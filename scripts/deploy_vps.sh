@@ -27,6 +27,21 @@ mkdir -p "$WEB_ROOT"
 rsync -a --delete "$WEB_DIR/dist/" "$WEB_ROOT/"
 
 echo "[deploy] Verifying API"
-curl --fail --silent "$API_HEALTH_URL" >/dev/null
+api_ready="false"
+for attempt in $(seq 1 30); do
+  if curl --fail --silent "$API_HEALTH_URL" >/dev/null; then
+    api_ready="true"
+    echo "[deploy] API is ready"
+    break
+  fi
+
+  echo "[deploy] Waiting for API to become ready (attempt $attempt/30)"
+  sleep 2
+done
+
+if [[ "$api_ready" != "true" ]]; then
+  echo "[deploy] API did not become ready in time" >&2
+  exit 1
+fi
 
 echo "[deploy] Done"
