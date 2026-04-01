@@ -31,6 +31,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,6 +40,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -288,6 +290,10 @@ public class SeedDataLoader {
 
     private void writeUsersFile(Map<String, UserAccount> users) throws IOException {
         Path path = Path.of(appProperties.bootstrap().usersFile());
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
         List<String> lines = List.of(
             "email=admin@santehmontazh.local; password=Admin123!; role=ADMIN",
             "email=estimator@santehmontazh.local; password=Estimator123!; role=ESTIMATOR",
@@ -318,7 +324,9 @@ public class SeedDataLoader {
     }
 
     private <T> List<T> readList(String classpath, TypeReference<List<T>> typeReference) throws IOException {
-        return objectMapper.readValue(Path.of(classpath).toFile(), typeReference);
+        try (InputStream inputStream = new ClassPathResource(classpath).getInputStream()) {
+            return objectMapper.readValue(inputStream, typeReference);
+        }
     }
 
     private record DemoUser(String fullName, String password, Role role) {
