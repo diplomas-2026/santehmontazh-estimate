@@ -2,6 +2,7 @@ package com.company.product.api.config;
 
 import com.company.product.api.security.JwtAuthenticationFilter;
 import java.util.List;
+import java.util.stream.Stream;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -49,7 +50,13 @@ public class SecurityConfiguration {
     @Bean
     CorsConfigurationSource corsConfigurationSource(AppProperties appProperties) {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(appProperties.cors().allowedOrigins());
+        configuration.setAllowedOrigins(
+            appProperties.cors().allowedOrigins().stream()
+                .flatMap(origin -> Stream.of(origin.split(",")))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList()
+        );
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
