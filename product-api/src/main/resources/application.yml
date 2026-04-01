@@ -34,5 +34,7 @@ app:
     users-file: ${APP_USERS_FILE:users.txt}
 
 springdoc:
+  api-docs:
+    path: /api/v3/api-docs
   swagger-ui:
-    path: /swagger-ui
+    path: /api/swagger-ui
