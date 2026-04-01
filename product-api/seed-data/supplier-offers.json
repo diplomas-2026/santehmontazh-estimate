@@ -1,0 +1,6 @@
+[
+  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"PP-32","supplierName":"ООО ПрофТруба","offeredPrice":275.00,"deliveryDays":3,"comment":"Поставка со склада","selected":true},
+  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"PP-32","supplierName":"ООО АкваМаркет","offeredPrice":282.00,"deliveryDays":2,"comment":"Быстрая доставка","selected":false},
+  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"KL-4","supplierName":"ООО ИнженерСклад","offeredPrice":3520.00,"deliveryDays":4,"comment":"По спеццене","selected":true},
+  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"KL-4","supplierName":"ООО МонтажКомплект","offeredPrice":3650.00,"deliveryDays":3,"comment":"С запасом на складе","selected":false}
+]

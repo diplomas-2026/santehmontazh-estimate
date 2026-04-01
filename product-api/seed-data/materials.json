@@ -1,0 +1,14 @@
+[
+  {"name":"Труба полипропиленовая 25 мм","sku":"PP-25","unit":"м","categoryName":"Трубы и фитинги","defaultPrice":210.00,"description":"Для разводки холодного и горячего водоснабжения","active":true},
+  {"name":"Труба полипропиленовая 32 мм","sku":"PP-32","unit":"м","categoryName":"Трубы и фитинги","defaultPrice":280.00,"description":"Для магистральных линий","active":true},
+  {"name":"Муфта 25 мм","sku":"MF-25","unit":"шт","categoryName":"Трубы и фитинги","defaultPrice":45.00,"description":"Соединительная муфта","active":true},
+  {"name":"Угол 25 мм","sku":"UG-25","unit":"шт","categoryName":"Трубы и фитинги","defaultPrice":55.00,"description":"Угловой фитинг","active":true},
+  {"name":"Кран шаровый 1/2","sku":"KR-12","unit":"шт","categoryName":"Арматура","defaultPrice":390.00,"description":"Запорный кран","active":true},
+  {"name":"Кран шаровый 3/4","sku":"KR-34","unit":"шт","categoryName":"Арматура","defaultPrice":520.00,"description":"Запорный кран","active":true},
+  {"name":"Коллектор 4 выхода","sku":"KL-4","unit":"шт","categoryName":"Арматура","defaultPrice":3600.00,"description":"Распределительный коллектор","active":true},
+  {"name":"Фильтр грубой очистки","sku":"FG-01","unit":"шт","categoryName":"Арматура","defaultPrice":740.00,"description":"Фильтр на ввод воды","active":true},
+  {"name":"Хомут сантехнический","sku":"HM-01","unit":"шт","categoryName":"Крепеж и расходники","defaultPrice":38.00,"description":"Крепление для труб","active":true},
+  {"name":"Герметик сантехнический","sku":"GR-01","unit":"шт","categoryName":"Крепеж и расходники","defaultPrice":320.00,"description":"Герметизация соединений","active":true},
+  {"name":"Циркуляционный насос","sku":"NS-01","unit":"шт","categoryName":"Оборудование","defaultPrice":12800.00,"description":"Насос для отопительного контура","active":true},
+  {"name":"Водонагреватель 100 л","sku":"VN-100","unit":"шт","categoryName":"Оборудование","defaultPrice":26500.00,"description":"Накопительный водонагреватель","active":true}
+]

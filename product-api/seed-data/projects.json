@@ -1,0 +1,5 @@
+[
+  {"name":"ЖК Волга Парк, секция А","code":"OBJ-001","address":"Самара, ул. Ново-Садовая, 150","description":"Монтаж системы водоснабжения и отопления в жилой секции","status":"IN_PROGRESS","plannedStartDate":"2026-03-01","plannedEndDate":"2026-07-30"},
+  {"name":"БЦ Орбита, этаж 5","code":"OBJ-002","address":"Самара, Московское шоссе, 17","description":"Реконструкция сантехнических коммуникаций офисного блока","status":"PURCHASE_IN_PROGRESS","plannedStartDate":"2026-02-10","plannedEndDate":"2026-05-25"},
+  {"name":"Складской комплекс Север","code":"OBJ-003","address":"Самара, ул. Товарная, 9","description":"Устройство хозяйственно-питьевого водопровода","status":"DRAFT","plannedStartDate":"2026-04-10","plannedEndDate":"2026-08-20"}
+]

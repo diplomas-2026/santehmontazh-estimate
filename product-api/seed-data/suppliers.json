@@ -1,0 +1,7 @@
+[
+  {"name":"ООО ТеплоСнаб","contactPerson":"Сергей Никитин","phone":"+7-917-100-10-10","email":"sale@teplosnab.local","address":"Самара, Заводское шоссе, 12","rating":4.80,"active":true},
+  {"name":"ООО ПрофТруба","contactPerson":"Елена Фролова","phone":"+7-917-200-20-20","email":"info@proftruba.local","address":"Самара, ул. Промышленности, 6","rating":4.60,"active":true},
+  {"name":"ООО АкваМаркет","contactPerson":"Андрей Косов","phone":"+7-917-300-30-30","email":"zakaz@aquamarket.local","address":"Тольятти, Южное шоссе, 18","rating":4.50,"active":true},
+  {"name":"ООО ИнженерСклад","contactPerson":"Мария Орлова","phone":"+7-917-400-40-40","email":"sale@ing-sklad.local","address":"Самара, ул. Авроры, 110","rating":4.70,"active":true},
+  {"name":"ООО МонтажКомплект","contactPerson":"Павел Медведев","phone":"+7-917-500-50-50","email":"mail@montazh.local","address":"Сызрань, ул. Советская, 43","rating":4.40,"active":true}
+]
