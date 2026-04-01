@@ -5,7 +5,7 @@ PROJECT_DIR="/opt/santehmontazh-estimate"
 API_DIR="$PROJECT_DIR/product-api"
 WEB_DIR="$PROJECT_DIR/product-web"
 WEB_ROOT="/var/www/projects/santehmontazh-estimate.matstart.ru"
-API_HEALTH_URL="http://127.0.0.1:18080/swagger-ui/index.html"
+API_HEALTH_URL="http://127.0.0.1:18080/api/swagger-ui/index.html"
 
 echo "[deploy] Updating repository"
 rm -f "$WEB_DIR/package-lock.json"
