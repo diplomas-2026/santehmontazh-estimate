@@ -272,8 +272,9 @@ public class SeedDataLoader {
         List<SupplierOfferSeed> items = readList("seed-data/supplier-offers.json", new TypeReference<>() {});
         for (SupplierOfferSeed item : items) {
             Purchase purchase = findPurchase(item.projectCode(), item.estimateVersion());
+            Material material = materialRepository.findBySkuIgnoreCase(item.materialSku()).orElseThrow();
             PurchaseItem purchaseItem = purchaseItemRepository.findByPurchaseId(purchase.getId()).stream()
-                .filter(current -> current.getMaterial().getSku().equals(item.materialSku()))
+                .filter(current -> current.getMaterial().getId().equals(material.getId()))
                 .findFirst()
                 .orElseThrow();
             Supplier supplier = supplierRepository.findByNameIgnoreCase(item.supplierName()).orElseThrow();
