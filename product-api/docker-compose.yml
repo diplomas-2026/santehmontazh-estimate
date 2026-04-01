@@ -28,7 +28,7 @@ services:
       DB_USERNAME: product
       DB_PASSWORD: product
       JWT_SECRET: change-me-change-me-change-me-change-me
-      APP_ALLOWED_ORIGINS: http://localhost:5173
+      APP_ALLOWED_ORIGINS: http://localhost:5173,https://santehmontazh-estimate.matstart.ru
       APP_USERS_FILE: users.txt
     ports:
       - "127.0.0.1:18080:8080"
