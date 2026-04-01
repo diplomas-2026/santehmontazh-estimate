@@ -42,6 +42,10 @@ export async function api(path, options = {}) {
     throw new Error('Не удалось выполнить запрос. Проверьте введенные данные и попробуйте еще раз.');
   }
 
+  if (response.status === 204) {
+    return null;
+  }
+
   const contentType = response.headers.get('content-type') ?? '';
   if (contentType.includes('application/json')) {
     return response.json();

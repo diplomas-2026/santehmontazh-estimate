@@ -1,4 +1,18 @@
-import { Link } from 'react-router-dom';
+import {
+  Alert,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../modules/auth/AuthContext';
 
 export function TableShell({ title, subtitle, columns, rows, premium = false, premiumMessage }) {
@@ -16,36 +30,51 @@ export function TableShell({ title, subtitle, columns, rows, premium = false, pr
       </div>
 
       {showPremiumBanner ? (
-        <article className="page-card premium-banner">
-          <div>
-            <p className="eyebrow">Premium</p>
-            <h3>Часть возможностей в этом разделе доступна только по подписке.</h3>
-            <p>{premiumMessage ?? 'Подключите платный тариф, чтобы открыть аналитику и расширенные управленческие сценарии.'}</p>
-          </div>
-          <Link className="primary-button" to="/pricing">Оформить подписку</Link>
-        </article>
+        <Alert
+          severity="warning"
+          action={<Button component={RouterLink} to="/pricing" color="inherit" variant="contained">Оформить подписку</Button>}
+        >
+          <strong>Premium:</strong> {premiumMessage ?? 'Подключите платный тариф, чтобы открыть аналитику и расширенные управленческие сценарии.'}
+        </Alert>
       ) : null}
 
-      <div className="page-card table-card">
-        <table>
-          <thead>
-            <tr>
-              {columns.map((column) => <th key={column}>{column}</th>)}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length ? rows.map((row, index) => (
-              <tr key={`${title}-${index + 1}`}>
-                {row.map((cell, cellIndex) => <td key={`${title}-${index + 1}-${cellIndex + 1}`}>{cell}</td>)}
-              </tr>
-            )) : (
-              <tr>
-                <td colSpan={columns.length} className="empty-row">Пока нет данных для отображения.</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent sx={{ p: 0 }}>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  {columns.map((column) => (
+                    <TableCell key={column}>
+                      <Typography sx={{ fontSize: '0.82rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'primary.light' }}>
+                        {column}
+                      </Typography>
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {rows.length ? rows.map((row, index) => (
+                  <TableRow key={`${title}-${index + 1}`} hover>
+                    {row.map((cell, cellIndex) => (
+                      <TableCell key={`${title}-${index + 1}-${cellIndex + 1}`}>{cell}</TableCell>
+                    ))}
+                  </TableRow>
+                )) : (
+                  <TableRow>
+                    <TableCell colSpan={columns.length}>
+                      <Stack sx={{ py: 4 }} alignItems="center">
+                        <Typography color="text.secondary">Пока нет данных для отображения.</Typography>
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </CardContent>
+      </Card>
     </section>
   );
 }
+

@@ -1,154 +1,220 @@
-import { Link } from 'react-router-dom';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Container,
+  Grid,
+  Stack,
+  Typography,
+} from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const premiumSignals = [
   ['24%', 'сокращение перерасхода по материалам'],
-  ['3 дня', 'в среднем экономим на подготовке закупки'],
+  ['3 дня', 'экономии на цикле закупки'],
   ['1 окно', 'для сметчика, снабжения и руководителя'],
 ];
 
 const productSteps = [
   {
+    marker: '01',
     title: 'Соберите смету из реальной потребности',
-    text: 'Сервис переводит проектные объемы в позиции сметы, чтобы команда сразу видела стоимость и критичные материалы.',
+    text: 'Платформа переводит инженерные объемы в финансовую картину объекта и сразу показывает стоимость решения.',
   },
   {
+    marker: '02',
     title: 'Переведите смету в закупку без ручной пересборки',
-    text: 'Потребность по объекту автоматически готова к закупке и сравнению поставщиков.',
+    text: 'Команда не переносит данные между файлами: смета, закупка, версии и комментарии идут в одном контуре.',
   },
   {
-    title: 'Контролируйте отклонения до того, как они съедят маржу',
-    text: 'План / факт, версии смет, история действий и управленческая аналитика доступны в одном интерфейсе.',
+    marker: '03',
+    title: 'Продавайте прозрачность руководителю',
+    text: 'План / факт, отклонения и premium-аналитика показывают, где объект теряет деньги и где можно выиграть.',
   },
 ];
 
 const paidFeatures = [
   'План / факт по закупкам с подсветкой перерасхода',
-  'Сравнение поставщиков и выбор лучшего предложения',
-  'Расширенная аналитика по объектам и ролям',
-  'Приоритетная поддержка и премиальные сценарии согласования',
+  'Сравнение предложений поставщиков',
+  'Расширенная аналитика по ролям и объектам',
+  'Приоритетные сценарии согласования и монетизация premium',
 ];
 
 export function LandingPage() {
   const { user, plans, subscription } = useAuth();
   const featuredPlan = plans.find((plan) => plan.highlight) ?? plans[1];
+  const checkoutLink = user
+    ? `/checkout?plan=${featuredPlan.id}&period=${featuredPlan.periods[0].id}`
+    : '/login';
 
   return (
-    <div className="marketing-shell">
-      <section className="hero-section">
-        <div className="hero-copy">
-          <p className="eyebrow">Смета. Закупка. Контроль маржи.</p>
-          <h1>Платформа, которая превращает потребность объекта в управляемую смету и закупку.</h1>
-          <p className="hero-text">
-            «СантехМонтаж Estimate» помогает строительным и инженерным подрядчикам быстрее считать сметы,
-            видеть дефицит материалов, контролировать отклонения и продавить закупку до результата без Excel-хаоса.
-          </p>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 } }}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Card sx={{ p: { xs: 1, md: 2 }, minHeight: '100%' }}>
+            <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+              <Stack spacing={4}>
+                <Stack spacing={2}>
+                  <Typography className="eyebrow">Смета. Закупка. Контроль маржи.</Typography>
+                  <Typography variant="h1" sx={{ fontSize: { xs: '2.5rem', md: '4.8rem' }, maxWidth: '12ch' }}>
+                    Платформа, которая превращает потребность объекта в управляемую смету и закупку.
+                  </Typography>
+                  <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 760, fontWeight: 500 }}>
+                    «СантехМонтаж Estimate» помогает подрядчику считать сметы быстрее, контролировать материалы и
+                    продавать руководству современный цифровой процесс вместо Excel-хаоса.
+                  </Typography>
+                </Stack>
 
-          <div className="hero-actions">
-            <Link className="primary-button hero-button" to={user ? '/dashboard' : '/register'}>
-              {user ? 'Открыть кабинет' : 'Попробовать бесплатно'}
-            </Link>
-            <Link className="ghost-button hero-button" to="/pricing">
-              Посмотреть тарифы
-            </Link>
-          </div>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <Button component={RouterLink} to={user ? '/dashboard' : '/register'} variant="contained" size="large">
+                    {user ? 'Открыть кабинет' : 'Попробовать бесплатно'}
+                  </Button>
+                  <Button component={RouterLink} to="/pricing" variant="outlined" color="inherit" size="large">
+                    Посмотреть тарифы
+                  </Button>
+                </Stack>
 
-          <div className="signal-grid">
-            {premiumSignals.map(([value, label]) => (
-              <article key={label} className="signal-card">
-                <strong>{value}</strong>
-                <span>{label}</span>
-              </article>
-            ))}
-          </div>
-        </div>
+                <Grid container spacing={2}>
+                  {premiumSignals.map(([value, label]) => (
+                    <Grid key={label} size={{ xs: 12, sm: 4 }}>
+                      <Card
+                        sx={{
+                          height: '100%',
+                          background: alpha('#ffffff', 0.05),
+                        }}
+                      >
+                        <CardContent>
+                          <Typography variant="h4" sx={{ mb: 1 }}>{value}</Typography>
+                          <Typography color="text.secondary">{label}</Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <aside className="hero-panel">
-          <div className="hero-panel-glow" />
-          <p className="hero-panel-label">Почему продукт хочется попробовать сразу</p>
-          <div className="hero-price-card">
-            <span className="eyebrow">Тариф дня</span>
-            <h2>{featuredPlan.name}</h2>
-            <p>{featuredPlan.description}</p>
-            <div className="price-stack">
-              <strong>{featuredPlan.periods[0].price}</strong>
-              <span>{featuredPlan.periods[0].label}</span>
-            </div>
-            <ul className="feature-list">
-              {featuredPlan.features.slice(0, 4).map((feature) => (
-                <li key={feature}>{feature}</li>
-              ))}
-            </ul>
-            <Link className="primary-button" to={`/checkout?plan=${featuredPlan.id}&period=${featuredPlan.periods[0].id}`}>
-              Оформить подписку
-            </Link>
-          </div>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={3} sx={{ height: '100%' }}>
+            <Card
+              sx={{
+                background: `linear-gradient(180deg, ${alpha('#ff9b62', 0.18)}, ${alpha('#0c1526', 0.88)})`,
+              }}
+            >
+              <CardContent sx={{ display: 'grid', gap: 2.5 }}>
+                <Typography className="eyebrow">Тариф дня</Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box sx={{ width: 14, height: 14, borderRadius: '50%', bgcolor: 'primary.main' }} />
+                  <Typography variant="h3">{featuredPlan.name}</Typography>
+                </Stack>
+                <Typography color="text.secondary">{featuredPlan.description}</Typography>
+                <Typography variant="h4">{featuredPlan.periods[0].price}</Typography>
+                <Typography color="text.secondary">{featuredPlan.periods[0].label}</Typography>
+                <Stack spacing={1}>
+                  {featuredPlan.features.slice(0, 4).map((feature) => (
+                    <Chip key={feature} label={feature} sx={{ justifyContent: 'flex-start' }} />
+                  ))}
+                </Stack>
+                <Button component={RouterLink} to={checkoutLink} variant="contained" size="large">
+                  {user ? 'Оформить подписку' : 'Войти и оформить'}
+                </Button>
+              </CardContent>
+            </Card>
 
-          <div className="status-card premium">
-            <span>Текущий статус</span>
-            <strong>{subscription ? `Подписка ${subscription.tierName}` : 'Premium еще не активирован'}</strong>
-            <p>
-              {subscription
-                ? `Доступ активен до ${new Date(subscription.expiresAt).toLocaleDateString('ru-RU')}.`
-                : 'Подключите платный режим и откройте аналитику, сравнение поставщиков и управленческие отчеты.'}
-            </p>
-          </div>
-        </aside>
-      </section>
+            <Card sx={{ background: alpha('#ffffff', 0.05) }}>
+              <CardContent sx={{ display: 'grid', gap: 1 }}>
+                <Typography className="eyebrow">Статус premium</Typography>
+                <Typography variant="h5">
+                  {subscription ? `Подписка ${subscription.tierName}` : 'Premium еще не активирован'}
+                </Typography>
+                <Typography color="text.secondary">
+                  {subscription
+                    ? `Доступ активен до ${new Date(subscription.expiresAt).toLocaleDateString('ru-RU')}.`
+                    : 'Подключите подписку, чтобы открыть аналитику, поставщиков и платные сценарии продукта.'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Stack>
+        </Grid>
+      </Grid>
 
-      <section className="marketing-section">
-        <div className="section-heading">
-          <p className="eyebrow">Как это работает</p>
-          <h2>Продукт выстраивает путь от потребности объекта до закупки без потери контекста.</h2>
-        </div>
+      <Box sx={{ mt: 3 }}>
+        <Card sx={{ p: { xs: 1, md: 2 } }}>
+          <CardContent>
+            <Stack spacing={3}>
+              <Box>
+                <Typography className="eyebrow">Как это работает</Typography>
+                <Typography variant="h3">Продукт выстраивает путь от потребности объекта до закупки без потери контекста.</Typography>
+              </Box>
 
-        <div className="step-grid">
-          {productSteps.map((step, index) => (
-            <article key={step.title} className="story-card">
-              <span className="story-index">0{index + 1}</span>
-              <h3>{step.title}</h3>
-              <p>{step.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+              <Grid container spacing={2}>
+                {productSteps.map((step) => (
+                  <Grid key={step.title} size={{ xs: 12, md: 4 }}>
+                    <Card sx={{ height: '100%', background: alpha('#ffffff', 0.04) }}>
+                        <CardContent sx={{ display: 'grid', gap: 2 }}>
+                        <Box sx={{ width: 52, height: 52, borderRadius: 3, display: 'grid', placeItems: 'center', bgcolor: alpha('#ffffff', 0.08), fontWeight: 800 }}>
+                          {step.marker}
+                        </Box>
+                        <Typography variant="h5">{step.title}</Typography>
+                        <Typography color="text.secondary">{step.text}</Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Box>
 
-      <section className="marketing-section split">
-        <div className="section-heading">
-          <p className="eyebrow">Premium продает себя сам</p>
-          <h2>Часть функций сознательно вынесена в платный доступ, чтобы монетизация ощущалась естественно.</h2>
-          <p className="muted">
-            Бесплатный сценарий дает возможность зайти в продукт, а платные модули показывают реальную ценность:
-            меньше перерасхода, выше прозрачность и быстрее цикл закупки.
-          </p>
-        </div>
-
-        <div className="premium-grid">
-          {paidFeatures.map((feature) => (
-            <article key={feature} className="premium-tile">
-              <span className="premium-badge">Premium</span>
-              <h3>{feature}</h3>
-              <p>Эта возможность продается на лендинге, в кабинете и прямо внутри рабочих разделов.</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="marketing-section cta">
-        <div>
-          <p className="eyebrow">Готово к демо</p>
-          <h2>Запустите тестовый сценарий сегодня и покажите команде, как должна выглядеть современная смета.</h2>
-        </div>
-        <div className="hero-actions">
-          <Link className="primary-button hero-button" to="/pricing">
-            Выбрать подписку
-          </Link>
-          <Link className="ghost-button hero-button" to={user ? '/dashboard' : '/login'}>
-            {user ? 'Перейти в кабинет' : 'У меня уже есть аккаунт'}
-          </Link>
-        </div>
-      </section>
-    </div>
+      <Grid container spacing={3} sx={{ mt: 0.5 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Card sx={{ p: { xs: 1, md: 2 }, height: '100%' }}>
+            <CardContent>
+              <Stack spacing={2.5}>
+                <Box>
+                  <Typography className="eyebrow">Premium продает себя сам</Typography>
+                  <Typography variant="h3">Часть функций сознательно вынесена в платный доступ, чтобы монетизация была естественной.</Typography>
+                </Box>
+                <Typography color="text.secondary">
+                  Бесплатный сценарий дает вход в систему, а платные блоки усиливают ценность продукта и помогают продавать подписку внутри кабинета.
+                </Typography>
+                <Stack direction="row" flexWrap="wrap" gap={1}>
+                  {paidFeatures.map((feature) => (
+                    <Chip key={feature} label={feature} color="primary" variant="outlined" />
+                  ))}
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Card sx={{ p: { xs: 1, md: 2 }, height: '100%' }}>
+            <CardContent>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography className="eyebrow">Готово к демо</Typography>
+                  <Typography variant="h3">Запустите тестовый сценарий сегодня и покажите команде, как должна выглядеть современная смета.</Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                  <Button component={RouterLink} to="/pricing" variant="contained" size="large">
+                    Выбрать подписку
+                  </Button>
+                  <Button component={RouterLink} to={user ? '/dashboard' : '/login'} variant="outlined" color="inherit" size="large">
+                    {user ? 'Перейти в кабинет' : 'У меня уже есть аккаунт'}
+                  </Button>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
-

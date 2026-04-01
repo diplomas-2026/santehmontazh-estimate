@@ -1,4 +1,18 @@
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Container,
+  Grid,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -31,93 +45,103 @@ export function AuthPage({ mode }) {
   }
 
   return (
-    <div className="auth-shell">
-      <div className="auth-layout">
-        <div className="auth-promo">
-          <p className="eyebrow">Современный продукт для подрядчика</p>
-          <h1>Смета и закупка в одном потоке, а не в десятке таблиц.</h1>
-          <p className="hero-text">
-            Платформа помогает команде считать сметы, закупать материалы и продавать руководству прозрачную картину по бюджету.
-          </p>
-          <div className="tag-row">
-            <span className="tag">Версии смет</span>
-            <span className="tag">Premium-аналитика</span>
-            <span className="tag">Согласование закупок</span>
-          </div>
-          <div className="hero-actions">
-            <Link className="ghost-button hero-button" to="/">О продукте</Link>
-            <Link className="primary-button hero-button" to="/pricing">Тарифы</Link>
-          </div>
-        </div>
+    <Container maxWidth="xl" sx={{ py: { xs: 3, md: 4 }, minHeight: '100vh', display: 'grid', alignItems: 'center' }}>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: { xs: 3, md: 5 }, display: 'grid', gap: 3 }}>
+              <Typography className="eyebrow">Современный продукт для подрядчика</Typography>
+              <Typography variant="h1" sx={{ fontSize: { xs: '2.4rem', md: '4.6rem' }, maxWidth: '11ch' }}>
+                Смета и закупка в одном потоке, а не в десятке таблиц.
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 680 }}>
+                Платформа помогает считать сметы, закупать материалы и продавать руководству прозрачную картину по бюджету объекта.
+              </Typography>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
+                <Button variant="outlined" color="inherit">Версии смет</Button>
+                <Button variant="outlined" color="inherit">Premium-аналитика</Button>
+                <Button variant="outlined" color="inherit">Согласование закупок</Button>
+              </Stack>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                <Button component={RouterLink} to="/" variant="outlined" color="inherit" size="large">О продукте</Button>
+                <Button component={RouterLink} to="/pricing" variant="contained" size="large">Тарифы</Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <div className="auth-card">
-          <p className="eyebrow">Производственная платформа</p>
-          <h1>{isRegister ? 'Регистрация сметчика' : 'Вход в систему'}</h1>
-          <p className="muted">
-            {isRegister
-              ? 'Новый пользователь создается с ролью ESTIMATOR и может сразу подключить платный тариф.'
-              : 'Авторизуйтесь, чтобы работать со сметами, закупками и premium-аналитикой по объектам.'}
-          </p>
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent sx={{ p: { xs: 3, md: 4 }, display: 'grid', gap: 2.5 }}>
+              <Box>
+                <Typography className="eyebrow">Производственная платформа</Typography>
+                <Typography variant="h3" sx={{ mb: 1.5 }}>
+                  {isRegister ? 'Регистрация сметчика' : 'Вход в систему'}
+                </Typography>
+                <Typography color="text.secondary">
+                  {isRegister
+                    ? 'Новый пользователь создается с ролью ESTIMATOR и может сразу подключить платный тариф.'
+                    : 'Авторизуйтесь, чтобы работать со сметами, закупками и premium-аналитикой по объектам.'}
+                </Typography>
+              </Box>
 
-          <form className="auth-form" onSubmit={handleSubmit}>
-            {isRegister ? (
-              <label>
-                ФИО
-                <input
-                  value={form.fullName}
-                  onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
-                  placeholder="Иван Петров"
+              <Stack component="form" spacing={2} onSubmit={handleSubmit}>
+                {isRegister ? (
+                  <TextField
+                    label="ФИО"
+                    value={form.fullName}
+                    onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
+                    placeholder="Иван Петров"
+                  />
+                ) : null}
+
+                <TextField
+                  label="Email"
+                  type="email"
+                  value={form.email}
+                  onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
+                  placeholder="user@santehmontazh.local"
                 />
-              </label>
-            ) : null}
 
-            <label>
-              Email
-              <input
-                type="email"
-                value={form.email}
-                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-                placeholder="user@santehmontazh.local"
-              />
-            </label>
-
-            <label>
-              Пароль
-              <div className="password-field">
-                <input
+                <TextField
+                  label="Пароль"
                   type={showPassword ? 'text' : 'password'}
                   value={form.password}
                   onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
                   placeholder="Минимум 8 символов"
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          edge="end"
+                          aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                          onClick={() => setShowPassword((current) => !current)}
+                        >
+                          {showPassword ? 'Скрыть' : 'Показать'}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-                <button
-                  type="button"
-                  className="password-toggle"
-                  aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
-                  aria-pressed={showPassword}
-                  onClick={() => setShowPassword((current) => !current)}
-                >
-                  {showPassword ? 'Скрыть' : 'Показать'}
-                </button>
-              </div>
-            </label>
 
-            {error ? <div className="error-box">{error}</div> : null}
+                {error ? <Alert severity="error">{error}</Alert> : null}
 
-            <button type="submit" className="primary-button" disabled={busy}>
-              {busy ? 'Подождите...' : isRegister ? 'Зарегистрироваться' : 'Войти'}
-            </button>
-          </form>
+                <Button type="submit" variant="contained" size="large" disabled={busy}>
+                  {busy ? 'Подождите...' : isRegister ? 'Зарегистрироваться' : 'Войти'}
+                </Button>
+              </Stack>
 
-          <div className="auth-footer">
-            {isRegister ? (
-              <Link to="/login">Уже есть аккаунт? Войти</Link>
-            ) : (
-              <Link to="/register">Нет аккаунта? Зарегистрироваться</Link>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+              <Typography color="text.secondary">
+                {isRegister ? (
+                  <RouterLink to="/login">Уже есть аккаунт? Войти</RouterLink>
+                ) : (
+                  <RouterLink to="/register">Нет аккаунта? Зарегистрироваться</RouterLink>
+                )}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }

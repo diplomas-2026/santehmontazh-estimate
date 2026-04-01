@@ -6,5 +6,6 @@ public enum AuditEntityType {
     MATERIAL,
     SUPPLIER,
     ESTIMATE,
-    PURCHASE
+    PURCHASE,
+    SUBSCRIPTION
 }

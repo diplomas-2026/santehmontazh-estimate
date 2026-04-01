@@ -37,7 +37,14 @@ export function AppRouter() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/pricing" element={<PricingPage />} />
-      <Route path="/checkout" element={<CheckoutPage />} />
+      <Route
+        path="/checkout"
+        element={(
+          <ProtectedRoute>
+            <CheckoutPage />
+          </ProtectedRoute>
+        )}
+      />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
       <Route
