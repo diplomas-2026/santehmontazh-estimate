@@ -1,13 +1,33 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { useAuth } from '../modules/auth/AuthContext';
 import { TableShell } from './shared/TableShell';
 
 export function ReportsPage() {
+  const { hasPremiumAccess } = useAuth();
   const [rows, setRows] = useState([]);
 
   useEffect(() => {
     api('/api/dashboard/deviations').then(setRows).catch(() => setRows([]));
   }, []);
+
+  if (!hasPremiumAccess) {
+    return (
+      <section className="page-section">
+        <div className="page-card premium-banner premium-banner-block">
+          <div>
+            <p className="eyebrow">Premium-аналитика</p>
+            <h2>План / факт продается как отдельный сильный модуль продукта.</h2>
+            <p>
+              В платном доступе находятся отклонения по объектам, приоритеты закупки и управленческие сигналы для руководителя.
+            </p>
+          </div>
+          <Link className="primary-button" to="/pricing">Открыть premium</Link>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <TableShell

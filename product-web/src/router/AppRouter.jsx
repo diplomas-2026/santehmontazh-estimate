@@ -1,13 +1,16 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../modules/auth/AuthContext';
 import { AuthPage } from '../screens/AuthPage';
+import { CheckoutPage } from '../screens/CheckoutPage';
 import { DashboardPage } from '../screens/DashboardPage';
+import { LandingPage } from '../screens/LandingPage';
 import { Layout } from '../screens/Layout';
 import { ProjectsPage } from '../screens/ProjectsPage';
 import { MaterialsPage } from '../screens/MaterialsPage';
 import { SuppliersPage } from '../screens/SuppliersPage';
 import { EstimatesPage } from '../screens/EstimatesPage';
 import { PurchasesPage } from '../screens/PurchasesPage';
+import { PricingPage } from '../screens/PricingPage';
 import { ReportsPage } from '../screens/ReportsPage';
 import { UsersPage } from '../screens/UsersPage';
 
@@ -32,6 +35,9 @@ function ProtectedRoute({ children, roles }) {
 export function AppRouter() {
   return (
     <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/checkout" element={<CheckoutPage />} />
       <Route path="/login" element={<AuthPage mode="login" />} />
       <Route path="/register" element={<AuthPage mode="register" />} />
       <Route
@@ -42,7 +48,6 @@ export function AppRouter() {
           </ProtectedRoute>
         )}
       >
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="materials" element={<MaterialsPage />} />
@@ -59,6 +64,7 @@ export function AppRouter() {
           )}
         />
       </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

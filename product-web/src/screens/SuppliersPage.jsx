@@ -13,6 +13,8 @@ export function SuppliersPage() {
     <TableShell
       title="Поставщики"
       subtitle="Справочник контрагентов и закупочных партнеров"
+      premium
+      premiumMessage="С подпиской вы открываете сравнение предложений, рейтинг поставщиков и рекомендации по выбору."
       columns={['Компания', 'Контакт', 'Телефон', 'Email', 'Рейтинг']}
       rows={suppliers.map((supplier) => [
         supplier.name,
