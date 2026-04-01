@@ -8,6 +8,7 @@ export function AuthPage({ mode }) {
   const [form, setForm] = useState({ fullName: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const isRegister = mode === 'register';
 
@@ -64,12 +65,23 @@ export function AuthPage({ mode }) {
 
           <label>
             Пароль
-            <input
-              type="password"
-              value={form.password}
-              onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
-              placeholder="Минимум 8 символов"
-            />
+            <div className="password-field">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={form.password}
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))}
+                placeholder="Минимум 8 символов"
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((current) => !current)}
+              >
+                {showPassword ? 'Скрыть' : 'Показать'}
+              </button>
+            </div>
           </label>
 
           {error ? <div className="error-box">{error}</div> : null}
