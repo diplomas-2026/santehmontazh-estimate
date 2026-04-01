@@ -324,7 +324,22 @@ public class SeedDataLoader {
     }
 
     private <T> List<T> readList(String classpath, TypeReference<List<T>> typeReference) throws IOException {
-        try (InputStream inputStream = new ClassPathResource(classpath).getInputStream()) {
+        ClassPathResource resource = new ClassPathResource(classpath);
+        if (resource.exists()) {
+            try (InputStream inputStream = resource.getInputStream()) {
+                return objectMapper.readValue(inputStream, typeReference);
+            }
+        }
+
+        Path filesystemPath = Path.of(classpath);
+        if (Files.exists(filesystemPath)) {
+            try (InputStream inputStream = Files.newInputStream(filesystemPath)) {
+                return objectMapper.readValue(inputStream, typeReference);
+            }
+        }
+
+        Path appRelativePath = Path.of("/app").resolve(classpath);
+        try (InputStream inputStream = Files.newInputStream(appRelativePath)) {
             return objectMapper.readValue(inputStream, typeReference);
         }
     }
