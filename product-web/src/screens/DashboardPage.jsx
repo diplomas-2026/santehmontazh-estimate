@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { Link } from 'react-router-dom';
+import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus, translateRole } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 export function DashboardPage() {
@@ -48,7 +49,9 @@ export function DashboardPage() {
         <div className="status-card premium">
           <span>Аккаунт</span>
           <strong>{user.fullName}</strong>
-          <p>{subscription ? `Тариф ${subscription.tierName} активен` : 'Вы используете бесплатный доступ'}</p>
+          <p>
+            {translateRole(user.role)} • {subscription ? `тариф ${subscription.tierName} активен` : 'используется бесплатный доступ'}
+          </p>
         </div>
       </div>
 
@@ -63,9 +66,9 @@ export function DashboardPage() {
       </div>
 
       <div className="table-grid">
-        <StatusCard title="Объекты" data={summary.projectStatuses} />
-        <StatusCard title="Сметы" data={summary.estimateStatuses} />
-        <StatusCard title="Закупки" data={summary.purchaseStatuses} />
+        <StatusCard title="Объекты" data={summary.projectStatuses} translator={translateProjectStatus} />
+        <StatusCard title="Сметы" data={summary.estimateStatuses} translator={translateEstimateStatus} />
+        <StatusCard title="Закупки" data={summary.purchaseStatuses} translator={translatePurchaseStatus} />
       </div>
 
       <div className="table-grid">
@@ -95,17 +98,33 @@ export function DashboardPage() {
           )}
         </article>
       </div>
+
+      <article className="page-card">
+        <p className="eyebrow">Как пользоваться системой</p>
+        <h3>Рабочий сценарий от первого объекта до контроля закупки</h3>
+        <div className="tag-row">
+          <span className="tag">1. Создайте объект</span>
+          <span className="tag">2. Сформируйте смету</span>
+          <span className="tag">3. Передайте смету в закупку</span>
+          <span className="tag">4. Согласуйте закупку</span>
+          <span className="tag">5. Смотрите план / факт</span>
+        </div>
+        <p className="muted">
+          Сервис нужен для того, чтобы связать расчет сметы и реальную закупку материалов в один процесс.
+          Пользователь видит, что нужно купить, сколько это стоит и где начинается перерасход по объекту.
+        </p>
+      </article>
     </section>
   );
 }
 
-function StatusCard({ title, data }) {
+function StatusCard({ title, data, translator }) {
   return (
     <article className="page-card">
       <h3>{title}</h3>
       {Object.entries(data).map(([status, count]) => (
         <div key={status} className="row-between">
-          <span>{status}</span>
+          <span>{translator ? translator(status) : status}</span>
           <strong>{count}</strong>
         </div>
       ))}

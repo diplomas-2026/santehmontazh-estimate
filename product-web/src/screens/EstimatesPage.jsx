@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { translateEstimateStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const emptyForm = { projectId: '', name: '', notes: '' };
@@ -77,7 +78,7 @@ export function EstimatesPage() {
             <div className="row-between">
               <div>
                 <h3>{estimate.name}</h3>
-                <p className="muted">{estimate.projectName} • версия {estimate.version} • {estimate.status}</p>
+                <p className="muted">{estimate.projectName} • версия {estimate.version} • {translateEstimateStatus(estimate.status)}</p>
               </div>
               <strong>{estimate.total}</strong>
             </div>

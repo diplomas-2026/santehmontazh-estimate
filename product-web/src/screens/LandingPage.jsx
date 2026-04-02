@@ -44,6 +44,25 @@ const paidFeatures = [
   'Приоритетные сценарии согласования и монетизация premium',
 ];
 
+const userWorkflow = [
+  {
+    title: 'Объект',
+    text: 'Создайте карточку объекта, чтобы зафиксировать площадку, адрес и текущий этап работ.',
+  },
+  {
+    title: 'Смета',
+    text: 'Сметчик собирает расчет, версии и состав материалов по объекту.',
+  },
+  {
+    title: 'Закупка',
+    text: 'Снабженец переводит смету в закупку и подбирает поставщиков.',
+  },
+  {
+    title: 'Контроль',
+    text: 'Руководитель смотрит статусы, согласует закупку и контролирует план / факт.',
+  },
+];
+
 export function LandingPage() {
   const { user, plans, subscription } = useAuth();
   const featuredPlan = plans.find((plan) => plan.highlight) ?? plans[1];
@@ -195,6 +214,35 @@ export function LandingPage() {
           </Card>
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
+          <Card sx={{ p: { xs: 1, md: 2 }, height: '100%' }}>
+            <CardContent>
+              <Stack spacing={3}>
+                <Box>
+                  <Typography className="eyebrow">Как пользоваться сервисом</Typography>
+                  <Typography variant="h3">Сервис нужен, чтобы провести пользователя от объекта до контроля закупки.</Typography>
+                </Box>
+                <Grid container spacing={2}>
+                  {userWorkflow.map((step, index) => (
+                    <Grid key={step.title} size={{ xs: 12, sm: 6 }}>
+                      <Card sx={{ height: '100%', background: alpha('#ffffff', 0.04) }}>
+                        <CardContent sx={{ display: 'grid', gap: 1.2 }}>
+                          <Typography className="eyebrow">Шаг {index + 1}</Typography>
+                          <Typography variant="h5">{step.title}</Typography>
+                          <Typography color="text.secondary">{step.text}</Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+                <Typography color="text.secondary">
+                  Идея продукта в том, чтобы команда не считала смету отдельно от закупки. Сервис показывает,
+                  что именно нужно купить, во сколько это обойдется и где по объекту начинается перерасход.
+                </Typography>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
           <Card sx={{ p: { xs: 1, md: 2 }, height: '100%' }}>
             <CardContent>
               <Stack spacing={3}>

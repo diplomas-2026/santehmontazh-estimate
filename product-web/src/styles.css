@@ -710,6 +710,32 @@ th {
   min-height: 280px;
 }
 
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.detail-list-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.compact-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .status-card {
   display: grid;
   gap: 8px;
@@ -763,6 +789,7 @@ th {
   .step-grid,
   .premium-grid,
   .pricing-grid,
+  .detail-grid,
   .table-grid,
   .metric-grid,
   .signal-grid,
@@ -800,6 +827,7 @@ th {
   .marketing-section,
   .pricing-hero,
   .checkout-layout,
+  .detail-grid,
   .dashboard-hero,
   .auth-promo,
   .auth-card,
@@ -822,4 +850,3 @@ th {
     align-items: flex-start;
   }
 }
-

@@ -5,6 +5,7 @@ import { CheckoutPage } from '../screens/CheckoutPage';
 import { DashboardPage } from '../screens/DashboardPage';
 import { LandingPage } from '../screens/LandingPage';
 import { Layout } from '../screens/Layout';
+import { ProjectDetailsPage } from '../screens/ProjectDetailsPage';
 import { ProjectsPage } from '../screens/ProjectsPage';
 import { MaterialsPage } from '../screens/MaterialsPage';
 import { SuppliersPage } from '../screens/SuppliersPage';
@@ -57,6 +58,7 @@ export function AppRouter() {
       >
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="projects" element={<ProjectsPage />} />
+        <Route path="projects/:id" element={<ProjectDetailsPage />} />
         <Route path="materials" element={<MaterialsPage />} />
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="estimates" element={<EstimatesPage />} />

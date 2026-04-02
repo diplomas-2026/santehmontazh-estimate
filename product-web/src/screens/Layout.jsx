@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { translateRole, translateSubscriptionStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const baseLinks = [
@@ -6,8 +7,6 @@ const baseLinks = [
   { to: '/projects', label: 'Объекты' },
   { to: '/materials', label: 'Материалы' },
   { to: '/suppliers', label: 'Поставщики', roles: ['ADMIN', 'PURCHASER', 'MANAGER'] },
-  { to: '/estimates', label: 'Сметы' },
-  { to: '/purchases', label: 'Закупки' },
   { to: '/reports/deviations', label: 'План / факт', roles: ['ADMIN', 'MANAGER'] },
   { to: '/admin/users', label: 'Пользователи', roles: ['ADMIN'] },
 ];
@@ -30,9 +29,9 @@ export function Layout() {
 
           <div className="user-card">
             <strong>{user.fullName}</strong>
-            <span>{user.role}</span>
+            <span>{translateRole(user.role)}</span>
             <span className={`plan-chip${subscription ? '' : ' muted-chip'}`}>
-              {subscription ? `${subscription.tierName} active` : 'Free access'}
+              {subscription ? `${subscription.tierName} • ${translateSubscriptionStatus(subscription.status)}` : 'Бесплатный доступ'}
             </span>
           </div>
         </div>

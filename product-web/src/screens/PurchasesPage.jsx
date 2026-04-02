@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { translateEstimateStatus, translatePurchaseStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const emptyForm = { estimateId: '', supplierName: '', comment: '' };
@@ -54,7 +55,7 @@ export function PurchasesPage() {
           <select value={form.estimateId} onChange={(event) => setForm((current) => ({ ...current, estimateId: event.target.value }))}>
             <option value="">Готовая смета</option>
             {estimates.map((estimate) => (
-              <option key={estimate.id} value={estimate.id}>{estimate.name}</option>
+              <option key={estimate.id} value={estimate.id}>{estimate.name} • {translateEstimateStatus(estimate.status)}</option>
             ))}
           </select>
           <input value={form.supplierName} onChange={(event) => setForm((current) => ({ ...current, supplierName: event.target.value }))} placeholder="Базовый поставщик" />
@@ -69,7 +70,7 @@ export function PurchasesPage() {
             <div className="row-between">
               <div>
                 <h3>{purchase.projectName}</h3>
-                <p className="muted">{purchase.estimateName} • {purchase.status}</p>
+                <p className="muted">{purchase.estimateName} • {translatePurchaseStatus(purchase.status)}</p>
               </div>
               <div className="metric-inline">
                 <span>План: {purchase.plannedTotal}</span>
