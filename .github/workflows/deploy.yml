@@ -31,3 +31,27 @@ jobs:
       - name: Run deployment
         run: |
           ssh root@45.128.205.5 'bash -s' < scripts/deploy_vps.sh
+
+      - name: Notify Telegram
+        if: ${{ success() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          REPOSITORY: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          SERVER_URL: ${{ github.server_url }}
+        run: |
+          MESSAGE=$(cat <<EOF
+          ✅ Деплой успешно завершен
+
+          Репозиторий: ${REPOSITORY}
+          Автор: ${ACTOR}
+          Коммит: ${SHA}
+          Запуск: ${SERVER_URL}/${REPOSITORY}/actions/runs/${RUN_ID}
+          EOF
+          )
+          curl -sS -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}"
