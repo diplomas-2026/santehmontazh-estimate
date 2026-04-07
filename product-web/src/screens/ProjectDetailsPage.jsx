@@ -2,14 +2,20 @@ import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus } from '../i18n/enums';
+import { useAuth } from '../modules/auth/AuthContext';
+
+const emptyEstimateForm = { name: '', notes: '' };
 
 export function ProjectDetailsPage() {
+  const { user } = useAuth();
   const { id } = useParams();
   const [project, setProject] = useState(null);
   const [estimates, setEstimates] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [estimateForm, setEstimateForm] = useState(emptyEstimateForm);
+  const [estimateError, setEstimateError] = useState('');
 
-  useEffect(() => {
+  function load() {
     api(`/api/projects/${id}`).then(setProject).catch(() => setProject(null));
     api('/api/estimates')
       .then((items) => setEstimates(items.filter((item) => String(item.projectId) === String(id))))
@@ -17,6 +23,10 @@ export function ProjectDetailsPage() {
     api('/api/purchases')
       .then((items) => setPurchases(items.filter((item) => String(item.projectId) === String(id))))
       .catch(() => setPurchases([]));
+  }
+
+  useEffect(() => {
+    load();
   }, [id]);
 
   const summary = useMemo(() => {
@@ -27,6 +37,37 @@ export function ProjectDetailsPage() {
       actual: purchases.reduce((sum, item) => sum + Number(item.actualTotal ?? 0), 0),
     };
   }, [estimates, purchases]);
+
+  async function createEstimate(event) {
+    event.preventDefault();
+    try {
+      await api('/api/estimates', {
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: Number(id),
+          name: estimateForm.name,
+          notes: estimateForm.notes,
+        }),
+      });
+      setEstimateForm(emptyEstimateForm);
+      setEstimateError('');
+      load();
+    } catch (submissionError) {
+      setEstimateError(submissionError.message);
+    }
+  }
+
+  async function createVersion(estimateId) {
+    await api(`/api/estimates/${estimateId}/create-version`, { method: 'POST' });
+    load();
+  }
+
+  async function submitForPurchase(estimateId) {
+    await api(`/api/estimates/${estimateId}/submit-for-purchase`, { method: 'POST' });
+    load();
+  }
+
+  const canEditEstimates = ['ADMIN', 'ESTIMATOR'].includes(user.role);
 
   if (!project) {
     return <div className="page-card">Загрузка данных по объекту...</div>;
@@ -97,6 +138,30 @@ export function ProjectDetailsPage() {
         </p>
       </article>
 
+      {canEditEstimates ? (
+        <form className="page-card form-grid" onSubmit={createEstimate}>
+          <div>
+            <p className="eyebrow">Новая смета</p>
+            <h3>Создать смету прямо внутри объекта</h3>
+            <p className="muted">
+              Смета автоматически будет привязана к объекту {project.name}. После создания она появится в списке ниже.
+            </p>
+          </div>
+          <input
+            value={estimateForm.name}
+            onChange={(event) => setEstimateForm((current) => ({ ...current, name: event.target.value }))}
+            placeholder="Например: Смета по внутренним сетям"
+          />
+          <input
+            value={estimateForm.notes}
+            onChange={(event) => setEstimateForm((current) => ({ ...current, notes: event.target.value }))}
+            placeholder="Примечание к расчету"
+          />
+          {estimateError ? <div className="error-box">{estimateError}</div> : null}
+          <button type="submit" className="primary-button">Создать смету</button>
+        </form>
+      ) : null}
+
       <div className="detail-grid">
         <article className="page-card">
           <div className="row-between">
@@ -104,7 +169,7 @@ export function ProjectDetailsPage() {
               <p className="eyebrow">Связанные сметы</p>
               <h3>Расчеты по объекту</h3>
             </div>
-            <Link className="ghost-button" to="/estimates">Все сметы</Link>
+            <Link className="ghost-button" to="/estimates">Архив смет</Link>
           </div>
 
           <div className="stack-list">
@@ -114,7 +179,21 @@ export function ProjectDetailsPage() {
                   <strong>{estimate.name}</strong>
                   <p className="muted">Версия {estimate.version} • {translateEstimateStatus(estimate.status)}</p>
                 </div>
-                <strong>{estimate.total}</strong>
+                <div className="detail-actions">
+                  <strong>{estimate.total}</strong>
+                  {canEditEstimates ? (
+                    <div className="action-row">
+                      <button type="button" className="ghost-button" onClick={() => createVersion(estimate.id)}>
+                        Новая версия
+                      </button>
+                      {estimate.status === 'DRAFT' ? (
+                        <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>
+                          В закупку
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </div>
               </div>
             )) : <p className="muted">По объекту пока нет смет.</p>}
           </div>
@@ -148,4 +227,3 @@ export function ProjectDetailsPage() {
     </section>
   );
 }
-
