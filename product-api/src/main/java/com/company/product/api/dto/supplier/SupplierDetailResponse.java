@@ -1,8 +1,10 @@
 package com.company.product.api.dto.supplier;
 
+import com.company.product.api.dto.common.ReviewResponse;
 import java.math.BigDecimal;
+import java.util.List;
 
-public record SupplierResponse(
+public record SupplierDetailResponse(
     Long id,
     String name,
     String contactPerson,
@@ -12,6 +14,8 @@ public record SupplierResponse(
     String websiteUrl,
     String telegram,
     BigDecimal rating,
-    boolean active
+    boolean active,
+    List<SupplierMaterialResponse> materials,
+    List<ReviewResponse> reviews
 ) {
 }

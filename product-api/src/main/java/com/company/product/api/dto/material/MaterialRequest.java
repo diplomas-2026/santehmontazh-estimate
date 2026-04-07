@@ -19,6 +19,7 @@ public record MaterialRequest(
     BigDecimal defaultPrice,
     @NotBlank(message = "Описание обязательно")
     String description,
+    String photoUrl,
     boolean active
 ) {
 }

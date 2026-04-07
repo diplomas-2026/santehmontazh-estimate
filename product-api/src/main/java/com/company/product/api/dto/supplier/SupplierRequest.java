@@ -18,6 +18,8 @@ public record SupplierRequest(
     String email,
     @NotBlank(message = "Адрес обязателен")
     String address,
+    String websiteUrl,
+    String telegram,
     @NotNull(message = "Рейтинг обязателен")
     @DecimalMin(value = "0.0", message = "Рейтинг не может быть отрицательным")
     BigDecimal rating,

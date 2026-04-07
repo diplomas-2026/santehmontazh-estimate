@@ -1,5 +1,8 @@
 package com.company.product.api.controller;
 
+import com.company.product.api.dto.common.ReviewRequest;
+import com.company.product.api.dto.common.ReviewResponse;
+import com.company.product.api.dto.supplier.SupplierDetailResponse;
 import com.company.product.api.dto.supplier.SupplierRequest;
 import com.company.product.api.dto.supplier.SupplierResponse;
 import com.company.product.api.service.SupplierService;
@@ -29,6 +32,11 @@ public class SupplierController {
         return supplierService.findAll();
     }
 
+    @GetMapping("/{id}")
+    public SupplierDetailResponse findById(@PathVariable Long id) {
+        return supplierService.findById(id);
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public SupplierResponse create(@Valid @RequestBody SupplierRequest request) {
@@ -39,5 +47,10 @@ public class SupplierController {
     @PreAuthorize("hasRole('ADMIN')")
     public SupplierResponse update(@PathVariable Long id, @Valid @RequestBody SupplierRequest request) {
         return supplierService.update(id, request);
+    }
+
+    @PostMapping("/{id}/reviews")
+    public List<ReviewResponse> addReview(@PathVariable Long id, @Valid @RequestBody ReviewRequest request) {
+        return supplierService.addReview(id, request);
     }
 }

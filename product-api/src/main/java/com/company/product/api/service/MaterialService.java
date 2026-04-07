@@ -1,14 +1,22 @@
 package com.company.product.api.service;
 
 import com.company.product.api.dto.material.MaterialCategoryResponse;
+import com.company.product.api.dto.material.MaterialDetailResponse;
 import com.company.product.api.dto.material.MaterialRequest;
 import com.company.product.api.dto.material.MaterialResponse;
+import com.company.product.api.dto.material.MaterialSupplierResponse;
+import com.company.product.api.dto.common.ReviewRequest;
+import com.company.product.api.dto.common.ReviewResponse;
 import com.company.product.api.entity.AuditEntityType;
 import com.company.product.api.entity.Material;
 import com.company.product.api.entity.MaterialCategory;
+import com.company.product.api.entity.MaterialReview;
+import com.company.product.api.entity.Supplier;
 import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.MaterialCategoryRepository;
 import com.company.product.api.repository.MaterialRepository;
+import com.company.product.api.repository.MaterialReviewRepository;
+import com.company.product.api.repository.SupplierRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.security.SecurityUtils;
 import java.util.List;
@@ -21,15 +29,21 @@ public class MaterialService {
 
     private final MaterialRepository materialRepository;
     private final MaterialCategoryRepository categoryRepository;
+    private final SupplierRepository supplierRepository;
+    private final MaterialReviewRepository materialReviewRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
 
     public MaterialService(MaterialRepository materialRepository,
                            MaterialCategoryRepository categoryRepository,
+                           SupplierRepository supplierRepository,
+                           MaterialReviewRepository materialReviewRepository,
                            UserRepository userRepository,
                            AuditService auditService) {
         this.materialRepository = materialRepository;
         this.categoryRepository = categoryRepository;
+        this.supplierRepository = supplierRepository;
+        this.materialReviewRepository = materialReviewRepository;
         this.userRepository = userRepository;
         this.auditService = auditService;
     }
@@ -42,6 +56,31 @@ public class MaterialService {
         return categoryRepository.findAll().stream()
             .map(category -> new MaterialCategoryResponse(category.getId(), category.getName(), category.getDescription()))
             .toList();
+    }
+
+    public MaterialDetailResponse findById(Long id) {
+        Material material = materialRepository.findById(id)
+            .orElseThrow(() -> new NotFoundException("Материал не найден"));
+        List<MaterialSupplierResponse> suppliers = supplierRepository.findLinkedByMaterialId(id).stream()
+            .map(this::toSupplierResponse)
+            .toList();
+        List<ReviewResponse> reviews = materialReviewRepository.findByMaterialIdOrderByCreatedAtDesc(id).stream()
+            .map(this::toReviewResponse)
+            .toList();
+        return new MaterialDetailResponse(
+            material.getId(),
+            material.getName(),
+            material.getSku(),
+            material.getUnit(),
+            material.getCategory().getId(),
+            material.getCategory().getName(),
+            material.getDefaultPrice(),
+            material.getDescription(),
+            material.getPhotoUrl(),
+            material.isActive(),
+            suppliers,
+            reviews
+        );
     }
 
     @Transactional
@@ -63,6 +102,22 @@ public class MaterialService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public List<ReviewResponse> addReview(Long materialId, ReviewRequest request) {
+        Material material = materialRepository.findById(materialId)
+            .orElseThrow(() -> new NotFoundException("Материал не найден"));
+        MaterialReview review = new MaterialReview();
+        review.setMaterial(material);
+        review.setAuthor(currentActor());
+        review.setRating(request.rating());
+        review.setComment(request.comment());
+        materialReviewRepository.save(review);
+        auditService.log(AuditEntityType.MATERIAL, materialId, "REVIEW_ADDED", currentActor(), "Добавлен отзыв по материалу");
+        return materialReviewRepository.findByMaterialIdOrderByCreatedAtDesc(materialId).stream()
+            .map(this::toReviewResponse)
+            .toList();
+    }
+
     private void apply(Material material, MaterialRequest request) {
         MaterialCategory category = categoryRepository.findById(request.categoryId())
             .orElseThrow(() -> new NotFoundException("Категория материала не найдена"));
@@ -72,13 +127,40 @@ public class MaterialService {
         material.setCategory(category);
         material.setDefaultPrice(request.defaultPrice());
         material.setDescription(request.description());
+        material.setPhotoUrl(blankToNull(request.photoUrl()));
         material.setActive(request.active());
     }
 
     private MaterialResponse toResponse(Material material) {
         return new MaterialResponse(material.getId(), material.getName(), material.getSku(), material.getUnit(),
             material.getCategory().getId(), material.getCategory().getName(), material.getDefaultPrice(),
-            material.getDescription(), material.isActive());
+            material.getDescription(), material.getPhotoUrl(), material.isActive());
+    }
+
+    private MaterialSupplierResponse toSupplierResponse(Supplier supplier) {
+        return new MaterialSupplierResponse(
+            supplier.getId(),
+            supplier.getName(),
+            supplier.getRating(),
+            supplier.getPhone(),
+            supplier.getEmail(),
+            supplier.getWebsiteUrl(),
+            supplier.getTelegram()
+        );
+    }
+
+    private ReviewResponse toReviewResponse(MaterialReview review) {
+        return new ReviewResponse(
+            review.getId(),
+            review.getAuthor().getFullName(),
+            review.getRating(),
+            review.getComment(),
+            review.getCreatedAt()
+        );
+    }
+
+    private String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
     }
 
     private com.company.product.api.entity.UserAccount currentActor() {

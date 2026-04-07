@@ -7,6 +7,7 @@ import com.company.product.api.entity.EstimateItem;
 import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Material;
 import com.company.product.api.entity.MaterialCategory;
+import com.company.product.api.entity.MaterialReview;
 import com.company.product.api.entity.Project;
 import com.company.product.api.entity.ProjectStatus;
 import com.company.product.api.entity.Purchase;
@@ -15,16 +16,19 @@ import com.company.product.api.entity.PurchaseStatus;
 import com.company.product.api.entity.Role;
 import com.company.product.api.entity.Supplier;
 import com.company.product.api.entity.SupplierOffer;
+import com.company.product.api.entity.SupplierReview;
 import com.company.product.api.entity.UserAccount;
 import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
 import com.company.product.api.repository.MaterialCategoryRepository;
 import com.company.product.api.repository.MaterialRepository;
+import com.company.product.api.repository.MaterialReviewRepository;
 import com.company.product.api.repository.ProjectRepository;
 import com.company.product.api.repository.PurchaseItemRepository;
 import com.company.product.api.repository.PurchaseRepository;
 import com.company.product.api.repository.SupplierOfferRepository;
 import com.company.product.api.repository.SupplierRepository;
+import com.company.product.api.repository.SupplierReviewRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.service.AuditService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -54,7 +58,9 @@ public class SeedDataLoader {
     private final ProjectRepository projectRepository;
     private final MaterialCategoryRepository categoryRepository;
     private final MaterialRepository materialRepository;
+    private final MaterialReviewRepository materialReviewRepository;
     private final SupplierRepository supplierRepository;
+    private final SupplierReviewRepository supplierReviewRepository;
     private final EstimateRepository estimateRepository;
     private final EstimateItemRepository estimateItemRepository;
     private final PurchaseRepository purchaseRepository;
@@ -69,7 +75,9 @@ public class SeedDataLoader {
                           ProjectRepository projectRepository,
                           MaterialCategoryRepository categoryRepository,
                           MaterialRepository materialRepository,
+                          MaterialReviewRepository materialReviewRepository,
                           SupplierRepository supplierRepository,
+                          SupplierReviewRepository supplierReviewRepository,
                           EstimateRepository estimateRepository,
                           EstimateItemRepository estimateItemRepository,
                           PurchaseRepository purchaseRepository,
@@ -83,7 +91,9 @@ public class SeedDataLoader {
         this.projectRepository = projectRepository;
         this.categoryRepository = categoryRepository;
         this.materialRepository = materialRepository;
+        this.materialReviewRepository = materialReviewRepository;
         this.supplierRepository = supplierRepository;
+        this.supplierReviewRepository = supplierReviewRepository;
         this.estimateRepository = estimateRepository;
         this.estimateItemRepository = estimateItemRepository;
         this.purchaseRepository = purchaseRepository;
@@ -96,16 +106,20 @@ public class SeedDataLoader {
     @Transactional
     public void load() throws IOException {
         Map<String, UserAccount> users = ensureDemoUsers();
-        if (appProperties.bootstrap().seedEnabled() && projectRepository.count() == 0) {
+        if (appProperties.bootstrap().seedEnabled()) {
             seedCategories();
             seedMaterials();
             seedSuppliers();
-            seedProjects(users);
-            seedEstimates(users);
-            seedEstimateItems();
-            seedPurchases(users);
-            seedPurchaseItems();
-            seedSupplierOffers();
+            seedMaterialReviews(users);
+            seedSupplierReviews(users);
+            if (projectRepository.count() == 0) {
+                seedProjects(users);
+                seedEstimates(users);
+                seedEstimateItems();
+                seedPurchases(users);
+                seedPurchaseItems();
+                seedSupplierOffers();
+            }
         }
         writeUsersFile(users);
     }
@@ -150,34 +164,33 @@ public class SeedDataLoader {
     private void seedMaterials() throws IOException {
         List<MaterialSeed> items = readList("seed-data/materials.json", new TypeReference<>() {});
         for (MaterialSeed item : items) {
-            materialRepository.findBySkuIgnoreCase(item.sku()).orElseGet(() -> {
-                Material material = new Material();
-                material.setName(item.name());
-                material.setSku(item.sku());
-                material.setUnit(item.unit());
-                material.setCategory(categoryRepository.findByNameIgnoreCase(item.categoryName()).orElseThrow());
-                material.setDefaultPrice(item.defaultPrice());
-                material.setDescription(item.description());
-                material.setActive(item.active());
-                return materialRepository.save(material);
-            });
+            Material material = materialRepository.findBySkuIgnoreCase(item.sku()).orElseGet(Material::new);
+            material.setName(item.name());
+            material.setSku(item.sku());
+            material.setUnit(item.unit());
+            material.setCategory(categoryRepository.findByNameIgnoreCase(item.categoryName()).orElseThrow());
+            material.setDefaultPrice(item.defaultPrice());
+            material.setDescription(item.description());
+            material.setPhotoUrl(item.photoUrl().isBlank() ? null : item.photoUrl());
+            material.setActive(item.active());
+            materialRepository.save(material);
         }
     }
 
     private void seedSuppliers() throws IOException {
         List<SupplierSeed> items = readList("seed-data/suppliers.json", new TypeReference<>() {});
         for (SupplierSeed item : items) {
-            supplierRepository.findByNameIgnoreCase(item.name()).orElseGet(() -> {
-                Supplier supplier = new Supplier();
-                supplier.setName(item.name());
-                supplier.setContactPerson(item.contactPerson());
-                supplier.setPhone(item.phone());
-                supplier.setEmail(item.email());
-                supplier.setAddress(item.address());
-                supplier.setRating(item.rating());
-                supplier.setActive(item.active());
-                return supplierRepository.save(supplier);
-            });
+            Supplier supplier = supplierRepository.findByNameIgnoreCase(item.name()).orElseGet(Supplier::new);
+            supplier.setName(item.name());
+            supplier.setContactPerson(item.contactPerson());
+            supplier.setPhone(item.phone());
+            supplier.setEmail(item.email());
+            supplier.setAddress(item.address());
+            supplier.setWebsiteUrl(item.websiteUrl().isBlank() ? null : item.websiteUrl());
+            supplier.setTelegram(item.telegram().isBlank() ? null : item.telegram());
+            supplier.setRating(item.rating());
+            supplier.setActive(item.active());
+            supplierRepository.save(supplier);
         }
     }
 
@@ -289,6 +302,46 @@ public class SeedDataLoader {
         }
     }
 
+    private void seedMaterialReviews(Map<String, UserAccount> users) throws IOException {
+        List<MaterialReviewSeed> items = readList("seed-data/material-reviews.json", new TypeReference<>() {});
+        for (MaterialReviewSeed item : items) {
+            Material material = materialRepository.findBySkuIgnoreCase(item.materialSku()).orElseThrow();
+            UserAccount author = users.get(item.authorEmail());
+            boolean exists = materialReviewRepository.findByMaterialIdOrderByCreatedAtDesc(material.getId()).stream()
+                .anyMatch(review -> review.getAuthor().getEmail().equalsIgnoreCase(item.authorEmail())
+                    && review.getComment().equals(item.comment()));
+            if (exists) {
+                continue;
+            }
+            MaterialReview review = new MaterialReview();
+            review.setMaterial(material);
+            review.setAuthor(author);
+            review.setRating(item.rating());
+            review.setComment(item.comment());
+            materialReviewRepository.save(review);
+        }
+    }
+
+    private void seedSupplierReviews(Map<String, UserAccount> users) throws IOException {
+        List<SupplierReviewSeed> items = readList("seed-data/supplier-reviews.json", new TypeReference<>() {});
+        for (SupplierReviewSeed item : items) {
+            Supplier supplier = supplierRepository.findByNameIgnoreCase(item.supplierName()).orElseThrow();
+            UserAccount author = users.get(item.authorEmail());
+            boolean exists = supplierReviewRepository.findBySupplierIdOrderByCreatedAtDesc(supplier.getId()).stream()
+                .anyMatch(review -> review.getAuthor().getEmail().equalsIgnoreCase(item.authorEmail())
+                    && review.getComment().equals(item.comment()));
+            if (exists) {
+                continue;
+            }
+            SupplierReview review = new SupplierReview();
+            review.setSupplier(supplier);
+            review.setAuthor(author);
+            review.setRating(item.rating());
+            review.setComment(item.comment());
+            supplierReviewRepository.save(review);
+        }
+    }
+
     private void writeUsersFile(Map<String, UserAccount> users) throws IOException {
         Path path = Path.of(appProperties.bootstrap().usersFile());
         Path parent = path.getParent();
@@ -352,11 +405,11 @@ public class SeedDataLoader {
     }
 
     private record MaterialSeed(String name, String sku, String unit, String categoryName, BigDecimal defaultPrice,
-                                String description, boolean active) {
+                                String description, String photoUrl, boolean active) {
     }
 
     private record SupplierSeed(String name, String contactPerson, String phone, String email, String address,
-                                BigDecimal rating, boolean active) {
+                                String websiteUrl, String telegram, BigDecimal rating, boolean active) {
     }
 
     private record ProjectSeed(String name, String code, String address, String description, String status,
@@ -383,5 +436,11 @@ public class SeedDataLoader {
 
     private record SupplierOfferSeed(String projectCode, String estimateName, String materialSku, String supplierName,
                                      BigDecimal offeredPrice, int deliveryDays, String comment, boolean selected) {
+    }
+
+    private record MaterialReviewSeed(String materialSku, String authorEmail, int rating, String comment) {
+    }
+
+    private record SupplierReviewSeed(String supplierName, String authorEmail, int rating, String comment) {
     }
 }

@@ -1,6 +1,9 @@
 package com.company.product.api.controller;
 
+import com.company.product.api.dto.common.ReviewRequest;
+import com.company.product.api.dto.common.ReviewResponse;
 import com.company.product.api.dto.material.MaterialCategoryResponse;
+import com.company.product.api.dto.material.MaterialDetailResponse;
 import com.company.product.api.dto.material.MaterialRequest;
 import com.company.product.api.dto.material.MaterialResponse;
 import com.company.product.api.service.MaterialService;
@@ -30,6 +33,11 @@ public class MaterialController {
         return materialService.findAll();
     }
 
+    @GetMapping("/{id}")
+    public MaterialDetailResponse findById(@PathVariable Long id) {
+        return materialService.findById(id);
+    }
+
     @GetMapping("/categories")
     public List<MaterialCategoryResponse> categories() {
         return materialService.categories();
@@ -45,5 +53,10 @@ public class MaterialController {
     @PreAuthorize("hasRole('ADMIN')")
     public MaterialResponse update(@PathVariable Long id, @Valid @RequestBody MaterialRequest request) {
         return materialService.update(id, request);
+    }
+
+    @PostMapping("/{id}/reviews")
+    public List<ReviewResponse> addReview(@PathVariable Long id, @Valid @RequestBody ReviewRequest request) {
+        return materialService.addReview(id, request);
     }
 }

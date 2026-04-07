@@ -871,6 +871,86 @@ th {
   grid-column: 1 / -1;
 }
 
+.detail-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  gap: 18px;
+}
+
+.detail-cover-image,
+.detail-cover-placeholder {
+  width: 100%;
+  min-height: 320px;
+  border-radius: 28px;
+}
+
+.detail-cover-image {
+  object-fit: cover;
+  box-shadow: 0 20px 50px rgba(2, 7, 15, 0.22);
+}
+
+.detail-cover-placeholder {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 165, 110, 0.16), transparent 24%),
+    linear-gradient(180deg, rgba(20, 31, 54, 0.88), rgba(12, 18, 31, 0.92));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 20px 50px rgba(2, 7, 15, 0.22);
+}
+
+.detail-cover-placeholder strong {
+  font-size: 4rem;
+  letter-spacing: 0.08em;
+  color: #ffd089;
+}
+
+.detail-cover-placeholder span {
+  color: rgba(226, 234, 249, 0.76);
+}
+
+.linked-grid,
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.linked-card,
+.review-card {
+  display: grid;
+  gap: 10px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: #eef3ff;
+}
+
+.linked-card span,
+.review-card span,
+.contact-list span {
+  color: rgba(221, 230, 246, 0.74);
+}
+
+.contact-list {
+  display: grid;
+  gap: 10px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #eef3ff;
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
 .compact-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -928,6 +1008,7 @@ th {
   .step-grid,
   .premium-grid,
   .pricing-grid,
+  .detail-hero-grid,
   .detail-grid,
   .table-grid,
   .metric-grid,
@@ -966,6 +1047,7 @@ th {
   .marketing-section,
   .pricing-hero,
   .checkout-layout,
+  .detail-hero-grid,
   .detail-grid,
   .dashboard-hero,
   .auth-promo,
@@ -992,6 +1074,11 @@ th {
 
   .purchase-item-fields,
   .purchase-offer-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .linked-grid,
+  .review-grid {
     grid-template-columns: 1fr;
   }
 

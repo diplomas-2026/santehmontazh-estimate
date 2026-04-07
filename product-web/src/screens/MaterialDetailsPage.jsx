@@ -1,0 +1,228 @@
+import { Link, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
+import { useAuth } from '../modules/auth/AuthContext';
+
+const emptyReviewForm = { rating: 5, comment: '' };
+
+function placeholderLabel(name) {
+  return name
+    .split(' ')
+    .slice(0, 2)
+    .map((part) => part[0] ?? '')
+    .join('')
+    .toUpperCase();
+}
+
+export function MaterialDetailsPage() {
+  const { id } = useParams();
+  const { user } = useAuth();
+  const [material, setMaterial] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [form, setForm] = useState(null);
+  const [reviewForm, setReviewForm] = useState(emptyReviewForm);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const isAdmin = user.role === 'ADMIN';
+  const averageRating = useMemo(() => {
+    if (!material?.reviews?.length) {
+      return null;
+    }
+    const total = material.reviews.reduce((sum, review) => sum + Number(review.rating), 0);
+    return (total / material.reviews.length).toFixed(1);
+  }, [material]);
+
+  useEffect(() => {
+    api(`/api/materials/${id}`).then((response) => {
+      setMaterial(response);
+      setForm({
+        name: response.name,
+        sku: response.sku,
+        unit: response.unit,
+        categoryId: String(response.categoryId),
+        defaultPrice: String(response.defaultPrice),
+        description: response.description,
+        photoUrl: response.photoUrl ?? '',
+        active: response.active,
+      });
+    }).catch(() => setMaterial(null));
+    api('/api/materials/categories').then(setCategories).catch(() => setCategories([]));
+  }, [id]);
+
+  async function saveMaterial(event) {
+    event.preventDefault();
+    try {
+      const updated = await api(`/api/materials/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...form,
+          categoryId: Number(form.categoryId),
+          defaultPrice: Number(form.defaultPrice),
+        }),
+      });
+      const detail = await api(`/api/materials/${id}`);
+      setMaterial(detail);
+      setForm({
+        name: updated.name,
+        sku: updated.sku,
+        unit: updated.unit,
+        categoryId: String(updated.categoryId),
+        defaultPrice: String(updated.defaultPrice),
+        description: updated.description,
+        photoUrl: updated.photoUrl ?? '',
+        active: updated.active,
+      });
+      setError('');
+      setSuccess('Карточка материала обновлена.');
+    } catch (submissionError) {
+      setError(submissionError.message);
+      setSuccess('');
+    }
+  }
+
+  async function addReview(event) {
+    event.preventDefault();
+    try {
+      const reviews = await api(`/api/materials/${id}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({
+          rating: Number(reviewForm.rating),
+          comment: reviewForm.comment,
+        }),
+      });
+      setMaterial((current) => ({ ...current, reviews }));
+      setReviewForm(emptyReviewForm);
+      setError('');
+      setSuccess('Отзыв по материалу добавлен.');
+    } catch (submissionError) {
+      setError(submissionError.message);
+      setSuccess('');
+    }
+  }
+
+  if (!material || !form) {
+    return <div className="page-card">Загрузка материала...</div>;
+  }
+
+  return (
+    <section className="page-section">
+      <div className="page-header">
+        <div>
+          <p className="eyebrow">Карточка материала</p>
+          <h2>{material.name}</h2>
+          <p className="muted">
+            {material.categoryName} • {material.sku} • {formatCurrency(material.defaultPrice)}
+          </p>
+        </div>
+        <div className="action-row">
+          <Link className="ghost-button" to="/materials">К каталогу материалов</Link>
+        </div>
+      </div>
+
+      {error ? <div className="error-box">{error}</div> : null}
+      {success ? <div className="success-box">{success}</div> : null}
+
+      <div className="detail-hero-grid">
+        {material.photoUrl ? (
+          <img className="detail-cover-image" src={material.photoUrl} alt={material.name} />
+        ) : (
+          <div className="detail-cover-placeholder">
+            <strong>{placeholderLabel(material.name)}</strong>
+            <span>Фото материала пока не добавлено</span>
+          </div>
+        )}
+
+        <article className="page-card">
+          <p className="eyebrow">Описание</p>
+          <h3>Что важно знать о материале</h3>
+          <p>{material.description}</p>
+          <div className="detail-meta">
+            <span className="tag">Артикул: {material.sku}</span>
+            <span className="tag">Единица: {material.unit}</span>
+            <span className="tag">Базовая цена: {formatCurrency(material.defaultPrice)}</span>
+            <span className="tag">{material.active ? 'Активный материал' : 'Скрыт из активной работы'}</span>
+            <span className="tag">
+              {averageRating ? `Средняя оценка: ${averageRating}/5` : 'Пока без отзывов'}
+            </span>
+          </div>
+        </article>
+      </div>
+
+      <div className="detail-grid">
+        <article className="page-card">
+          <p className="eyebrow">Связанные поставщики</p>
+          <h3>Кто уже предлагал этот материал</h3>
+          <div className="linked-grid">
+            {material.suppliers.length ? material.suppliers.map((supplier) => (
+              <Link key={supplier.id} className="linked-card" to={`/suppliers/${supplier.id}`}>
+                <strong>{supplier.name}</strong>
+                <span>Рейтинг: {supplier.rating}</span>
+                <span>{supplier.phone}</span>
+                <span>{supplier.telegram || supplier.email}</span>
+              </Link>
+            )) : <div className="empty-note">Поставщики появятся здесь после того, как по материалу будут предложения в закупках.</div>}
+          </div>
+        </article>
+
+        <article className="page-card">
+          <p className="eyebrow">Отзывы</p>
+          <h3>Что пишут о материале</h3>
+          <div className="review-grid">
+            {material.reviews.length ? material.reviews.map((review) => (
+              <div key={review.id} className="review-card">
+                <div className="row-between">
+                  <strong>{review.authorName}</strong>
+                  <span>{review.rating}/5</span>
+                </div>
+                <p>{review.comment}</p>
+              </div>
+            )) : <div className="empty-note">Пока никто не оставил отзыв об этом материале.</div>}
+          </div>
+
+          <form className="purchase-comment-form" onSubmit={addReview}>
+            <select value={reviewForm.rating} onChange={(event) => setReviewForm((current) => ({ ...current, rating: event.target.value }))}>
+              {[5, 4, 3, 2, 1].map((value) => (
+                <option key={value} value={value}>{value} из 5</option>
+              ))}
+            </select>
+            <textarea
+              rows={3}
+              value={reviewForm.comment}
+              onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))}
+              placeholder="Напишите, насколько материал удобен в работе, есть ли проблемы с качеством или поставкой"
+              required
+            />
+            <button type="submit" className="ghost-button">Оставить отзыв</button>
+          </form>
+        </article>
+      </div>
+
+      {isAdmin ? (
+        <form className="page-card form-grid" onSubmit={saveMaterial}>
+          <div>
+            <p className="eyebrow">Управление материалом</p>
+            <h3>Редактирование доступно администратору</h3>
+          </div>
+          <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} placeholder="Название материала" />
+          <input value={form.sku} onChange={(event) => setForm((current) => ({ ...current, sku: event.target.value }))} placeholder="Артикул" />
+          <input value={form.unit} onChange={(event) => setForm((current) => ({ ...current, unit: event.target.value }))} placeholder="Единица измерения" />
+          <select value={form.categoryId} onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>{category.name}</option>
+            ))}
+          </select>
+          <input type="number" min="0.01" step="0.01" value={form.defaultPrice} onChange={(event) => setForm((current) => ({ ...current, defaultPrice: event.target.value }))} placeholder="Базовая цена" />
+          <input value={form.photoUrl} onChange={(event) => setForm((current) => ({ ...current, photoUrl: event.target.value }))} placeholder="URL фотографии" />
+          <textarea rows={4} value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} placeholder="Описание материала" />
+          <label className="checkbox-row">
+            <input type="checkbox" checked={form.active} onChange={(event) => setForm((current) => ({ ...current, active: event.target.checked }))} />
+            <span>Материал активен</span>
+          </label>
+          <button type="submit" className="primary-button">Сохранить материал</button>
+        </form>
+      ) : null}
+    </section>
+  );
+}

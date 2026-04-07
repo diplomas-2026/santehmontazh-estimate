@@ -1,10 +1,20 @@
 package com.company.product.api.repository;
 
 import com.company.product.api.entity.Material;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     Optional<Material> findBySkuIgnoreCase(String sku);
+
+    @Query("""
+        select distinct pi.material from SupplierOffer so
+        join so.purchaseItem pi
+        where so.supplier.id = :supplierId
+        order by pi.material.name
+        """)
+    List<Material> findLinkedBySupplierId(Long supplierId);
 }

@@ -35,6 +35,12 @@ public class Supplier {
     @Column(nullable = false, length = 1000)
     private String address;
 
+    @Column(length = 1000)
+    private String websiteUrl;
+
+    @Column(length = 255)
+    private String telegram;
+
     @Column(nullable = false, precision = 3, scale = 2)
     private BigDecimal rating;
 
