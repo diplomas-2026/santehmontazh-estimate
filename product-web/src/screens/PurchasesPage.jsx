@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { formatCurrency } from '../i18n/currency';
@@ -70,7 +71,11 @@ export function PurchasesPage() {
           <article key={purchase.id} className="page-card">
             <div className="row-between">
               <div>
-                <h3>{purchase.projectName}</h3>
+                <h3>
+                  <Link className="detail-link" to={`/purchases/${purchase.id}`}>
+                    {purchase.projectName}
+                  </Link>
+                </h3>
                 <p className="muted">{purchase.estimateName} • {translatePurchaseStatus(purchase.status)}</p>
               </div>
               <div className="metric-inline">

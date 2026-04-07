@@ -224,14 +224,15 @@ export function ProjectDetailsPage() {
               <p className="eyebrow">Связанные закупки</p>
               <h3>Закупочный контур объекта</h3>
             </div>
-            <Link className="ghost-button" to="/purchases">Все закупки</Link>
           </div>
 
           <div className="stack-list">
             {purchases.length ? purchases.map((purchase) => (
               <div key={purchase.id} className="detail-list-item">
                 <div>
-                  <strong>{purchase.estimateName}</strong>
+                  <Link className="detail-link" to={`/purchases/${purchase.id}`}>
+                    {purchase.estimateName}
+                  </Link>
                   <p className="muted">{translatePurchaseStatus(purchase.status)} • {purchase.supplierName}</p>
                 </div>
                 <div className="metric-inline">
