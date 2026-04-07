@@ -35,9 +35,19 @@ import com.company.product.api.repository.SupplierOfferRepository;
 import com.company.product.api.repository.SupplierRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.security.SecurityUtils;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.List;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -325,6 +335,106 @@ public class PurchaseService {
             Комментарий: %s
             """.formatted(response.id(), response.projectName(), response.estimateName(), response.status(),
             response.plannedTotal(), response.actualTotal(), response.supplierName(), response.supplierUrl(), response.comment());
+    }
+
+    public byte[] exportEstimateReport(Long purchaseId) {
+        Purchase purchase = getPurchase(purchaseId);
+        PurchaseResponse response = toResponse(purchase);
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            XSSFSheet sheet = workbook.createSheet("Отчет по смете");
+            CellStyle headerStyle = createHeaderStyle(workbook);
+            CellStyle sectionStyle = createSectionStyle(workbook);
+
+            int rowIndex = 0;
+            rowIndex = writeMetaRow(sheet, rowIndex, "Объект", response.projectName(), headerStyle);
+            rowIndex = writeMetaRow(sheet, rowIndex, "Смета", response.estimateName(), headerStyle);
+            rowIndex = writeMetaRow(sheet, rowIndex, "Статус закупки", response.status().name(), headerStyle);
+            rowIndex = writeMetaRow(sheet, rowIndex, "Где купили", response.supplierName().isBlank() ? "Не указано" : response.supplierName(), headerStyle);
+            rowIndex = writeMetaRow(sheet, rowIndex, "Ссылка", response.supplierUrl().isBlank() ? "Не указана" : response.supplierUrl(), headerStyle);
+            rowIndex = writeMetaRow(sheet, rowIndex, "Комментарий", response.comment().isBlank() ? "Нет комментария" : response.comment(), headerStyle);
+            rowIndex++;
+
+            Row titleRow = sheet.createRow(rowIndex++);
+            titleRow.createCell(0).setCellValue("Позиции сметы и закупки");
+            titleRow.getCell(0).setCellStyle(sectionStyle);
+
+            Row headerRow = sheet.createRow(rowIndex++);
+            String[] headers = {
+                "Материал",
+                "Ед.",
+                "Плановое количество",
+                "Плановая цена",
+                "Плановая сумма",
+                "Фактическое количество",
+                "Фактическая цена",
+                "Фактическая сумма",
+                "Отклонение",
+                "Комментарий"
+            };
+            for (int index = 0; index < headers.length; index++) {
+                headerRow.createCell(index).setCellValue(headers[index]);
+                headerRow.getCell(index).setCellStyle(headerStyle);
+            }
+
+            for (PurchaseItemResponse item : response.items()) {
+                Row row = sheet.createRow(rowIndex++);
+                row.createCell(0).setCellValue(item.materialName());
+                row.createCell(1).setCellValue(item.unit());
+                row.createCell(2).setCellValue(item.plannedQuantity().doubleValue());
+                row.createCell(3).setCellValue(item.plannedPrice().doubleValue());
+                row.createCell(4).setCellValue(item.plannedLineTotal().doubleValue());
+                row.createCell(5).setCellValue(item.actualQuantity().doubleValue());
+                row.createCell(6).setCellValue(item.actualPrice().doubleValue());
+                row.createCell(7).setCellValue(item.actualLineTotal().doubleValue());
+                row.createCell(8).setCellValue(item.actualLineTotal().subtract(item.plannedLineTotal()).doubleValue());
+                row.createCell(9).setCellValue(item.comment() == null || item.comment().isBlank() ? "-" : item.comment());
+            }
+
+            Row totalsRow = sheet.createRow(rowIndex);
+            totalsRow.createCell(0).setCellValue("Итого");
+            totalsRow.getCell(0).setCellStyle(sectionStyle);
+            totalsRow.createCell(4).setCellValue(response.plannedTotal().doubleValue());
+            totalsRow.createCell(7).setCellValue(response.actualTotal().doubleValue());
+            totalsRow.createCell(8).setCellValue(response.deviation().doubleValue());
+
+            for (int column = 0; column < headers.length; column++) {
+                sheet.autoSizeColumn(column);
+            }
+
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Не удалось сформировать Excel-отчет по смете", exception);
+        }
+    }
+
+    private int writeMetaRow(XSSFSheet sheet, int rowIndex, String title, String value, CellStyle headerStyle) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(title);
+        row.createCell(1).setCellValue(value);
+        row.getCell(0).setCellStyle(headerStyle);
+        return rowIndex + 1;
+    }
+
+    private CellStyle createHeaderStyle(XSSFWorkbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        return style;
+    }
+
+    private CellStyle createSectionStyle(XSSFWorkbook workbook) {
+        CellStyle style = workbook.createCellStyle();
+        Font font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFont(font);
+        return style;
     }
 
     private void recalculateTotals(Purchase purchase) {

@@ -10,7 +10,10 @@ import com.company.product.api.dto.purchase.SupplierOfferResponse;
 import com.company.product.api.service.PurchaseService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -111,5 +114,14 @@ public class PurchaseController {
     @GetMapping(value = "/purchases/{id}/print", produces = MediaType.TEXT_PLAIN_VALUE)
     public String print(@PathVariable Long id) {
         return purchaseService.print(id);
+    }
+
+    @GetMapping(value = "/purchases/{id}/estimate-report", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> estimateReport(@PathVariable Long id) {
+        byte[] report = purchaseService.exportEstimateReport(id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDisposition(ContentDisposition.attachment().filename("smeta-report-" + id + ".xlsx").build());
+        return ResponseEntity.ok().headers(headers).body(report);
     }
 }

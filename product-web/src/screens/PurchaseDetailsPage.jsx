@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { api } from '../api';
+import { api, getToken } from '../api';
 import { formatCurrency } from '../i18n/currency';
 import { formatRuDate } from '../i18n/date';
 import { translatePurchaseStatus } from '../i18n/enums';
@@ -162,6 +162,34 @@ export function PurchaseDetailsPage() {
     }
   }
 
+  async function downloadEstimateReport() {
+    try {
+      const token = getToken();
+      const response = await fetch(`/api/purchases/${id}/estimate-report`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!response.ok) {
+        throw new Error('Не удалось скачать отчет по смете.');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `otchet-po-smete-${purchase.id}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setError('');
+      setSuccess('Excel-отчет по смете скачан.');
+    } catch (submissionError) {
+      setError(submissionError.message);
+      setSuccess('');
+    }
+  }
+
   if (loading) {
     return <div className="page-card">Загрузка закупки...</div>;
   }
@@ -190,6 +218,9 @@ export function PurchaseDetailsPage() {
           <Link className="ghost-button" to="/purchases">
             К списку закупок
           </Link>
+          <button type="button" className="ghost-button" onClick={downloadEstimateReport}>
+            Скачать отчет по смете
+          </button>
           <button type="button" className="primary-button" onClick={openPrintView}>
             Печать
           </button>
