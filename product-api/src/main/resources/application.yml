@@ -6,11 +6,13 @@ spring:
       auth:
         bearer:
           api-key: ${GIGACHAT_API_KEY:}
+        scope: GIGACHAT_API_PERS
+        unsafe-ssl: true
       chat:
         options:
           temperature: 0.2
-      scope: GIGACHAT_API_PERS
-      verify-ssl: false
+      internal:
+        read-timeout: 45s
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/product_db}
     username: ${DB_USERNAME:product}
