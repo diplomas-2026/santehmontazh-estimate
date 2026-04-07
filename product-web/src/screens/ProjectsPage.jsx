@@ -30,7 +30,6 @@ const emptyProjectForm = {
 
 const projectLifecycle = [
   ['DRAFT', 'Черновик'],
-  ['PLANNED', 'Запланирован'],
   ['IN_PROGRESS', 'В работе'],
   ['PURCHASE_IN_PROGRESS', 'Закупка идет'],
   ['COMPLETED', 'Завершен'],

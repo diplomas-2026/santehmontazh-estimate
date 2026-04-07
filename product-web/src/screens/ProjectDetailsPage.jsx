@@ -9,7 +9,6 @@ import { useAuth } from '../modules/auth/AuthContext';
 const emptyEstimateForm = { name: '', notes: '' };
 const projectLifecycle = [
   ['DRAFT', 'Черновик'],
-  ['PLANNED', 'Запланирован'],
   ['IN_PROGRESS', 'В работе'],
   ['PURCHASE_IN_PROGRESS', 'Закупка идет'],
   ['COMPLETED', 'Завершен'],
@@ -23,17 +22,15 @@ export function ProjectDetailsPage() {
   const [purchases, setPurchases] = useState([]);
   const [estimateForm, setEstimateForm] = useState(emptyEstimateForm);
   const [estimateError, setEstimateError] = useState('');
+  const [projectError, setProjectError] = useState('');
+  const [projectSuccess, setProjectSuccess] = useState('');
   const [purchaseError, setPurchaseError] = useState('');
   const [purchaseSuccess, setPurchaseSuccess] = useState('');
 
   const load = useCallback(() => {
     api(`/api/projects/${id}`).then(setProject).catch(() => setProject(null));
-    api('/api/estimates')
-      .then((items) => setEstimates(items.filter((item) => String(item.projectId) === String(id))))
-      .catch(() => setEstimates([]));
-    api('/api/purchases')
-      .then((items) => setPurchases(items.filter((item) => String(item.projectId) === String(id))))
-      .catch(() => setPurchases([]));
+    api(`/api/projects/${id}/estimates`).then(setEstimates).catch(() => setEstimates([]));
+    api(`/api/projects/${id}/purchases`).then(setPurchases).catch(() => setPurchases([]));
   }, [id]);
 
   useEffect(() => {
@@ -95,6 +92,19 @@ export function ProjectDetailsPage() {
     }
   }
 
+  async function completeProject() {
+    try {
+      const updated = await api(`/api/projects/${id}/complete`, { method: 'POST' });
+      setProject(updated);
+      setProjectError('');
+      setProjectSuccess('Объект завершен и переведен в архив активной работы.');
+      load();
+    } catch (submissionError) {
+      setProjectError(submissionError.message);
+      setProjectSuccess('');
+    }
+  }
+
   const canEditEstimates = ['ADMIN', 'BASE_USER'].includes(user.role);
   const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
   const canManagePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
@@ -138,6 +148,8 @@ export function ProjectDetailsPage() {
               </span>
             ))}
           </div>
+          {projectError ? <div className="error-box" style={{ marginTop: 16 }}>{projectError}</div> : null}
+          {projectSuccess ? <div className="success-box" style={{ marginTop: 16 }}>{projectSuccess}</div> : null}
         </article>
 
         <article className="page-card">
@@ -161,6 +173,18 @@ export function ProjectDetailsPage() {
               <strong>{formatCurrency(summary.actual)}</strong>
             </div>
           </div>
+          <div className="action-row" style={{ marginTop: 16 }}>
+            {project.status !== 'COMPLETED' ? (
+              <button type="button" className="primary-button" onClick={completeProject}>
+                Завершить объект
+              </button>
+            ) : (
+              <span className="tag tag-success">Объект завершен</span>
+            )}
+          </div>
+          <p className="muted">
+            Объект можно завершить, когда все закупки получены, а все сметы переведены в архив.
+          </p>
         </article>
       </div>
 
@@ -180,7 +204,7 @@ export function ProjectDetailsPage() {
         </p>
       </article>
 
-      {canEditEstimates ? (
+      {canEditEstimates && project.status !== 'COMPLETED' ? (
         <form className="page-card form-grid" onSubmit={createEstimate}>
           <div>
             <p className="eyebrow">Новая смета</p>
@@ -238,7 +262,7 @@ export function ProjectDetailsPage() {
                   ) : null}
                   {canCreatePurchase ? (
                     <div className="action-row">
-                      {estimate.status === 'DRAFT' && estimate.items.length > 0 ? (
+                      {estimate.status === 'DRAFT' && estimate.items.length > 0 && !purchasesByEstimateId.has(estimate.id) ? (
                         <button type="button" className="primary-button" onClick={() => createPurchase(estimate.id)}>
                           Создать закупку
                         </button>
@@ -301,6 +325,16 @@ export function ProjectDetailsPage() {
                         Вернуть
                       </button>
                     </>
+                  ) : null}
+                  {canManagePurchase && purchase.status === 'APPROVED' ? (
+                    <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'order')}>
+                      Оформить заказ
+                    </button>
+                  ) : null}
+                  {canManagePurchase && purchase.status === 'ORDERED' ? (
+                    <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'receive')}>
+                      Подтвердить получение
+                    </button>
                   ) : null}
                 </div>
               </article>

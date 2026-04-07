@@ -65,14 +65,6 @@ const lifecycleActions = {
       message: 'Закупка отмечена как полученная.',
     },
   ],
-  RETURNED_FOR_REVISION: [
-    {
-      action: 'submit',
-      label: 'Повторно отправить на согласование',
-      className: 'primary-button',
-      message: 'Закупка повторно отправлена на согласование.',
-    },
-  ],
 };
 
 function buildItemDrafts(items = []) {
@@ -301,6 +293,7 @@ export function PurchaseDetailsPage() {
   }
 
   const currentActions = getLifecycleActions(purchase.status);
+  const canEdit = purchase.status === 'DRAFT';
   const selectedOffers = new Map(
     (purchase.items ?? []).map((item) => [item.id, (item.offers ?? []).find((offer) => offer.selected) ?? null]),
   );
@@ -330,6 +323,16 @@ export function PurchaseDetailsPage() {
 
       {error ? <div className="error-box">{error}</div> : null}
       {success ? <div className="success-box">{success}</div> : null}
+      {!canEdit ? (
+        <div className="page-card">
+          <p className="eyebrow">Режим просмотра</p>
+          <h3>Редактирование ограничено текущим статусом</h3>
+          <p className="muted">
+            Изменять карточку, позиции и предложения можно только пока закупка находится в статусе «Черновик».
+            Дальше остаются действия жизненного цикла и комментарии.
+          </p>
+        </div>
+      ) : null}
 
       <div className="detail-grid">
         <article className="page-card">
@@ -391,6 +394,7 @@ export function PurchaseDetailsPage() {
           onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierName: event.target.value }))}
           placeholder="Название поставщика"
           required
+          disabled={!canEdit}
         />
         <textarea
           rows={3}
@@ -398,8 +402,9 @@ export function PurchaseDetailsPage() {
           onChange={(event) => setPurchaseForm((current) => ({ ...current, comment: event.target.value }))}
           placeholder="Комментарий к закупке"
           required
+          disabled={!canEdit}
         />
-        <button type="submit" className="primary-button">
+        <button type="submit" className="primary-button" disabled={!canEdit}>
           Сохранить карточку закупки
         </button>
       </form>
@@ -477,6 +482,7 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Плановое количество"
                       required
+                      disabled={!canEdit}
                     />
                     <input
                       type="number"
@@ -492,6 +498,7 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Плановая цена"
                       required
+                      disabled={!canEdit}
                     />
                     <input
                       type="number"
@@ -507,6 +514,7 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Фактическое количество"
                       required
+                      disabled={!canEdit}
                     />
                     <input
                       type="number"
@@ -522,6 +530,7 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Фактическая цена"
                       required
+                      disabled={!canEdit}
                     />
                   </div>
                   <textarea
@@ -536,9 +545,10 @@ export function PurchaseDetailsPage() {
                     }))}
                     placeholder="Комментарий к позиции"
                     required
+                    disabled={!canEdit}
                   />
                   <div className="action-row">
-                    <button type="submit" className="ghost-button">
+                    <button type="submit" className="ghost-button" disabled={!canEdit}>
                       Сохранить позицию
                     </button>
                   </div>
@@ -571,6 +581,7 @@ export function PurchaseDetailsPage() {
                             type="button"
                             className="ghost-button"
                             onClick={() => selectOffer(item.id, offer.id)}
+                            disabled={!canEdit}
                           >
                             Выбрать предложение
                           </button>
@@ -598,6 +609,7 @@ export function PurchaseDetailsPage() {
                         },
                       }))}
                       required
+                      disabled={!canEdit}
                     >
                       <option value="">Выберите поставщика</option>
                       {suppliers.map((supplier) => (
@@ -620,6 +632,7 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Цена предложения"
                       required
+                      disabled={!canEdit}
                     />
                     <input
                       type="number"
@@ -635,6 +648,7 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Срок поставки, дней"
                       required
+                      disabled={!canEdit}
                     />
                     <input
                       value={offerDrafts[item.id]?.comment ?? ''}
@@ -647,8 +661,9 @@ export function PurchaseDetailsPage() {
                       }))}
                       placeholder="Комментарий к предложению"
                       required
+                      disabled={!canEdit}
                     />
-                    <button type="submit" className="primary-button">
+                    <button type="submit" className="primary-button" disabled={!canEdit}>
                       Добавить предложение
                     </button>
                   </form>

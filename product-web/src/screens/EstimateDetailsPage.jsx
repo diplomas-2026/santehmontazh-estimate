@@ -23,6 +23,7 @@ export function EstimateDetailsPage() {
   const [itemForm, setItemForm] = useState(emptyItemForm);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [archiveMessage, setArchiveMessage] = useState('');
 
   const load = useCallback(() => {
     api(`/api/estimates/${id}`).then(setEstimate).catch(() => setEstimate(null));
@@ -92,6 +93,20 @@ export function EstimateDetailsPage() {
     }
   }
 
+  async function archiveEstimate() {
+    try {
+      const updated = await api(`/api/estimates/${id}/archive`, { method: 'POST' });
+      setEstimate(updated);
+      setArchiveMessage('Смета переведена в архив и больше не участвует в активной работе по объекту.');
+      setError('');
+      setSuccess('');
+      load();
+    } catch (submissionError) {
+      setError(submissionError.message);
+      setArchiveMessage('');
+    }
+  }
+
   if (!estimate) {
     return <div className="page-card">Загрузка сметы...</div>;
   }
@@ -124,6 +139,16 @@ export function EstimateDetailsPage() {
             <span className="tag">Позиции: {estimate.items.length}</span>
             <span className="tag">Материалов к закупке: {purchasableItemsCount}</span>
           </div>
+          <div className="action-row" style={{ marginTop: 16 }}>
+            {estimate.status !== 'ARCHIVED' ? (
+              <button type="button" className="ghost-button" onClick={archiveEstimate}>
+                Архивировать смету
+              </button>
+            ) : (
+              <span className="tag tag-success">Смета в архиве</span>
+            )}
+          </div>
+          {archiveMessage ? <div className="success-box" style={{ marginTop: 16 }}>{archiveMessage}</div> : null}
         </article>
 
         <article className="page-card">
@@ -142,13 +167,21 @@ export function EstimateDetailsPage() {
                 </button>
               </>
             ) : (
-              <button type="button" className="primary-button" disabled={!canCreatePurchase} onClick={createPurchase}>
+              <button
+                type="button"
+                className="primary-button"
+                disabled={!canCreatePurchase || estimate.status === 'ARCHIVED'}
+                onClick={createPurchase}
+              >
                 Создать закупку по смете
               </button>
             )}
           </div>
           {!purchase && purchasableItemsCount === 0 ? (
             <p className="muted">Для создания закупки нужна хотя бы одна позиция с указанным материалом.</p>
+          ) : null}
+          {estimate.status === 'ARCHIVED' ? (
+            <p className="muted">Архивная смета больше не используется для создания новых закупок.</p>
           ) : null}
         </article>
       </div>
@@ -216,6 +249,15 @@ export function EstimateDetailsPage() {
           {success ? <div className="success-box">{success}</div> : null}
           <button type="submit" className="primary-button">Добавить позицию</button>
         </form>
+      ) : null}
+      {!canEdit && estimate.status === 'ARCHIVED' ? (
+        <div className="page-card">
+          <p className="eyebrow">Архивная смета</p>
+          <h3>Редактирование закрыто</h3>
+          <p className="muted">
+            Эта смета уже завершила свой цикл и теперь доступна только для просмотра как история объекта.
+          </p>
+        </div>
       ) : null}
 
       <article className="page-card">

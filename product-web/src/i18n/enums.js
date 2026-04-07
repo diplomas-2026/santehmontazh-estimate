@@ -5,7 +5,6 @@ const roleLabels = {
 
 const projectStatusLabels = {
   DRAFT: 'Черновик',
-  PLANNED: 'Запланирован',
   IN_PROGRESS: 'В работе',
   PURCHASE_IN_PROGRESS: 'Идет закупка',
   COMPLETED: 'Завершен',
@@ -15,7 +14,8 @@ const estimateStatusLabels = {
   DRAFT: 'Черновик',
   IN_PURCHASE: 'В закупке',
   READY_FOR_PURCHASE: 'Готова к закупке',
-  APPROVED: 'Утверждена',
+  ARCHIVED: 'В архиве',
+  COMPLETED: 'Завершена',
 };
 
 const purchaseStatusLabels = {
@@ -24,7 +24,6 @@ const purchaseStatusLabels = {
   APPROVED: 'Утверждена',
   ORDERED: 'Заказ оформлен',
   RECEIVED: 'Получена',
-  RETURNED_FOR_REVISION: 'Возвращена на доработку',
 };
 
 const subscriptionStatusLabels = {
