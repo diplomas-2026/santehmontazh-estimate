@@ -37,6 +37,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -51,6 +53,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 public class AiEstimateAssistantService {
+
+    private static final Logger log = LoggerFactory.getLogger(AiEstimateAssistantService.class);
 
     private static final TypeReference<List<AiEstimateQuestionResponse>> QUESTIONS_TYPE = new TypeReference<>() {
     };
@@ -253,9 +257,16 @@ public class AiEstimateAssistantService {
             new SystemMessage(SYSTEM_PROMPT),
             new UserMessage(promptText)
         );
-        ChatResponse response = chatModel.call(new Prompt(messages));
-        String content = response.getResult().getOutput().getText();
-        AiModelResponse parsed = parseModelResponse(content);
+        ChatResponse response;
+        try {
+            response = chatModel.call(new Prompt(messages));
+        } catch (Exception exception) {
+            log.error("GigaChat request failed for project {}", project.getId(), exception);
+            throw new BadRequestException("AI-помощник не смог получить ответ от модели. Попробуйте еще раз через пару секунд.");
+        }
+
+        String content = extractContent(response);
+        AiModelResponse parsed = normalizeModelResponse(parseModelResponse(content));
         if (parsed.status() == AiEstimateSessionStatus.QUESTIONING && parsed.questions().isEmpty()) {
             throw new BadRequestException("AI не вернул уточняющие вопросы. Попробуйте еще раз.");
         }
@@ -264,6 +275,17 @@ public class AiEstimateAssistantService {
         }
         long totalTokens = extractTotalTokens(response, content);
         return new ModelDecision(parsed, totalTokens);
+    }
+
+    private String extractContent(ChatResponse response) {
+        if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+            throw new BadRequestException("AI вернул пустой ответ. Попробуйте еще раз.");
+        }
+        String text = response.getResult().getOutput().getText();
+        if (text == null || text.isBlank()) {
+            throw new BadRequestException("AI вернул пустой ответ. Попробуйте еще раз.");
+        }
+        return stripMarkdownFence(text);
     }
 
     private long extractTotalTokens(ChatResponse response, String content) {
@@ -506,6 +528,26 @@ public class AiEstimateAssistantService {
         } catch (JsonProcessingException exception) {
             throw new BadRequestException("AI вернул ответ в неожиданном формате. Попробуйте еще раз.");
         }
+    }
+
+    private AiModelResponse normalizeModelResponse(AiModelResponse response) {
+        return new AiModelResponse(
+            response.status(),
+            normalizeText(response.assistantMessage()),
+            normalizeText(response.estimateName()),
+            normalizeText(response.estimateNotes()),
+            response.questions() == null ? List.of() : response.questions(),
+            response.items() == null ? List.of() : response.items()
+        );
+    }
+
+    private String stripMarkdownFence(String text) {
+        String normalized = text.trim();
+        if (normalized.startsWith("```")) {
+            normalized = normalized.replaceFirst("^```(?:json)?\\s*", "");
+            normalized = normalized.replaceFirst("\\s*```$", "");
+        }
+        return normalized.trim();
     }
 
     private record ModelDecision(AiModelResponse response, long totalTokens) {
