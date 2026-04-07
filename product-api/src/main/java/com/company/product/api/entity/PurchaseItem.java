@@ -49,6 +49,12 @@ public class PurchaseItem {
     @Column(nullable = false, precision = 14, scale = 2)
     private BigDecimal actualLineTotal;
 
+    @Column(nullable = false)
+    private String supplierName;
+
+    @Column(nullable = false, length = 1000)
+    private String supplierUrl;
+
     @Column(nullable = false, length = 1000)
     private String comment;
 }

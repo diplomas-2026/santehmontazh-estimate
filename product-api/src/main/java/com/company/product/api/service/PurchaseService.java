@@ -107,8 +107,6 @@ public class PurchaseService {
         return createPurchaseFromEstimate(
             estimate,
             actor,
-            blankToEmpty(request.supplierName()),
-            blankToEmpty(request.supplierUrl()),
             blankToEmpty(request.comment()),
             true
         );
@@ -121,8 +119,6 @@ public class PurchaseService {
         return createPurchaseFromEstimate(
             estimate,
             actor,
-            "",
-            "",
             "Закупка создана автоматически из сметы",
             false
         );
@@ -130,8 +126,6 @@ public class PurchaseService {
 
     private PurchaseResponse createPurchaseFromEstimate(Estimate estimate,
                                                         UserAccount actor,
-                                                        String supplierName,
-                                                        String supplierUrl,
                                                         String comment,
                                                         boolean requireReadyStatus) {
         if (estimate.getProject().getStatus() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
@@ -159,8 +153,8 @@ public class PurchaseService {
         purchase.setEstimate(estimate);
         purchase.setCreatedBy(actor);
         purchase.setStatus(PurchaseStatus.DRAFT);
-        purchase.setSupplierName(supplierName);
-        purchase.setSupplierUrl(supplierUrl);
+        purchase.setSupplierName("");
+        purchase.setSupplierUrl("");
         purchase.setComment(comment);
         purchase.setPlannedTotal(BigDecimal.ZERO);
         purchase.setActualTotal(BigDecimal.ZERO);
@@ -178,6 +172,8 @@ public class PurchaseService {
             item.setActualQuantity(BigDecimal.ZERO);
             item.setActualPrice(BigDecimal.ZERO);
             item.setActualLineTotal(BigDecimal.ZERO);
+            item.setSupplierName("");
+            item.setSupplierUrl("");
             item.setComment("Сформировано автоматически из сметы");
             purchaseItemRepository.save(item);
             plannedTotal = plannedTotal.add(item.getPlannedLineTotal());
@@ -196,8 +192,6 @@ public class PurchaseService {
     @Transactional
     public PurchaseResponse update(Long id, PurchaseRequest request) {
         Purchase purchase = getEditablePurchase(id);
-        purchase.setSupplierName(blankToEmpty(request.supplierName()));
-        purchase.setSupplierUrl(blankToEmpty(request.supplierUrl()));
         purchase.setComment(blankToEmpty(request.comment()));
         purchase.setUpdatedAt(OffsetDateTime.now());
         Purchase saved = purchaseRepository.save(purchase);
@@ -216,6 +210,8 @@ public class PurchaseService {
         item.setActualQuantity(request.actualQuantity());
         item.setActualPrice(request.actualPrice());
         item.setActualLineTotal(request.actualQuantity().multiply(request.actualPrice()));
+        item.setSupplierName(blankToEmpty(request.supplierName()));
+        item.setSupplierUrl(blankToEmpty(request.supplierUrl()));
         item.setComment(blankToEmpty(request.comment()));
         purchaseItemRepository.save(item);
         recalculateTotals(purchase);
@@ -330,11 +326,9 @@ public class PurchaseService {
             Статус: %s
             Плановая сумма: %s
             Фактическая сумма: %s
-            Где купили: %s
-            Ссылка: %s
             Комментарий: %s
             """.formatted(response.id(), response.projectName(), response.estimateName(), response.status(),
-            response.plannedTotal(), response.actualTotal(), response.supplierName(), response.supplierUrl(), response.comment());
+            response.plannedTotal(), response.actualTotal(), response.comment());
     }
 
     public byte[] exportEstimateReport(Long purchaseId) {
@@ -350,8 +344,6 @@ public class PurchaseService {
             rowIndex = writeMetaRow(sheet, rowIndex, "Объект", response.projectName(), headerStyle);
             rowIndex = writeMetaRow(sheet, rowIndex, "Смета", response.estimateName(), headerStyle);
             rowIndex = writeMetaRow(sheet, rowIndex, "Статус закупки", response.status().name(), headerStyle);
-            rowIndex = writeMetaRow(sheet, rowIndex, "Где купили", response.supplierName().isBlank() ? "Не указано" : response.supplierName(), headerStyle);
-            rowIndex = writeMetaRow(sheet, rowIndex, "Ссылка", response.supplierUrl().isBlank() ? "Не указана" : response.supplierUrl(), headerStyle);
             rowIndex = writeMetaRow(sheet, rowIndex, "Комментарий", response.comment().isBlank() ? "Нет комментария" : response.comment(), headerStyle);
             rowIndex++;
 
@@ -370,6 +362,8 @@ public class PurchaseService {
                 "Фактическая цена",
                 "Фактическая сумма",
                 "Отклонение",
+                "Где купили",
+                "Ссылка",
                 "Комментарий"
             };
             for (int index = 0; index < headers.length; index++) {
@@ -388,7 +382,9 @@ public class PurchaseService {
                 row.createCell(6).setCellValue(item.actualPrice().doubleValue());
                 row.createCell(7).setCellValue(item.actualLineTotal().doubleValue());
                 row.createCell(8).setCellValue(item.actualLineTotal().subtract(item.plannedLineTotal()).doubleValue());
-                row.createCell(9).setCellValue(item.comment() == null || item.comment().isBlank() ? "-" : item.comment());
+                row.createCell(9).setCellValue(item.supplierName() == null || item.supplierName().isBlank() ? "Не указано" : item.supplierName());
+                row.createCell(10).setCellValue(item.supplierUrl() == null || item.supplierUrl().isBlank() ? "-" : item.supplierUrl());
+                row.createCell(11).setCellValue(item.comment() == null || item.comment().isBlank() ? "-" : item.comment());
             }
 
             Row totalsRow = sheet.createRow(rowIndex);
@@ -489,7 +485,7 @@ public class PurchaseService {
         List<PurchaseItemResponse> items = purchaseItemRepository.findByPurchaseId(purchase.getId()).stream()
             .map(item -> new PurchaseItemResponse(item.getId(), item.getMaterial().getId(), item.getMaterial().getName(),
                 item.getMaterial().getUnit(), item.getPlannedQuantity(), item.getPlannedPrice(), item.getPlannedLineTotal(),
-                item.getActualQuantity(), item.getActualPrice(), item.getActualLineTotal(), item.getComment(),
+                item.getActualQuantity(), item.getActualPrice(), item.getActualLineTotal(), item.getSupplierName(), item.getSupplierUrl(), item.getComment(),
                 supplierOfferRepository.findByPurchaseItemId(item.getId()).stream().map(this::toOfferResponse).toList(),
                 supplierRepository.findLinkedByMaterialId(item.getMaterial().getId()).stream().map(this::toSupplierHint).toList()))
             .toList();

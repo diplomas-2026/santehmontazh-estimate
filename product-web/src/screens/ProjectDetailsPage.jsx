@@ -363,8 +363,10 @@ export function ProjectDetailsPage() {
                     </div>
 
                     <div className="purchase-source-line">
-                      <span>Где купили</span>
-                      <strong>{purchase.supplierName || 'Пока не указано'}</strong>
+                      <span>Источники покупки</span>
+                      <strong>
+                        {purchase.items.filter((item) => item.supplierName?.trim()).length} из {purchase.items.length} позиций
+                      </strong>
                     </div>
                   </div>
 

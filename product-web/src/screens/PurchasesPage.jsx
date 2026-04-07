@@ -54,7 +54,7 @@ export function PurchasesPage() {
                 </span>
               ))}
               <span className="tag">
-                Где купили: {purchase.supplierName || 'не указано'}
+                Источники зафиксированы: {purchase.items.filter((item) => item.supplierName?.trim()).length} из {purchase.items.length}
               </span>
             </div>
 

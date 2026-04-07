@@ -14,6 +14,8 @@ public record PurchaseItemResponse(
     BigDecimal actualQuantity,
     BigDecimal actualPrice,
     BigDecimal actualLineTotal,
+    String supplierName,
+    String supplierUrl,
     String comment,
     List<SupplierOfferResponse> offers,
     List<PurchaseSupplierHintResponse> supplierHints

@@ -9,6 +9,8 @@ const emptyItemDraft = {
   plannedPrice: '',
   actualQuantity: '',
   actualPrice: '',
+  supplierName: '',
+  supplierUrl: '',
   comment: '',
 };
 
@@ -18,6 +20,8 @@ function buildItemDraft(item) {
     plannedPrice: String(item?.plannedPrice ?? ''),
     actualQuantity: String(item?.actualQuantity ?? ''),
     actualPrice: String(item?.actualPrice ?? ''),
+    supplierName: item?.supplierName ?? '',
+    supplierUrl: item?.supplierUrl ?? '',
     comment: item?.comment ?? '',
   };
 }
@@ -94,6 +98,8 @@ export function PurchaseItemDetailsPage() {
           plannedPrice: Number(draft.plannedPrice),
           actualQuantity: Number(draft.actualQuantity),
           actualPrice: Number(draft.actualPrice),
+          supplierName: draft.supplierName,
+          supplierUrl: draft.supplierUrl,
           comment: draft.comment,
         }),
       });
@@ -147,10 +153,19 @@ export function PurchaseItemDetailsPage() {
             <span className="tag">Факт: {item.actualQuantity} {item.unit} по {formatCurrency(item.actualPrice)}</span>
             <span className="tag">Итого по плану: {formatCurrency(item.plannedLineTotal)}</span>
             <span className="tag">Итого по факту: {formatCurrency(item.actualLineTotal)}</span>
+            <span className="tag">Где купили: {item.supplierName || 'Не указано'}</span>
           </div>
           <p className="muted">
             {item.comment || 'Комментарий к позиции пока не добавлен.'}
           </p>
+          {item.supplierUrl ? (
+            <p className="muted">
+              Ссылка:{' '}
+              <a className="detail-link" href={item.supplierUrl} target="_blank" rel="noreferrer">
+                {item.supplierUrl}
+              </a>
+            </p>
+          ) : null}
         </article>
 
         <article className="page-card">
@@ -176,9 +191,9 @@ export function PurchaseItemDetailsPage() {
       <form className="page-card purchase-item-editor" onSubmit={saveItem}>
         <div>
           <p className="eyebrow">Редактирование позиции</p>
-          <h3>Обновите план, факт и рабочий комментарий</h3>
+          <h3>Обновите план, факт и источник покупки</h3>
           <p className="muted">
-            Здесь вы фиксируете реальный результат закупки по конкретной позиции. После завершения закупки редактирование будет закрыто.
+            Здесь вы фиксируете реальный результат закупки по конкретной позиции: сколько купили, по какой цене и где именно купили.
           </p>
         </div>
         <div className="purchase-item-fields">
@@ -235,6 +250,24 @@ export function PurchaseItemDetailsPage() {
             />
           </label>
         </div>
+        <label className="form-field">
+          <span className="form-label">Где купили</span>
+          <input
+            value={draft.supplierName}
+            onChange={(event) => setDraft((current) => ({ ...current, supplierName: event.target.value }))}
+            placeholder="Например: Леруа Мерлен или ООО ТеплоСнаб"
+            disabled={!canEdit}
+          />
+        </label>
+        <label className="form-field">
+          <span className="form-label">Ссылка на место покупки</span>
+          <input
+            value={draft.supplierUrl}
+            onChange={(event) => setDraft((current) => ({ ...current, supplierUrl: event.target.value }))}
+            placeholder="Ссылка на поставщика, магазин или карточку товара"
+            disabled={!canEdit}
+          />
+        </label>
         <label className="form-field">
           <span className="form-label">Комментарий к позиции</span>
           <textarea

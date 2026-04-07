@@ -17,6 +17,8 @@ public record PurchaseItemRequest(
     @NotNull(message = "Фактическая цена обязательна")
     @DecimalMin(value = "0.00", inclusive = true, message = "Цена не может быть отрицательной")
     BigDecimal actualPrice,
+    String supplierName,
+    String supplierUrl,
     String comment
 ) {
 }

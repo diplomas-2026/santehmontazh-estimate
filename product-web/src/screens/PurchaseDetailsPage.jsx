@@ -6,8 +6,6 @@ import { formatRuDate } from '../i18n/date';
 import { translatePurchaseStatus } from '../i18n/enums';
 
 const emptyPurchaseForm = {
-  supplierName: '',
-  supplierUrl: '',
   comment: '',
 };
 
@@ -82,8 +80,6 @@ export function PurchaseDetailsPage() {
     }
 
     setPurchaseForm({
-      supplierName: purchase.supplierName ?? '',
-      supplierUrl: purchase.supplierUrl ?? '',
       comment: purchase.comment ?? '',
     });
     setCommentMessage('');
@@ -106,8 +102,6 @@ export function PurchaseDetailsPage() {
         method: 'PUT',
         body: JSON.stringify({
           estimateId: purchase.estimateId,
-          supplierName: purchaseForm.supplierName,
-          supplierUrl: purchaseForm.supplierUrl,
           comment: purchaseForm.comment,
         }),
       });
@@ -200,6 +194,8 @@ export function PurchaseDetailsPage() {
 
   const currentActions = getLifecycleActions(purchase.status);
   const canEdit = purchase.status !== 'COMPLETED';
+  const sourcedItemsCount = (purchase.items ?? []).filter((item) => item.supplierName?.trim()).length;
+  const totalItemsCount = purchase.items?.length ?? 0;
 
   return (
     <section className="page-section purchase-workbench">
@@ -247,7 +243,7 @@ export function PurchaseDetailsPage() {
           <div className="detail-meta">
             <span className="tag">Объект: {purchase.projectName}</span>
             <span className="tag">Смета: {purchase.estimateName}</span>
-            <span className="tag">Где купили: {purchase.supplierName || 'Не указано'}</span>
+            <span className="tag">Источники покупки: {sourcedItemsCount} из {totalItemsCount}</span>
             <span className="tag">Создана: {formatRuDate(purchase.createdAt)}</span>
             <span className="tag">Обновлена: {formatRuDate(purchase.updatedAt)}</span>
             <span className="tag">План: {formatCurrency(purchase.plannedTotal)}</span>
@@ -257,14 +253,6 @@ export function PurchaseDetailsPage() {
           <p className="muted">
             {purchase.comment || 'Здесь можно кратко зафиксировать, как проходит закупка и любые важные договоренности.'}
           </p>
-          {purchase.supplierUrl ? (
-            <p className="muted">
-              Ссылка на место покупки:{' '}
-              <a className="detail-link" href={purchase.supplierUrl} target="_blank" rel="noreferrer">
-                {purchase.supplierUrl}
-              </a>
-            </p>
-          ) : null}
         </article>
 
         <article className="page-card">
@@ -295,30 +283,12 @@ export function PurchaseDetailsPage() {
 
       <form className="page-card form-grid purchase-form-card" onSubmit={savePurchase}>
         <div>
-          <p className="eyebrow">Где купили</p>
-          <h3>Зафиксируйте источник покупки</h3>
+          <p className="eyebrow">Общий комментарий</p>
+          <h3>Зафиксируйте контекст закупки</h3>
           <p className="muted">
-            Это может быть поставщик из каталога, внешний магазин, маркетплейс или любой другой источник. Ссылка необязательна.
+            Источник покупки теперь хранится на уровне каждой позиции. Здесь остается общий комментарий по всей закупке.
           </p>
         </div>
-        <label className="form-field">
-          <span className="form-label">Где купили</span>
-          <input
-            value={purchaseForm.supplierName}
-            onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierName: event.target.value }))}
-            placeholder="Например: ООО ТеплоСнаб или Леруа Мерлен"
-            disabled={!canEdit}
-          />
-        </label>
-        <label className="form-field">
-          <span className="form-label">Ссылка на место покупки</span>
-          <input
-            value={purchaseForm.supplierUrl}
-            onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierUrl: event.target.value }))}
-            placeholder="Ссылка на поставщика, магазин или карточку товара"
-            disabled={!canEdit}
-          />
-        </label>
         <label className="form-field">
           <span className="form-label">Комментарий к закупке</span>
           <textarea
@@ -362,6 +332,7 @@ export function PurchaseDetailsPage() {
                     </span>
                     <span className="tag">Итого по плану: {formatCurrency(item.plannedLineTotal)}</span>
                     <span className="tag">Итого по факту: {formatCurrency(item.actualLineTotal)}</span>
+                    <span className="tag">Источник: {item.supplierName || 'Не указан'}</span>
                   </div>
                   <p className="muted">
                     {item.comment || 'Комментарий к позиции не задан.'}
@@ -371,12 +342,12 @@ export function PurchaseDetailsPage() {
                   {(item.supplierHints ?? []).length ? (
                     <>
                       <span className="tag tag-success">Есть подсказки</span>
-                      <span className="muted">Можно посмотреть подходящих поставщиков ниже.</span>
+                      <span className="muted">Можно открыть позицию и зафиксировать, где купили именно этот материал.</span>
                     </>
                   ) : (
                     <>
                       <span className="tag">Подсказок нет</span>
-                      <span className="muted">Эту позицию можно купить у любого внешнего поставщика и просто зафиксировать факт в закупке.</span>
+                      <span className="muted">Эту позицию можно купить в любом месте и указать источник на карточке позиции.</span>
                     </>
                   )}
                 </div>
