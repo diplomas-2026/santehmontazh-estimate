@@ -30,6 +30,8 @@ services:
       JWT_SECRET: change-me-change-me-change-me-change-me
       APP_ALLOWED_ORIGINS: http://localhost:5173,https://santehmontazh-estimate.matstart.ru
       APP_USERS_FILE: users.txt
+      APP_AI_ENABLED: ${APP_AI_ENABLED:-true}
+      GIGACHAT_API_KEY: ${GIGACHAT_API_KEY:-}
     ports:
       - "127.0.0.1:18080:8080"
 

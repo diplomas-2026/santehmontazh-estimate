@@ -795,6 +795,28 @@ th {
   font-weight: 700;
 }
 
+.ai-usage-panel {
+  gap: 8px;
+}
+
+.ai-assistant-card,
+.ai-assistant-flow {
+  display: grid;
+  gap: 16px;
+}
+
+.ai-assistant-message {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ai-assistant-message p {
+  margin: 8px 0 0;
+  color: rgba(235, 240, 252, 0.82);
+}
+
 .purchase-item-card {
   display: grid;
   gap: 18px;

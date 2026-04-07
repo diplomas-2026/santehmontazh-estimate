@@ -1,5 +1,6 @@
 package com.company.product.api.service;
 
+import com.company.product.api.dto.ai.AiEstimateDraftItemResponse;
 import com.company.product.api.dto.estimate.EstimateItemRequest;
 import com.company.product.api.dto.estimate.EstimateItemResponse;
 import com.company.product.api.dto.estimate.EstimateRequest;
@@ -90,6 +91,42 @@ public class EstimateService {
         estimate.setUpdatedAt(OffsetDateTime.now());
         Estimate saved = estimateRepository.save(estimate);
         auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "CREATED", actor, "Создана новая смета");
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public EstimateResponse createFromAiDraft(Long projectId, String name, String notes, List<AiEstimateDraftItemResponse> draftItems) {
+        UserAccount actor = currentActor();
+        Project project = getEditableProject(projectId, actor);
+
+        Estimate estimate = new Estimate();
+        estimate.setProject(project);
+        estimate.setName(name);
+        estimate.setStatus(EstimateStatus.DRAFT);
+        estimate.setNotes(notes);
+        estimate.setCreatedBy(actor);
+        estimate.setUpdatedAt(OffsetDateTime.now());
+        Estimate saved = estimateRepository.save(estimate);
+
+        for (AiEstimateDraftItemResponse draftItem : draftItems) {
+            Material material = resolveMaterial(draftItem.materialId());
+            String workName = normalizeWorkName(draftItem.workName());
+            validateEstimateItem(material, workName);
+
+            EstimateItem item = new EstimateItem();
+            item.setEstimate(saved);
+            item.setMaterial(material);
+            item.setWorkName(workName);
+            item.setQuantity(draftItem.quantity());
+            item.setUnitPrice(draftItem.unitPrice());
+            item.setLineTotal(draftItem.quantity().multiply(draftItem.unitPrice()));
+            item.setComment(normalizeComment(draftItem.comment()));
+            estimateItemRepository.save(item);
+        }
+
+        saved.setUpdatedAt(OffsetDateTime.now());
+        estimateRepository.save(saved);
+        auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "AI_CREATED", actor, "Смета создана через AI-помощник");
         return toResponse(saved);
     }
 

@@ -29,8 +29,10 @@ jobs:
           ssh-keyscan -H 45.128.205.5 >> ~/.ssh/known_hosts
 
       - name: Run deployment
+        env:
+          GIGACHAT_API_KEY: ${{ secrets.GIGACHAT_API_KEY }}
         run: |
-          ssh root@45.128.205.5 'bash -s' < scripts/deploy_vps.sh
+          ssh root@45.128.205.5 "export GIGACHAT_API_KEY='${GIGACHAT_API_KEY}'; bash -s" < scripts/deploy_vps.sh
 
       - name: Notify Telegram
         if: ${{ success() }}

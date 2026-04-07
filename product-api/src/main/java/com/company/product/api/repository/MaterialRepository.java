@@ -10,6 +10,8 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
 
     Optional<Material> findBySkuIgnoreCase(String sku);
 
+    List<Material> findTop10ByNameContainingIgnoreCaseOrderByNameAsc(String name);
+
     @Query("""
         select distinct m from Supplier s
         join s.materials m

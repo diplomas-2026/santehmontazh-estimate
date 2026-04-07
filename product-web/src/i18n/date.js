@@ -4,6 +4,14 @@ const fullDateFormatter = new Intl.DateTimeFormat('ru-RU', {
   year: 'numeric',
 });
 
+const fullDateTimeFormatter = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+
 export function formatRuDate(value) {
   if (!value) {
     return 'Не указано';
@@ -19,4 +27,17 @@ export function formatRuDate(value) {
   }
 
   return fullDateFormatter.format(date);
+}
+
+export function formatRuDateTime(value) {
+  if (!value) {
+    return 'Не указано';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return fullDateTimeFormatter.format(date);
 }

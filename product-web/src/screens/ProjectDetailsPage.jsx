@@ -2,11 +2,12 @@ import { Link, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { formatCurrency } from '../i18n/currency';
-import { formatRuDate } from '../i18n/date';
+import { formatRuDate, formatRuDateTime } from '../i18n/date';
 import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const emptyEstimateForm = { name: '', notes: '' };
+const emptyAiState = { message: '' };
 const projectLifecycle = [
   ['DRAFT', 'Черновик'],
   ['IN_PROGRESS', 'В работе'],
@@ -26,11 +27,19 @@ export function ProjectDetailsPage() {
   const [projectSuccess, setProjectSuccess] = useState('');
   const [purchaseError, setPurchaseError] = useState('');
   const [purchaseSuccess, setPurchaseSuccess] = useState('');
+  const [aiUsage, setAiUsage] = useState(null);
+  const [aiForm, setAiForm] = useState(emptyAiState);
+  const [aiSession, setAiSession] = useState(null);
+  const [aiAnswers, setAiAnswers] = useState({});
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiError, setAiError] = useState('');
+  const [aiSuccess, setAiSuccess] = useState('');
 
   const load = useCallback(() => {
     api(`/api/projects/${id}`).then(setProject).catch(() => setProject(null));
     api(`/api/projects/${id}/estimates`).then(setEstimates).catch(() => setEstimates([]));
     api(`/api/projects/${id}/purchases`).then(setPurchases).catch(() => setPurchases([]));
+    api('/api/ai/usage').then(setAiUsage).catch(() => setAiUsage(null));
   }, [id]);
 
   useEffect(() => {
@@ -102,6 +111,88 @@ export function ProjectDetailsPage() {
     } catch (submissionError) {
       setProjectError(submissionError.message);
       setProjectSuccess('');
+    }
+  }
+
+  async function startAiSession(event) {
+    event.preventDefault();
+    setAiBusy(true);
+    try {
+      const response = await api('/api/ai/estimate-assistant/sessions', {
+        method: 'POST',
+        body: JSON.stringify({
+          projectId: Number(id),
+          message: aiForm.message,
+        }),
+      });
+      setAiSession(response);
+      setAiAnswers({});
+      setAiError('');
+      setAiSuccess('AI-помощник начал разбор задачи. Ответьте на уточнения или сразу примените черновик.');
+      setAiUsage(response.usage);
+      window.dispatchEvent(new Event('ai-usage-updated'));
+    } catch (submissionError) {
+      setAiError(submissionError.message);
+      setAiSuccess('');
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function continueAiSession(event) {
+    event.preventDefault();
+    if (!aiSession) {
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const payload = Object.fromEntries(
+        Object.entries(aiAnswers).filter(([, value]) => value && value.trim()),
+      );
+      const response = await api(`/api/ai/estimate-assistant/sessions/${aiSession.id}/answers`, {
+        method: 'POST',
+        body: JSON.stringify({ answers: payload }),
+      });
+      setAiSession(response);
+      setAiAnswers({});
+      setAiError('');
+      setAiSuccess(
+        response.status === 'READY'
+          ? 'AI-помощник подготовил черновик сметы. Проверьте позиции перед созданием.'
+          : 'Ответы приняты. AI уточнил следующие вопросы.',
+      );
+      setAiUsage(response.usage);
+      window.dispatchEvent(new Event('ai-usage-updated'));
+    } catch (submissionError) {
+      setAiError(submissionError.message);
+      setAiSuccess('');
+    } finally {
+      setAiBusy(false);
+    }
+  }
+
+  async function applyAiDraft() {
+    if (!aiSession) {
+      return;
+    }
+    setAiBusy(true);
+    try {
+      const created = await api(`/api/ai/estimate-assistant/sessions/${aiSession.id}/apply`, {
+        method: 'POST',
+      });
+      setAiError('');
+      setAiSuccess('Черновик применен. Смета создана и появилась в списке объекта.');
+      setAiSession(null);
+      setAiAnswers({});
+      setAiForm(emptyAiState);
+      load();
+      window.dispatchEvent(new Event('ai-usage-updated'));
+      setProjectSuccess(`AI-помощник создал смету «${created.name}».`);
+    } catch (submissionError) {
+      setAiError(submissionError.message);
+      setAiSuccess('');
+    } finally {
+      setAiBusy(false);
     }
   }
 
@@ -236,6 +327,127 @@ export function ProjectDetailsPage() {
           {estimateError ? <div className="error-box">{estimateError}</div> : null}
           <button type="submit" className="primary-button">Создать смету</button>
         </form>
+      ) : null}
+
+      {canEditEstimates && project.status !== 'COMPLETED' ? (
+        <article className="page-card ai-assistant-card">
+          <div className="row-between">
+            <div>
+              <p className="eyebrow">AI-помощник по смете</p>
+              <h3>Сначала задаст уточняющие вопросы, потом соберет черновик</h3>
+            </div>
+            {aiUsage ? (
+              <div className="detail-actions">
+                <strong>{aiUsage.remainingTokens} токенов</strong>
+                <span className="muted">Сброс: {formatRuDateTime(aiUsage.resetAt)}</span>
+              </div>
+            ) : null}
+          </div>
+          <p className="muted">
+            Опишите задачу своими словами. AI не будет делать точный расчет из воздуха: он сначала спросит, чего не хватает, и только потом соберет черновик сметы.
+          </p>
+
+          {!aiSession ? (
+            <form className="ai-assistant-flow" onSubmit={startAiSession}>
+              <label className="form-field">
+                <span className="form-label">Что нужно посчитать</span>
+                <textarea
+                  rows={4}
+                  value={aiForm.message}
+                  onChange={(event) => setAiForm({ message: event.target.value })}
+                  placeholder="Например: Нужно собрать смету по кухне в квартире, есть мойка, гарнитур, смеситель и монтаж. Размер кухни 3 на 4 метра."
+                  required
+                />
+              </label>
+              {aiError ? <div className="error-box">{aiError}</div> : null}
+              {aiSuccess ? <div className="success-box">{aiSuccess}</div> : null}
+              <div className="action-row">
+                <button type="submit" className="primary-button" disabled={aiBusy || !aiUsage?.available}>
+                  {aiBusy ? 'AI анализирует...' : 'Начать с AI'}
+                </button>
+              </div>
+              {aiUsage ? <p className="muted">{aiUsage.message}</p> : null}
+            </form>
+          ) : (
+            <div className="ai-assistant-flow">
+              <article className="ai-assistant-message">
+                <strong>AI-помощник</strong>
+                <p>{aiSession.assistantMessage}</p>
+              </article>
+
+              {aiSession.status === 'QUESTIONING' ? (
+                <form className="ai-assistant-flow" onSubmit={continueAiSession}>
+                  {aiSession.questions.map((question) => (
+                    <label key={question.key} className="form-field">
+                      <span className="form-label">{question.label}</span>
+                      <input
+                        value={aiAnswers[question.key] ?? ''}
+                        onChange={(event) => setAiAnswers((current) => ({ ...current, [question.key]: event.target.value }))}
+                        placeholder={question.placeholder || 'Введите ответ'}
+                      />
+                      {question.reason ? <span className="muted">{question.reason}</span> : null}
+                    </label>
+                  ))}
+                  {aiError ? <div className="error-box">{aiError}</div> : null}
+                  {aiSuccess ? <div className="success-box">{aiSuccess}</div> : null}
+                  <div className="action-row">
+                    <button type="submit" className="primary-button" disabled={aiBusy}>
+                      {aiBusy ? 'AI уточняет...' : 'Продолжить'}
+                    </button>
+                    <button type="button" className="ghost-button" onClick={() => { setAiSession(null); setAiAnswers({}); setAiError(''); setAiSuccess(''); }}>
+                      Начать заново
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+
+              {aiSession.status === 'READY' ? (
+                <div className="ai-assistant-flow">
+                  <div className="detail-meta">
+                    <span className="tag">Название сметы: {aiSession.estimateName}</span>
+                    <span className="tag">Позиции: {aiSession.draftItems.length}</span>
+                    <span className="tag">Токены сессии: {aiSession.consumedTokens}</span>
+                  </div>
+                  <p className="muted">{aiSession.estimateNotes}</p>
+                  <div className="table-card">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Позиция</th>
+                          <th>Материал</th>
+                          <th>Количество</th>
+                          <th>Цена</th>
+                          <th>Комментарий</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {aiSession.draftItems.map((item, index) => (
+                          <tr key={`${item.workName}-${index}`}>
+                            <td>{item.workName}</td>
+                            <td>{item.materialName || 'Материал не найден в каталоге'}</td>
+                            <td>{item.quantity} {item.unit}</td>
+                            <td>{formatCurrency(item.unitPrice)}</td>
+                            <td>{item.comment || (item.needsAttention ? 'Нужно проверить перед сохранением' : 'Готово к сохранению')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {aiError ? <div className="error-box">{aiError}</div> : null}
+                  {aiSuccess ? <div className="success-box">{aiSuccess}</div> : null}
+                  <div className="action-row">
+                    <button type="button" className="primary-button" onClick={applyAiDraft} disabled={aiBusy}>
+                      {aiBusy ? 'Создаем смету...' : 'Создать смету из черновика'}
+                    </button>
+                    <button type="button" className="ghost-button" onClick={() => { setAiSession(null); setAiAnswers({}); setAiError(''); setAiSuccess(''); }}>
+                      Новый AI-черновик
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </article>
       ) : null}
 
       {purchaseError ? <div className="error-box">{purchaseError}</div> : null}

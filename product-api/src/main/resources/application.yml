@@ -1,6 +1,16 @@
 spring:
   application:
     name: product-api
+  ai:
+    gigachat:
+      auth:
+        bearer:
+          api-key: ${GIGACHAT_API_KEY:}
+      chat:
+        options:
+          temperature: 0.2
+      scope: GIGACHAT_API_PERS
+      verify-ssl: false
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/product_db}
     username: ${DB_USERNAME:product}
@@ -32,6 +42,12 @@ app:
     seed-enabled: ${APP_SEED_ENABLED:true}
     demo-users-enabled: ${APP_DEMO_USERS_ENABLED:true}
     users-file: ${APP_USERS_FILE:users.txt}
+  ai:
+    enabled: ${APP_AI_ENABLED:true}
+    daily-token-limit: ${APP_AI_DAILY_TOKEN_LIMIT:20000}
+    reset-zone: ${APP_AI_RESET_ZONE:Europe/Samara}
+    min-tokens-per-request: ${APP_AI_MIN_TOKENS_PER_REQUEST:500}
+    max-completion-tokens: ${APP_AI_MAX_COMPLETION_TOKENS:900}
 
 springdoc:
   api-docs:
