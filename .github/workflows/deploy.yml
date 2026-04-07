@@ -33,7 +33,7 @@ jobs:
           ssh root@45.128.205.5 'bash -s' < scripts/deploy_vps.sh
 
       - name: Notify Telegram
-        if: ${{ success() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+        if: ${{ success() }}
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -43,6 +43,11 @@ jobs:
           RUN_ID: ${{ github.run_id }}
           SERVER_URL: ${{ github.server_url }}
         run: |
+          if [ -z "${TELEGRAM_BOT_TOKEN}" ] || [ -z "${TELEGRAM_CHAT_ID}" ]; then
+            echo "Telegram secrets are not configured, skipping notification."
+            exit 0
+          fi
+
           MESSAGE=$(cat <<EOF
           ✅ Деплой успешно завершен
 
