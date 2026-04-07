@@ -187,26 +187,6 @@ export function SupplierDetailsPage() {
           <p className="muted">
             Один пользователь может оставить только один отзыв и потом редактировать его.
           </p>
-          <div className="review-grid">
-            {supplier.reviews.length ? supplier.reviews.map((review) => (
-              <div key={review.id} className="review-card">
-                <div className="review-card-top">
-                  <div>
-                    <div className="review-card-header">
-                      <strong>{review.authorName}</strong>
-                      {review.currentUser ? <span className="review-pill">Ваш отзыв</span> : null}
-                    </div>
-                    <div className="review-stars" aria-label={`Оценка ${review.rating} из 5`}>
-                      <span>{renderStars(review.rating)}</span>
-                      <strong>{review.rating}/5</strong>
-                    </div>
-                  </div>
-                  <span className="review-date">{formatRuDate(review.createdAt)}</span>
-                </div>
-                <p className="review-card-body">{review.comment}</p>
-              </div>
-            )) : <div className="empty-note">Пока отзывов о поставщике нет.</div>}
-          </div>
           <div className="review-form-card">
             <div className="review-form-head">
               <div>
@@ -232,6 +212,26 @@ export function SupplierDetailsPage() {
               />
               <button type="submit" className="ghost-button">{ownReview ? 'Обновить отзыв' : 'Сохранить отзыв'}</button>
             </form>
+          </div>
+          <div className="review-grid">
+            {supplier.reviews.length ? supplier.reviews.map((review) => (
+              <div key={review.id} className="review-card">
+                <div className="review-card-top">
+                  <div>
+                    <div className="review-card-header">
+                      <strong>{review.authorName}</strong>
+                      {review.currentUser ? <span className="review-pill">Ваш отзыв</span> : null}
+                    </div>
+                    <div className="review-stars" aria-label={`Оценка ${review.rating} из 5`}>
+                      <span>{renderStars(review.rating)}</span>
+                      <strong>{review.rating}/5</strong>
+                    </div>
+                  </div>
+                  <span className="review-date">{formatRuDate(review.createdAt)}</span>
+                </div>
+                <p className="review-card-body">{review.comment}</p>
+              </div>
+            )) : <div className="empty-note">Пока отзывов о поставщике нет.</div>}
           </div>
         </article>
 
