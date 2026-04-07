@@ -52,15 +52,15 @@ export function AuthPage({ mode }) {
             <CardContent sx={{ p: { xs: 3, md: 5 }, display: 'grid', gap: 3 }}>
               <Typography className="eyebrow">Современный продукт для подрядчика</Typography>
               <Typography variant="h1" sx={{ fontSize: { xs: '2.4rem', md: '4.6rem' }, maxWidth: '11ch' }}>
-                Смета и закупка в одном потоке, а не в десятке таблиц.
+                Объекты, сметы и закупки в одном потоке, а не в десятке таблиц.
               </Typography>
               <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 680 }}>
-                Платформа помогает считать сметы, закупать материалы и продавать руководству прозрачную картину по бюджету объекта.
+                Платформа помогает вести объект от первого расчета до закупки материалов и показывает прозрачную картину по бюджету.
               </Typography>
               <Stack direction="row" flexWrap="wrap" gap={1}>
+                <Button variant="outlined" color="inherit">Объекты</Button>
                 <Button variant="outlined" color="inherit">Позиции смет</Button>
                 <Button variant="outlined" color="inherit">Premium-аналитика</Button>
-                <Button variant="outlined" color="inherit">Согласование закупок</Button>
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Button component={RouterLink} to="/" variant="outlined" color="inherit" size="large">О продукте</Button>
@@ -80,7 +80,7 @@ export function AuthPage({ mode }) {
                 </Typography>
                 <Typography color="text.secondary">
                   {isRegister
-                    ? 'Новый пользователь создается с ролью BASE_USER и получает личные объекты, сметы и закупки.'
+                    ? 'После регистрации у вас появится рабочее пространство для объектов, смет и закупок.'
                     : 'Авторизуйтесь, чтобы работать со сметами, закупками и premium-аналитикой по объектам.'}
                 </Typography>
               </Box>

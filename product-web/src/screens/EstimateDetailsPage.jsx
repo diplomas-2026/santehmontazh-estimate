@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus } from '../i18n/enums';
@@ -24,33 +24,22 @@ export function EstimateDetailsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  function load() {
+  const load = useCallback(() => {
     api(`/api/estimates/${id}`).then(setEstimate).catch(() => setEstimate(null));
     api('/api/materials').then(setMaterials).catch(() => setMaterials([]));
     api('/api/purchases')
       .then((items) => setPurchase(items.find((item) => String(item.estimateId) === String(id)) ?? null))
       .catch(() => setPurchase(null));
-  }
+  }, [id]);
 
   useEffect(() => {
     load();
-  }, [id]);
+  }, [load]);
 
-  const selectedMaterial = useMemo(
-    () => materials.find((material) => String(material.id) === String(itemForm.materialId)) ?? null,
-    [materials, itemForm.materialId],
-  );
   const purchasableItemsCount = useMemo(
     () => estimate?.items?.filter((item) => item.materialId != null).length ?? 0,
     [estimate],
   );
-
-  useEffect(() => {
-    if (!selectedMaterial || itemForm.unitPrice) {
-      return;
-    }
-    setItemForm((current) => ({ ...current, unitPrice: String(selectedMaterial.defaultPrice ?? '') }));
-  }, [selectedMaterial, itemForm.unitPrice]);
 
   const canEdit = ['ADMIN', 'BASE_USER'].includes(user.role) && estimate?.status === 'DRAFT';
   const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role) && purchasableItemsCount > 0 && !purchase;
@@ -94,7 +83,7 @@ export function EstimateDetailsPage() {
     try {
       const createdPurchase = await api(`/api/purchases/from-estimate/${id}`, { method: 'POST' });
       setPurchase(createdPurchase);
-      setSuccess('Закупка создана по этой смете. Теперь снабжение может продолжить работу.');
+      setSuccess('Закупка создана по этой смете. Теперь можно продолжить работу с поставщиками.');
       setError('');
       load();
     } catch (submissionError) {
@@ -141,15 +130,15 @@ export function EstimateDetailsPage() {
           <p className="eyebrow">Переход в закупку</p>
           <h3>Что делает система дальше</h3>
           <p className="muted">
-            После передачи в закупку из позиций этой сметы создается черновик закупки. Снабженец продолжит работу уже
-            в закупочном модуле: выберет поставщиков, согласует и доведет покупку до факта.
+            После передачи в закупку из позиций этой сметы создается черновик закупки. Дальше работа продолжается в закупочном контуре:
+            пользователь выберет поставщиков, согласует и доведет покупку до факта.
           </p>
           <div className="action-row">
             {purchase ? (
               <>
                 <div className="success-box">Закупка уже создана по этой смете.</div>
-                <button type="button" className="primary-button" onClick={() => navigate('/purchases')}>
-                  Открыть закупки
+                <button type="button" className="primary-button" onClick={() => navigate(`/purchases/${purchase.id}`)}>
+                  Открыть закупку
                 </button>
               </>
             ) : (
@@ -180,7 +169,20 @@ export function EstimateDetailsPage() {
           />
           <select
             value={itemForm.materialId}
-            onChange={(event) => setItemForm((current) => ({ ...current, materialId: event.target.value }))}
+            onChange={(event) => {
+              const materialId = event.target.value;
+              const selectedMaterialOnChange = materials.find((material) => String(material.id) === String(materialId));
+              setItemForm((current) => {
+                if (current.unitPrice || !selectedMaterialOnChange) {
+                  return { ...current, materialId };
+                }
+                return {
+                  ...current,
+                  materialId,
+                  unitPrice: String(selectedMaterialOnChange.defaultPrice ?? ''),
+                };
+              });
+            }}
           >
             <option value="">Материал можно не указывать</option>
             {materials.map((material) => (

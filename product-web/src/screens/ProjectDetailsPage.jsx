@@ -1,5 +1,5 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { formatCurrency } from '../i18n/currency';
 import { formatRuDate } from '../i18n/date';
@@ -7,11 +7,17 @@ import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatu
 import { useAuth } from '../modules/auth/AuthContext';
 
 const emptyEstimateForm = { name: '', notes: '' };
+const projectLifecycle = [
+  ['DRAFT', 'Черновик'],
+  ['PLANNED', 'Запланирован'],
+  ['IN_PROGRESS', 'В работе'],
+  ['PURCHASE_IN_PROGRESS', 'Закупка идет'],
+  ['COMPLETED', 'Завершен'],
+];
 
 export function ProjectDetailsPage() {
   const { user } = useAuth();
   const { id } = useParams();
-  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [estimates, setEstimates] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -20,7 +26,7 @@ export function ProjectDetailsPage() {
   const [purchaseError, setPurchaseError] = useState('');
   const [purchaseSuccess, setPurchaseSuccess] = useState('');
 
-  function load() {
+  const load = useCallback(() => {
     api(`/api/projects/${id}`).then(setProject).catch(() => setProject(null));
     api('/api/estimates')
       .then((items) => setEstimates(items.filter((item) => String(item.projectId) === String(id))))
@@ -28,11 +34,11 @@ export function ProjectDetailsPage() {
     api('/api/purchases')
       .then((items) => setPurchases(items.filter((item) => String(item.projectId) === String(id))))
       .catch(() => setPurchases([]));
-  }
+  }, [id]);
 
   useEffect(() => {
     load();
-  }, [id]);
+  }, [load]);
 
   const summary = useMemo(() => {
     return {
@@ -125,6 +131,13 @@ export function ProjectDetailsPage() {
             <span className="tag">Старт: {formatRuDate(project.plannedStartDate)}</span>
             <span className="tag">Финиш: {formatRuDate(project.plannedEndDate)}</span>
           </div>
+          <div className="tag-row" style={{ marginTop: 16 }}>
+            {projectLifecycle.map(([value, label]) => (
+              <span key={value} className={`tag${project.status === value ? ' tag-active' : ''}`}>
+                {label}
+              </span>
+            ))}
+          </div>
         </article>
 
         <article className="page-card">
@@ -216,9 +229,12 @@ export function ProjectDetailsPage() {
                     Открыть смету
                   </Link>
                   {purchasesByEstimateId.has(estimate.id) ? (
-                    <button type="button" className="ghost-button" onClick={() => navigate('/purchases')}>
-                      Закупка создана
-                    </button>
+                    <Link
+                      className="primary-button"
+                      to={`/purchases/${purchasesByEstimateId.get(estimate.id).id}`}
+                    >
+                      Открыть закупку
+                    </Link>
                   ) : null}
                   {canCreatePurchase ? (
                     <div className="action-row">

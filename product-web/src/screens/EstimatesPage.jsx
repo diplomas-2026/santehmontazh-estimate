@@ -62,9 +62,13 @@ export function EstimatesPage() {
     <section className="page-section">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Сметный модуль</p>
+          <p className="eyebrow">Реестр смет</p>
           <h2>Сметы и позиции затрат</h2>
+          <p className="muted">
+            Сметы создаются внутри объекта. Этот экран нужен, чтобы быстро найти нужный расчет и перейти в карточку объекта.
+          </p>
         </div>
+        <Link className="ghost-button" to="/projects">К объектам</Link>
       </div>
 
       {canEdit ? (
@@ -105,7 +109,9 @@ export function EstimatesPage() {
               <div className="action-row">
                 <Link className="ghost-button" to={`/estimates/${estimate.id}`}>Открыть смету</Link>
                 {purchasesByEstimateId.has(estimate.id) ? (
-                  <span className="tag">Закупка создана</span>
+                  <Link className="primary-button" to={`/purchases/${purchasesByEstimateId.get(estimate.id).id}`}>
+                    Открыть закупку
+                  </Link>
                 ) : null}
                 {estimate.status === 'DRAFT' && estimate.items.length > 0 && !purchasesByEstimateId.has(estimate.id) ? (
                   <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>Создать закупку</button>

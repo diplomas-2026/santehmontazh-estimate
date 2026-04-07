@@ -47,9 +47,13 @@ export function PurchasesPage() {
     <section className="page-section">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Закупочный модуль</p>
+          <p className="eyebrow">Реестр закупок</p>
           <h2>Закупки и предложения поставщиков</h2>
+          <p className="muted">
+            Закупка всегда начинается со сметы внутри объекта. Этот экран нужен для контроля и согласования уже созданных закупок.
+          </p>
         </div>
+        <Link className="ghost-button" to="/projects">К объектам</Link>
       </div>
 
       {canCreate ? (

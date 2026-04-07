@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from 'react';
 import { api, getToken } from '../../api';
 import { subscriptionPlans } from '../subscription/plans';
@@ -7,7 +8,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(getToken()));
 
   async function loadSubscription() {
     try {
@@ -21,8 +22,8 @@ export function AuthProvider({ children }) {
   }
 
   useEffect(() => {
-    if (!getToken()) {
-      setLoading(false);
+    const token = getToken();
+    if (!token) {
       return;
     }
 

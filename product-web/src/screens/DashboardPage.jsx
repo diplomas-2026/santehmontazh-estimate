@@ -35,12 +35,12 @@ export function DashboardPage() {
       <div className="dashboard-hero">
         <div className="dashboard-hero-copy">
           <p className="eyebrow">Главный экран продукта</p>
-          <h2>Командный центр для сметчика, снабжения и руководителя объекта.</h2>
+          <h2>Единая панель по объектам, сметам и закупкам.</h2>
           <p className="muted">
-            Здесь видно, где теряются деньги, какие закупки тормозят объект и какие premium-модули уже помогают команде быстрее принимать решения.
+            Здесь видно, где теряются деньги, какие закупки тормозят объект и какие premium-модули уже помогают быстро принимать решения.
           </p>
           <div className="hero-actions">
-            <Link className="primary-button hero-button" to="/estimates">Открыть сметы</Link>
+            <Link className="primary-button hero-button" to="/projects">Открыть объекты</Link>
             <Link className="ghost-button hero-button" to="/pricing">
               {subscription ? 'Усилить тариф' : 'Включить premium'}
             </Link>
@@ -77,6 +77,7 @@ export function DashboardPage() {
           <p className="eyebrow">Сценарии продукта</p>
           <h3>Что уже можно сделать в системе</h3>
           <div className="tag-row">
+            <span className="tag">Создать объект</span>
             <span className="tag">Создать смету и позиции</span>
             <span className="tag">Сформировать закупку</span>
             <span className="tag">Передать на согласование</span>
@@ -106,12 +107,12 @@ export function DashboardPage() {
         <div className="tag-row">
           <span className="tag">1. Создайте объект</span>
           <span className="tag">2. Сформируйте смету</span>
-          <span className="tag">3. Передайте смету в закупку</span>
-          <span className="tag">4. Согласуйте закупку</span>
+          <span className="tag">3. Добавьте позиции</span>
+          <span className="tag">4. Передайте в закупку</span>
           <span className="tag">5. Смотрите план / факт</span>
         </div>
         <p className="muted">
-          Сервис нужен для того, чтобы связать расчет сметы и реальную закупку материалов в один процесс.
+          Сервис нужен для того, чтобы связать объект, расчет сметы и реальную закупку материалов в один процесс.
           Пользователь видит, что нужно купить, сколько это стоит и где начинается перерасход по объекту.
         </p>
       </article>

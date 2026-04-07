@@ -4,7 +4,7 @@ import { translateRole, translateSubscriptionStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const baseLinks = [
-  { to: '/dashboard', label: 'Командный центр' },
+  { to: '/dashboard', label: 'Обзор' },
   { to: '/projects', label: 'Объекты' },
   { to: '/materials', label: 'Материалы' },
   { to: '/suppliers', label: 'Поставщики', roles: ['ADMIN', 'BASE_USER'] },
@@ -24,7 +24,7 @@ export function Layout() {
             <span className="brand-mark">SM</span>
             <div>
               <p className="eyebrow">SantechMontazh Estimate</p>
-              <h1 className="brand-title">Смета и закупки</h1>
+              <h1 className="brand-title">Объекты и закупки</h1>
             </div>
           </Link>
 
