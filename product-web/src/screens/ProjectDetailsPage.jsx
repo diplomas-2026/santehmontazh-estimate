@@ -74,8 +74,25 @@ export function ProjectDetailsPage() {
     }
   }
 
+  async function changePurchaseStatus(purchaseId, action, body) {
+    try {
+      await api(`/api/purchases/${purchaseId}/${action}`, {
+        method: 'POST',
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      setPurchaseError('');
+      setPurchaseSuccess('Статус закупки обновлен.');
+      load();
+    } catch (submissionError) {
+      setPurchaseError(submissionError.message);
+      setPurchaseSuccess('');
+    }
+  }
+
   const canEditEstimates = ['ADMIN', 'ESTIMATOR'].includes(user.role);
   const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role);
+  const canManagePurchase = ['ADMIN', 'PURCHASER'].includes(user.role);
+  const canApprovePurchase = ['ADMIN', 'MANAGER'].includes(user.role);
   const purchasesByEstimateId = useMemo(
     () => new Map(purchases.map((purchase) => [purchase.estimateId, purchase])),
     [purchases],
@@ -219,27 +236,58 @@ export function ProjectDetailsPage() {
         </article>
 
         <article className="page-card">
-          <div className="row-between">
-            <div>
-              <p className="eyebrow">Связанные закупки</p>
-              <h3>Закупочный контур объекта</h3>
-            </div>
-          </div>
+          <p className="eyebrow">Связанные закупки</p>
+          <h3>Закупочный контур объекта</h3>
 
           <div className="stack-list">
             {purchases.length ? purchases.map((purchase) => (
-              <div key={purchase.id} className="detail-list-item">
-                <div>
-                  <Link className="detail-link" to={`/purchases/${purchase.id}`}>
-                    {purchase.estimateName}
-                  </Link>
-                  <p className="muted">{translatePurchaseStatus(purchase.status)} • {purchase.supplierName}</p>
+              <article key={purchase.id} className="page-card">
+                <div className="row-between">
+                  <div>
+                    <h3>
+                      <Link className="detail-link" to={`/purchases/${purchase.id}`}>
+                        {purchase.projectName}
+                      </Link>
+                    </h3>
+                    <p className="muted">{purchase.estimateName} • {translatePurchaseStatus(purchase.status)}</p>
+                  </div>
+                  <div className="metric-inline">
+                    <span>План: {formatCurrency(purchase.plannedTotal)}</span>
+                    <span>Факт: {formatCurrency(purchase.actualTotal)}</span>
+                    <strong>Δ {formatCurrency(purchase.deviation)}</strong>
+                  </div>
                 </div>
-                <div className="metric-inline">
-                  <span>План: {formatCurrency(purchase.plannedTotal)}</span>
-                  <span>Факт: {formatCurrency(purchase.actualTotal)}</span>
+
+                <div className="tag-row">
+                  {purchase.items.map((item) => (
+                    <span key={item.id} className="tag">
+                      {item.materialName} • {item.plannedQuantity} {item.unit} • {item.offers.find((offer) => offer.selected)?.supplierName ?? 'без выбора'}
+                    </span>
+                  ))}
                 </div>
-              </div>
+
+                <div className="action-row">
+                  {canManagePurchase && purchase.status === 'DRAFT' ? (
+                    <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'submit')}>
+                      На согласование
+                    </button>
+                  ) : null}
+                  {canApprovePurchase && purchase.status === 'SUBMITTED' ? (
+                    <>
+                      <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'approve')}>
+                        Утвердить
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => changePurchaseStatus(purchase.id, 'return-for-revision', { message: 'Нужно скорректировать выбор поставщика' })}
+                      >
+                        Вернуть
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              </article>
             )) : <p className="muted">По объекту пока нет закупок.</p>}
           </div>
         </article>
