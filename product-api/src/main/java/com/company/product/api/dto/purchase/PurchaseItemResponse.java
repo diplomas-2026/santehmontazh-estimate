@@ -15,6 +15,7 @@ public record PurchaseItemResponse(
     BigDecimal actualPrice,
     BigDecimal actualLineTotal,
     String comment,
-    List<SupplierOfferResponse> offers
+    List<SupplierOfferResponse> offers,
+    List<PurchaseSupplierHintResponse> supplierHints
 ) {
 }

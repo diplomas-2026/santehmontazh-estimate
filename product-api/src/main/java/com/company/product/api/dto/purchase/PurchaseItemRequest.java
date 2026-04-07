@@ -1,7 +1,6 @@
 package com.company.product.api.dto.purchase;
 
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
@@ -18,7 +17,6 @@ public record PurchaseItemRequest(
     @NotNull(message = "Фактическая цена обязательна")
     @DecimalMin(value = "0.00", inclusive = true, message = "Цена не может быть отрицательной")
     BigDecimal actualPrice,
-    @NotBlank(message = "Комментарий обязателен")
     String comment
 ) {
 }

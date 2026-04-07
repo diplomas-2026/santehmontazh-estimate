@@ -94,7 +94,7 @@ public class ProjectService {
         }
 
         List<Purchase> purchases = purchaseRepository.findByProjectId(project.getId());
-        boolean hasOpenPurchases = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.RECEIVED);
+        boolean hasOpenPurchases = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.COMPLETED);
         if (hasOpenPurchases) {
             throw new BadRequestException("Нельзя завершить объект, пока не завершены все закупки");
         }

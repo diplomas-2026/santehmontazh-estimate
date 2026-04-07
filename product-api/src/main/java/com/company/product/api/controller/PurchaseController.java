@@ -81,34 +81,16 @@ public class PurchaseController {
         return purchaseService.selectOffer(itemId, offerId);
     }
 
-    @PostMapping("/purchases/{id}/submit")
+    @PostMapping("/purchases/{id}/start")
     @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
-    public PurchaseResponse submit(@PathVariable Long id) {
-        return purchaseService.submit(id);
+    public PurchaseResponse start(@PathVariable Long id) {
+        return purchaseService.start(id);
     }
 
-    @PostMapping("/purchases/{id}/approve")
+    @PostMapping("/purchases/{id}/complete")
     @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
-    public PurchaseResponse approve(@PathVariable Long id) {
-        return purchaseService.approve(id);
-    }
-
-    @PostMapping("/purchases/{id}/return-for-revision")
-    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
-    public PurchaseResponse returnForRevision(@PathVariable Long id, @Valid @RequestBody ApprovalCommentRequest request) {
-        return purchaseService.returnForRevision(id, request);
-    }
-
-    @PostMapping("/purchases/{id}/order")
-    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
-    public PurchaseResponse order(@PathVariable Long id) {
-        return purchaseService.order(id);
-    }
-
-    @PostMapping("/purchases/{id}/receive")
-    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
-    public PurchaseResponse receive(@PathVariable Long id) {
-        return purchaseService.receive(id);
+    public PurchaseResponse complete(@PathVariable Long id) {
+        return purchaseService.complete(id);
     }
 
     @GetMapping("/projects/{projectId}/purchases")

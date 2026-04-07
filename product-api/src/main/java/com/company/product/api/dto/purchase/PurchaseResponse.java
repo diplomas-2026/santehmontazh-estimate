@@ -16,6 +16,7 @@ public record PurchaseResponse(
     BigDecimal actualTotal,
     BigDecimal deviation,
     String supplierName,
+    String supplierUrl,
     String comment,
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt,

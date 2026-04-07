@@ -108,7 +108,6 @@ export function ProjectDetailsPage() {
   const canEditEstimates = ['ADMIN', 'BASE_USER'].includes(user.role);
   const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
   const canManagePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
-  const canApprovePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
   const purchasesByEstimateId = useMemo(
     () => new Map(purchases.map((purchase) => [purchase.estimateId, purchase])),
     [purchases],
@@ -183,7 +182,7 @@ export function ProjectDetailsPage() {
             )}
           </div>
           <p className="muted">
-            Объект можно завершить, когда все закупки получены, а все сметы переведены в архив.
+            Объект можно завершить, когда все закупки завершены, а все сметы переведены в архив.
           </p>
         </article>
       </div>
@@ -195,7 +194,7 @@ export function ProjectDetailsPage() {
           <span className="tag">1. Подготовить смету</span>
           <span className="tag">2. Заполнить позиции сметы</span>
           <span className="tag">3. Передать в закупку</span>
-          <span className="tag">4. Согласовать закупку</span>
+          <span className="tag">4. Зафиксировать покупку</span>
           <span className="tag">5. Сравнить план и факт</span>
         </div>
         <p className="muted">
@@ -326,9 +325,10 @@ export function ProjectDetailsPage() {
                       <div className="tag-row">
                         {purchase.items.map((item) => (
                           <span key={item.id} className="tag">
-                            {item.materialName} • {item.plannedQuantity} {item.unit} • {item.offers.find((offer) => offer.selected)?.supplierName ?? 'без выбора'}
+                            {item.materialName} • {item.plannedQuantity} {item.unit}
                           </span>
                         ))}
+                        <span className="tag">Где купили: {purchase.supplierName || 'не указано'}</span>
                       </div>
                     </td>
                     <td>
@@ -337,32 +337,13 @@ export function ProjectDetailsPage() {
                           Открыть закупку
                         </Link>
                         {canManagePurchase && purchase.status === 'DRAFT' ? (
-                          <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'submit')}>
-                            На согласование
+                          <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'start')}>
+                            Начать закупку
                           </button>
                         ) : null}
-                        {canApprovePurchase && purchase.status === 'SUBMITTED' ? (
-                          <>
-                            <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'approve')}>
-                              Утвердить
-                            </button>
-                            <button
-                              type="button"
-                              className="ghost-button"
-                              onClick={() => changePurchaseStatus(purchase.id, 'return-for-revision', { message: 'Нужно скорректировать выбор поставщика' })}
-                            >
-                              Вернуть
-                            </button>
-                          </>
-                        ) : null}
-                        {canManagePurchase && purchase.status === 'APPROVED' ? (
-                          <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'order')}>
-                            Оформить заказ
-                          </button>
-                        ) : null}
-                        {canManagePurchase && purchase.status === 'ORDERED' ? (
-                          <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'receive')}>
-                            Подтвердить получение
+                        {canManagePurchase && purchase.status === 'IN_PROGRESS' ? (
+                          <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'complete')}>
+                            Завершить закупку
                           </button>
                         ) : null}
                       </div>

@@ -80,7 +80,7 @@ export function DashboardPage() {
             <span className="tag">Создать объект</span>
             <span className="tag">Создать смету и позиции</span>
             <span className="tag">Сформировать закупку</span>
-            <span className="tag">Передать на согласование</span>
+            <span className="tag">Зафиксировать место покупки</span>
             <span className="tag">Сравнить план и факт</span>
           </div>
         </article>

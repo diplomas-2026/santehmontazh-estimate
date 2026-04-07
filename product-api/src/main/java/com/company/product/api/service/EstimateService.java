@@ -201,7 +201,7 @@ public class EstimateService {
             return toResponse(estimate);
         }
         List<Purchase> purchases = purchaseRepository.findByEstimateId(estimate.getId());
-        boolean hasOpenPurchase = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.RECEIVED);
+        boolean hasOpenPurchase = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.COMPLETED);
         if (hasOpenPurchase) {
             throw new BadRequestException("Нельзя архивировать смету, пока по ней есть незавершенная закупка");
         }

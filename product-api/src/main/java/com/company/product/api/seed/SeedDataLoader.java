@@ -276,6 +276,7 @@ public class SeedDataLoader {
             purchase.setPlannedTotal(BigDecimal.ZERO);
             purchase.setActualTotal(BigDecimal.ZERO);
             purchase.setSupplierName(item.supplierName());
+            purchase.setSupplierUrl("");
             purchase.setComment(item.comment());
             purchase.setUpdatedAt(OffsetDateTime.now());
             purchaseRepository.save(purchase);

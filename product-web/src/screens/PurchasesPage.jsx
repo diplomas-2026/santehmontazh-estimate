@@ -20,9 +20,9 @@ export function PurchasesPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow">Реестр закупок</p>
-          <h2>Закупки и предложения поставщиков</h2>
+          <h2>Закупки по вашим объектам</h2>
           <p className="muted">
-            Закупка всегда начинается со сметы внутри объекта. Этот экран нужен для контроля и согласования уже созданных закупок.
+            Закупка всегда начинается со сметы внутри объекта. Здесь видно, что уже куплено, что еще в работе и где пользователь зафиксировал покупку.
           </p>
         </div>
         <Link className="ghost-button" to="/projects">К объектам</Link>
@@ -50,9 +50,12 @@ export function PurchasesPage() {
             <div className="tag-row">
               {purchase.items.map((item) => (
                 <span key={item.id} className="tag">
-                  {item.materialName} • {item.plannedQuantity} {item.unit} • {item.offers.find((offer) => offer.selected)?.supplierName ?? 'без выбора'}
+                  {item.materialName} • {item.plannedQuantity} {item.unit}
                 </span>
               ))}
+              <span className="tag">
+                Где купили: {purchase.supplierName || 'не указано'}
+              </span>
             </div>
 
             <div className="action-row">

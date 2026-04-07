@@ -20,10 +20,8 @@ const estimateStatusLabels = {
 
 const purchaseStatusLabels = {
   DRAFT: 'Черновик',
-  SUBMITTED: 'На согласовании',
-  APPROVED: 'Утверждена',
-  ORDERED: 'Заказ оформлен',
-  RECEIVED: 'Получена',
+  IN_PROGRESS: 'В закупке',
+  COMPLETED: 'Завершена',
 };
 
 const subscriptionStatusLabels = {

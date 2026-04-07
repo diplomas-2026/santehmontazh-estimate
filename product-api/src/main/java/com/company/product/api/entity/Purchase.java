@@ -52,6 +52,9 @@ public class Purchase {
     @Column(nullable = false)
     private String supplierName;
 
+    @Column(nullable = false, length = 1000)
+    private String supplierUrl;
+
     @Column(nullable = false, length = 2000)
     private String comment;
 

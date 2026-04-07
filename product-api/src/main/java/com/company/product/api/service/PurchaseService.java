@@ -6,6 +6,7 @@ import com.company.product.api.dto.purchase.PurchaseItemRequest;
 import com.company.product.api.dto.purchase.PurchaseItemResponse;
 import com.company.product.api.dto.purchase.PurchaseRequest;
 import com.company.product.api.dto.purchase.PurchaseResponse;
+import com.company.product.api.dto.purchase.PurchaseSupplierHintResponse;
 import com.company.product.api.dto.purchase.SupplierOfferRequest;
 import com.company.product.api.dto.purchase.SupplierOfferResponse;
 import com.company.product.api.entity.ApprovalComment;
@@ -96,8 +97,9 @@ public class PurchaseService {
         return createPurchaseFromEstimate(
             estimate,
             actor,
-            request.supplierName(),
-            request.comment(),
+            blankToEmpty(request.supplierName()),
+            blankToEmpty(request.supplierUrl()),
+            blankToEmpty(request.comment()),
             true
         );
     }
@@ -109,7 +111,8 @@ public class PurchaseService {
         return createPurchaseFromEstimate(
             estimate,
             actor,
-            "Поставщик не выбран",
+            "",
+            "",
             "Закупка создана автоматически из сметы",
             false
         );
@@ -118,6 +121,7 @@ public class PurchaseService {
     private PurchaseResponse createPurchaseFromEstimate(Estimate estimate,
                                                         UserAccount actor,
                                                         String supplierName,
+                                                        String supplierUrl,
                                                         String comment,
                                                         boolean requireReadyStatus) {
         if (estimate.getProject().getStatus() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
@@ -146,6 +150,7 @@ public class PurchaseService {
         purchase.setCreatedBy(actor);
         purchase.setStatus(PurchaseStatus.DRAFT);
         purchase.setSupplierName(supplierName);
+        purchase.setSupplierUrl(supplierUrl);
         purchase.setComment(comment);
         purchase.setPlannedTotal(BigDecimal.ZERO);
         purchase.setActualTotal(BigDecimal.ZERO);
@@ -181,8 +186,9 @@ public class PurchaseService {
     @Transactional
     public PurchaseResponse update(Long id, PurchaseRequest request) {
         Purchase purchase = getEditablePurchase(id);
-        purchase.setSupplierName(request.supplierName());
-        purchase.setComment(request.comment());
+        purchase.setSupplierName(blankToEmpty(request.supplierName()));
+        purchase.setSupplierUrl(blankToEmpty(request.supplierUrl()));
+        purchase.setComment(blankToEmpty(request.comment()));
         purchase.setUpdatedAt(OffsetDateTime.now());
         Purchase saved = purchaseRepository.save(purchase);
         auditService.log(AuditEntityType.PURCHASE, saved.getId(), "UPDATED", currentActor(), "Обновлены метаданные закупки");
@@ -200,7 +206,7 @@ public class PurchaseService {
         item.setActualQuantity(request.actualQuantity());
         item.setActualPrice(request.actualPrice());
         item.setActualLineTotal(request.actualQuantity().multiply(request.actualPrice()));
-        item.setComment(request.comment());
+        item.setComment(blankToEmpty(request.comment()));
         purchaseItemRepository.save(item);
         recalculateTotals(purchase);
         auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "ITEM_UPDATED", currentActor(), "Обновлена позиция закупки");
@@ -257,75 +263,29 @@ public class PurchaseService {
     }
 
     @Transactional
-    public PurchaseResponse submit(Long purchaseId) {
+    public PurchaseResponse start(Long purchaseId) {
         Purchase purchase = getEditablePurchase(purchaseId);
         if (purchase.getStatus() != PurchaseStatus.DRAFT) {
-            throw new BadRequestException("Отправить на согласование можно только закупку в статусе DRAFT");
+            throw new BadRequestException("Начать закупку можно только из статуса черновика");
         }
-        purchase.setStatus(PurchaseStatus.SUBMITTED);
+        purchase.setStatus(PurchaseStatus.IN_PROGRESS);
         purchase.setUpdatedAt(OffsetDateTime.now());
         purchaseRepository.save(purchase);
-        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "SUBMITTED", currentActor(), "Закупка отправлена на согласование");
+        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "STARTED", currentActor(), "Закупка переведена в работу");
         return toResponse(purchase);
     }
 
     @Transactional
-    public PurchaseResponse approve(Long purchaseId) {
+    public PurchaseResponse complete(Long purchaseId) {
         Purchase purchase = getPurchase(purchaseId);
-        if (purchase.getStatus() != PurchaseStatus.SUBMITTED) {
-            throw new BadRequestException("Утвердить можно только закупку в статусе SUBMITTED");
+        if (purchase.getStatus() != PurchaseStatus.IN_PROGRESS) {
+            throw new BadRequestException("Завершить можно только закупку в статусе «В закупке»");
         }
-        purchase.setStatus(PurchaseStatus.APPROVED);
-        purchase.setUpdatedAt(OffsetDateTime.now());
-        purchaseRepository.save(purchase);
-        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "APPROVED", currentActor(), "Закупка утверждена");
-        return toResponse(purchase);
-    }
-
-    @Transactional
-    public PurchaseResponse returnForRevision(Long purchaseId, ApprovalCommentRequest request) {
-        Purchase purchase = getPurchase(purchaseId);
-        if (purchase.getStatus() != PurchaseStatus.SUBMITTED) {
-            throw new BadRequestException("Вернуть на доработку можно только закупку в статусе SUBMITTED");
-        }
-        ApprovalComment comment = new ApprovalComment();
-        comment.setEntityType(CommentEntityType.PURCHASE);
-        comment.setEntityId(purchaseId);
-        comment.setAuthor(currentActor());
-        comment.setMessage(request.message());
-        approvalCommentRepository.save(comment);
-
-        purchase.setStatus(PurchaseStatus.DRAFT);
-        purchase.setUpdatedAt(OffsetDateTime.now());
-        purchaseRepository.save(purchase);
-        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "RETURNED_FOR_REVISION", currentActor(), "Закупка возвращена на доработку");
-        return toResponse(purchase);
-    }
-
-    @Transactional
-    public PurchaseResponse order(Long purchaseId) {
-        Purchase purchase = getPurchase(purchaseId);
-        if (purchase.getStatus() != PurchaseStatus.APPROVED) {
-            throw new BadRequestException("Заказ можно оформить только после утверждения");
-        }
-        purchase.setStatus(PurchaseStatus.ORDERED);
-        purchase.setUpdatedAt(OffsetDateTime.now());
-        purchaseRepository.save(purchase);
-        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "ORDERED", currentActor(), "Закупка переведена в статус ORDERED");
-        return toResponse(purchase);
-    }
-
-    @Transactional
-    public PurchaseResponse receive(Long purchaseId) {
-        Purchase purchase = getPurchase(purchaseId);
-        if (purchase.getStatus() != PurchaseStatus.ORDERED) {
-            throw new BadRequestException("Получение доступно только после оформления заказа");
-        }
-        purchase.setStatus(PurchaseStatus.RECEIVED);
+        purchase.setStatus(PurchaseStatus.COMPLETED);
         purchase.setUpdatedAt(OffsetDateTime.now());
         recalculateTotals(purchase);
         purchaseRepository.save(purchase);
-        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "RECEIVED", currentActor(), "Закупка завершена");
+        auditService.log(AuditEntityType.PURCHASE, purchase.getId(), "COMPLETED", currentActor(), "Закупка завершена");
         return toResponse(purchase);
     }
 
@@ -360,10 +320,11 @@ public class PurchaseService {
             Статус: %s
             Плановая сумма: %s
             Фактическая сумма: %s
-            Поставщик: %s
+            Где купили: %s
+            Ссылка: %s
             Комментарий: %s
             """.formatted(response.id(), response.projectName(), response.estimateName(), response.status(),
-            response.plannedTotal(), response.actualTotal(), response.supplierName(), response.comment());
+            response.plannedTotal(), response.actualTotal(), response.supplierName(), response.supplierUrl(), response.comment());
     }
 
     private void recalculateTotals(Purchase purchase) {
@@ -385,8 +346,8 @@ public class PurchaseService {
 
     private Purchase getEditablePurchase(Long id) {
         Purchase purchase = getPurchase(id);
-        if (purchase.getStatus() != PurchaseStatus.DRAFT) {
-            throw new BadRequestException("Закупка недоступна для редактирования в текущем статусе");
+        if (purchase.getStatus() == PurchaseStatus.COMPLETED) {
+            throw new BadRequestException("Завершенная закупка недоступна для редактирования");
         }
         return purchase;
     }
@@ -419,7 +380,8 @@ public class PurchaseService {
             .map(item -> new PurchaseItemResponse(item.getId(), item.getMaterial().getId(), item.getMaterial().getName(),
                 item.getMaterial().getUnit(), item.getPlannedQuantity(), item.getPlannedPrice(), item.getPlannedLineTotal(),
                 item.getActualQuantity(), item.getActualPrice(), item.getActualLineTotal(), item.getComment(),
-                supplierOfferRepository.findByPurchaseItemId(item.getId()).stream().map(this::toOfferResponse).toList()))
+                supplierOfferRepository.findByPurchaseItemId(item.getId()).stream().map(this::toOfferResponse).toList(),
+                supplierRepository.findLinkedByMaterialId(item.getMaterial().getId()).stream().map(this::toSupplierHint).toList()))
             .toList();
         List<ApprovalCommentResponse> comments = comments(purchase.getId());
         return new PurchaseResponse(
@@ -433,12 +395,29 @@ public class PurchaseService {
             purchase.getActualTotal(),
             purchase.getActualTotal().subtract(purchase.getPlannedTotal()),
             purchase.getSupplierName(),
+            purchase.getSupplierUrl(),
             purchase.getComment(),
             purchase.getCreatedAt(),
             purchase.getUpdatedAt(),
             items,
             comments
         );
+    }
+
+    private PurchaseSupplierHintResponse toSupplierHint(Supplier supplier) {
+        return new PurchaseSupplierHintResponse(
+            supplier.getId(),
+            supplier.getName(),
+            supplier.getRating(),
+            supplier.getPhone(),
+            supplier.getEmail(),
+            supplier.getWebsiteUrl(),
+            supplier.getTelegram()
+        );
+    }
+
+    private String blankToEmpty(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private SupplierOfferResponse toOfferResponse(SupplierOffer offer) {

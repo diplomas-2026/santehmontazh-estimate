@@ -7,6 +7,7 @@ import { translatePurchaseStatus } from '../i18n/enums';
 
 const emptyPurchaseForm = {
   supplierName: '',
+  supplierUrl: '',
   comment: '',
 };
 
@@ -18,51 +19,21 @@ const emptyItemDraft = {
   comment: '',
 };
 
-const emptyOfferDraft = {
-  supplierId: '',
-  offeredPrice: '',
-  deliveryDays: '',
-  comment: '',
-};
-
 const lifecycleActions = {
   DRAFT: [
     {
-      action: 'submit',
-      label: 'Отправить на согласование',
+      action: 'start',
+      label: 'Начать закупку',
       className: 'primary-button',
-      message: 'Закупка отправлена на согласование.',
+      message: 'Закупка переведена в работу.',
     },
   ],
-  SUBMITTED: [
+  IN_PROGRESS: [
     {
-      action: 'approve',
-      label: 'Утвердить закупку',
+      action: 'complete',
+      label: 'Завершить закупку',
       className: 'primary-button',
-      message: 'Закупка утверждена.',
-    },
-    {
-      action: 'return-for-revision',
-      label: 'Вернуть на доработку',
-      className: 'ghost-button',
-      body: { message: 'Нужно скорректировать выбор поставщика' },
-      message: 'Закупка возвращена на доработку.',
-    },
-  ],
-  APPROVED: [
-    {
-      action: 'order',
-      label: 'Оформить заказ',
-      className: 'primary-button',
-      message: 'Заказ оформлен.',
-    },
-  ],
-  ORDERED: [
-    {
-      action: 'receive',
-      label: 'Отметить получение',
-      className: 'primary-button',
-      message: 'Закупка отмечена как полученная.',
+      message: 'Закупка завершена.',
     },
   ],
 };
@@ -82,27 +53,17 @@ function buildItemDrafts(items = []) {
   );
 }
 
-function buildOfferDrafts(items = []) {
-  return Object.fromEntries(items.map((item) => [item.id, { ...emptyOfferDraft }]));
-}
-
 function getLifecycleActions(status) {
   return lifecycleActions[status] ?? [];
-}
-
-function getCurrentStepLabel(status) {
-  return translatePurchaseStatus(status);
 }
 
 export function PurchaseDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [purchase, setPurchase] = useState(null);
-  const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [purchaseForm, setPurchaseForm] = useState(emptyPurchaseForm);
   const [itemDrafts, setItemDrafts] = useState({});
-  const [offerDrafts, setOfferDrafts] = useState({});
   const [commentMessage, setCommentMessage] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -113,22 +74,17 @@ export function PurchaseDetailsPage() {
     async function load() {
       setLoading(true);
       try {
-        const [purchaseResponse, suppliersResponse] = await Promise.all([
-          api(`/api/purchases/${id}`),
-          api('/api/suppliers').catch(() => []),
-        ]);
+        const purchaseResponse = await api(`/api/purchases/${id}`);
 
         if (!active) {
           return;
         }
 
         setPurchase(purchaseResponse);
-        setSuppliers(suppliersResponse);
         setError('');
       } catch {
         if (active) {
           setPurchase(null);
-          setSuppliers([]);
         }
       } finally {
         if (active) {
@@ -151,11 +107,11 @@ export function PurchaseDetailsPage() {
 
     setPurchaseForm({
       supplierName: purchase.supplierName ?? '',
+      supplierUrl: purchase.supplierUrl ?? '',
       comment: purchase.comment ?? '',
     });
     setCommentMessage('');
     setItemDrafts(buildItemDrafts(purchase.items ?? []));
-    setOfferDrafts(buildOfferDrafts(purchase.items ?? []));
   }, [purchase]);
 
   async function reloadPurchase(message) {
@@ -176,6 +132,7 @@ export function PurchaseDetailsPage() {
         body: JSON.stringify({
           estimateId: purchase.estimateId,
           supplierName: purchaseForm.supplierName,
+          supplierUrl: purchaseForm.supplierUrl,
           comment: purchaseForm.comment,
         }),
       });
@@ -208,42 +165,10 @@ export function PurchaseDetailsPage() {
     }
   }
 
-  async function addOffer(itemId) {
-    const draft = offerDrafts[itemId];
-    try {
-      await api(`/api/purchase-items/${itemId}/offers`, {
-        method: 'POST',
-        body: JSON.stringify({
-          supplierId: Number(draft.supplierId),
-          offeredPrice: Number(draft.offeredPrice),
-          deliveryDays: Number(draft.deliveryDays),
-          comment: draft.comment,
-        }),
-      });
-      await reloadPurchase('Предложение поставщика добавлено.');
-    } catch (submissionError) {
-      setError(submissionError.message);
-      setSuccess('');
-    }
-  }
-
-  async function selectOffer(itemId, offerId) {
-    try {
-      await api(`/api/purchase-items/${itemId}/offers/${offerId}/select`, {
-        method: 'POST',
-      });
-      await reloadPurchase('Предложение поставщика выбрано.');
-    } catch (submissionError) {
-      setError(submissionError.message);
-      setSuccess('');
-    }
-  }
-
-  async function changeStatus(action, body, message) {
+  async function changeStatus(action, message) {
     try {
       const response = await api(`/api/purchases/${id}/${action}`, {
         method: 'POST',
-        body: body ? JSON.stringify(body) : undefined,
       });
       setPurchase(response);
       setError('');
@@ -264,7 +189,7 @@ export function PurchaseDetailsPage() {
       setPurchase((current) => (current ? { ...current, comments } : current));
       setCommentMessage('');
       setError('');
-      setSuccess('Комментарий добавлен.');
+      setSuccess('Заметка добавлена.');
     } catch (submissionError) {
       setError(submissionError.message);
       setSuccess('');
@@ -293,10 +218,7 @@ export function PurchaseDetailsPage() {
   }
 
   const currentActions = getLifecycleActions(purchase.status);
-  const canEdit = purchase.status === 'DRAFT';
-  const selectedOffers = new Map(
-    (purchase.items ?? []).map((item) => [item.id, (item.offers ?? []).find((offer) => offer.selected) ?? null]),
-  );
+  const canEdit = purchase.status !== 'COMPLETED';
 
   return (
     <section className="page-section purchase-workbench">
@@ -305,7 +227,7 @@ export function PurchaseDetailsPage() {
           <p className="eyebrow">Рабочая карточка закупки</p>
           <h2>{purchase.estimateName}</h2>
           <p className="muted">
-            {purchase.projectName} • {getCurrentStepLabel(purchase.status)}
+            {purchase.projectName} • {translatePurchaseStatus(purchase.status)}
           </p>
         </div>
         <div className="action-row">
@@ -323,25 +245,25 @@ export function PurchaseDetailsPage() {
 
       {error ? <div className="error-box">{error}</div> : null}
       {success ? <div className="success-box">{success}</div> : null}
+
       {!canEdit ? (
         <div className="page-card">
           <p className="eyebrow">Режим просмотра</p>
-          <h3>Редактирование ограничено текущим статусом</h3>
+          <h3>Закупка уже завершена</h3>
           <p className="muted">
-            Изменять карточку, позиции и предложения можно только пока закупка находится в статусе «Черновик».
-            Дальше остаются действия жизненного цикла и комментарии.
+            После завершения закупка остается доступной для просмотра и печати, но больше не редактируется.
           </p>
         </div>
       ) : null}
 
-      <div className="detail-grid">
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
           <p className="eyebrow">Сводка</p>
           <h3>Что уже собрано по закупке</h3>
           <div className="detail-meta">
             <span className="tag">Объект: {purchase.projectName}</span>
             <span className="tag">Смета: {purchase.estimateName}</span>
-            <span className="tag">Поставщик: {purchase.supplierName || 'не выбран'}</span>
+            <span className="tag">Где купили: {purchase.supplierName || 'Не указано'}</span>
             <span className="tag">Создана: {formatRuDate(purchase.createdAt)}</span>
             <span className="tag">Обновлена: {formatRuDate(purchase.updatedAt)}</span>
             <span className="tag">План: {formatCurrency(purchase.plannedTotal)}</span>
@@ -349,22 +271,28 @@ export function PurchaseDetailsPage() {
             <span className="tag">Отклонение: {formatCurrency(purchase.deviation)}</span>
           </div>
           <p className="muted">
-            {purchase.comment || 'Комментарий к закупке еще не добавлен. Здесь удобно фиксировать рабочие заметки и причины изменений.'}
+            {purchase.comment || 'Здесь можно кратко зафиксировать, как проходит закупка и любые важные договоренности.'}
           </p>
+          {purchase.supplierUrl ? (
+            <p className="muted">
+              Ссылка на место покупки:{' '}
+              <a className="detail-link" href={purchase.supplierUrl} target="_blank" rel="noreferrer">
+                {purchase.supplierUrl}
+              </a>
+            </p>
+          ) : null}
         </article>
 
         <article className="page-card">
           <p className="eyebrow">Статус и действия</p>
-          <h3>Жизненный цикл закупки</h3>
+          <h3>Текущий этап закупки</h3>
           <div className="tag-row">
             <span className={`tag${purchase.status === 'DRAFT' ? ' tag-active' : ''}`}>Черновик</span>
-            <span className={`tag${purchase.status === 'SUBMITTED' ? ' tag-active' : ''}`}>На согласовании</span>
-            <span className={`tag${purchase.status === 'APPROVED' ? ' tag-active' : ''}`}>Утверждена</span>
-            <span className={`tag${purchase.status === 'ORDERED' ? ' tag-active' : ''}`}>Заказ оформлен</span>
-            <span className={`tag${purchase.status === 'RECEIVED' ? ' tag-active' : ''}`}>Получена</span>
+            <span className={`tag${purchase.status === 'IN_PROGRESS' ? ' tag-active' : ''}`}>В закупке</span>
+            <span className={`tag${purchase.status === 'COMPLETED' ? ' tag-active' : ''}`}>Завершена</span>
           </div>
           <p className="muted">
-            Текущий статус: <strong>{translatePurchaseStatus(purchase.status)}</strong>.
+            BASE_USER сам ведет закупку от начала до конца: выбирает, где купить, фиксирует факт и завершает процесс без согласования.
           </p>
           <div className="action-row">
             {currentActions.length ? currentActions.map((action) => (
@@ -372,7 +300,7 @@ export function PurchaseDetailsPage() {
                 key={action.action}
                 type="button"
                 className={action.className}
-                onClick={() => changeStatus(action.action, action.body, action.message)}
+                onClick={() => changeStatus(action.action, action.message)}
               >
                 {action.label}
               </button>
@@ -383,25 +311,29 @@ export function PurchaseDetailsPage() {
 
       <form className="page-card form-grid purchase-form-card" onSubmit={savePurchase}>
         <div>
-          <p className="eyebrow">Карточка закупки</p>
-          <h3>Поставщик и комментарий</h3>
+          <p className="eyebrow">Где купили</p>
+          <h3>Зафиксируйте источник покупки</h3>
           <p className="muted">
-            Здесь можно изменить базового поставщика закупки и оставить пояснение для команды.
+            Это может быть поставщик из каталога, внешний магазин, маркетплейс или любой другой источник. Ссылка необязательна.
           </p>
         </div>
         <input
           value={purchaseForm.supplierName}
           onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierName: event.target.value }))}
-          placeholder="Название поставщика"
-          required
+          placeholder="Например: ООО ТеплоСнаб или Леруа Мерлен"
+          disabled={!canEdit}
+        />
+        <input
+          value={purchaseForm.supplierUrl}
+          onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierUrl: event.target.value }))}
+          placeholder="Ссылка на поставщика, магазин или карточку товара"
           disabled={!canEdit}
         />
         <textarea
           rows={3}
           value={purchaseForm.comment}
           onChange={(event) => setPurchaseForm((current) => ({ ...current, comment: event.target.value }))}
-          placeholder="Комментарий к закупке"
-          required
+          placeholder="Краткий комментарий по закупке"
           disabled={!canEdit}
         />
         <button type="submit" className="primary-button" disabled={!canEdit}>
@@ -413,272 +345,176 @@ export function PurchaseDetailsPage() {
         <div className="row-between">
           <div>
             <p className="eyebrow">Позиции закупки</p>
-            <h3>Что именно ведем по этой закупке</h3>
+            <h3>Что именно покупаем по этой закупке</h3>
           </div>
           <strong>{formatCurrency(purchase.plannedTotal)}</strong>
         </div>
 
         <div className="stack-list">
-          {(purchase.items ?? []).length ? purchase.items.map((item) => {
-            const selectedOffer = selectedOffers.get(item.id);
-
-            return (
-              <article key={item.id} className="purchase-item-card">
-                <div className="purchase-item-head">
-                  <div>
-                    <p className="eyebrow">Позиция</p>
-                    <h4>{item.materialName}</h4>
-                    <div className="detail-meta">
-                      <span className="tag">
-                        План: {item.plannedQuantity} {item.unit} по {formatCurrency(item.plannedPrice)}
-                      </span>
-                      <span className="tag">
-                        Факт: {item.actualQuantity} {item.unit} по {formatCurrency(item.actualPrice)}
-                      </span>
-                      <span className="tag">Итого по плану: {formatCurrency(item.plannedLineTotal)}</span>
-                      <span className="tag">Итого по факту: {formatCurrency(item.actualLineTotal)}</span>
-                    </div>
-                    <p className="muted">
-                      {item.comment || 'Комментарий к позиции не задан. Его можно добавить в карточке ниже.'}
-                    </p>
+          {(purchase.items ?? []).length ? purchase.items.map((item) => (
+            <article key={item.id} className="purchase-item-card">
+              <div className="purchase-item-head">
+                <div>
+                  <p className="eyebrow">Позиция</p>
+                  <h4>{item.materialName}</h4>
+                  <div className="detail-meta">
+                    <span className="tag">
+                      План: {item.plannedQuantity} {item.unit} по {formatCurrency(item.plannedPrice)}
+                    </span>
+                    <span className="tag">
+                      Факт: {item.actualQuantity} {item.unit} по {formatCurrency(item.actualPrice)}
+                    </span>
+                    <span className="tag">Итого по плану: {formatCurrency(item.plannedLineTotal)}</span>
+                    <span className="tag">Итого по факту: {formatCurrency(item.actualLineTotal)}</span>
                   </div>
-                  <div className="purchase-item-badge">
-                    {selectedOffer ? (
-                      <>
-                        <span className="tag tag-success">Выбрано</span>
-                        <strong>{selectedOffer.supplierName}</strong>
-                        <span className="muted">
-                          {formatCurrency(selectedOffer.offeredPrice)} • {selectedOffer.deliveryDays} дн.
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="tag">Выбор не сделан</span>
-                        <span className="muted">Подберите предложение поставщика для этой позиции.</span>
-                      </>
-                    )}
-                  </div>
+                  <p className="muted">
+                    {item.comment || 'Комментарий к позиции не задан.'}
+                  </p>
                 </div>
+                <div className="purchase-item-badge">
+                  {(item.supplierHints ?? []).length ? (
+                    <>
+                      <span className="tag tag-success">Есть подсказки</span>
+                      <span className="muted">Можно посмотреть подходящих поставщиков ниже.</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="tag">Подсказок нет</span>
+                      <span className="muted">Эту позицию можно купить у любого внешнего поставщика и просто зафиксировать факт в закупке.</span>
+                    </>
+                  )}
+                </div>
+              </div>
 
-                <form
-                  className="purchase-item-editor"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    saveItem(item.id);
-                  }}
-                >
-                  <div className="purchase-item-fields">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={itemDrafts[item.id]?.plannedQuantity ?? ''}
-                      onChange={(event) => setItemDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyItemDraft }),
-                          plannedQuantity: event.target.value,
-                        },
-                      }))}
-                      placeholder="Плановое количество"
-                      required
-                      disabled={!canEdit}
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={itemDrafts[item.id]?.plannedPrice ?? ''}
-                      onChange={(event) => setItemDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyItemDraft }),
-                          plannedPrice: event.target.value,
-                        },
-                      }))}
-                      placeholder="Плановая цена"
-                      required
-                      disabled={!canEdit}
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={itemDrafts[item.id]?.actualQuantity ?? ''}
-                      onChange={(event) => setItemDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyItemDraft }),
-                          actualQuantity: event.target.value,
-                        },
-                      }))}
-                      placeholder="Фактическое количество"
-                      required
-                      disabled={!canEdit}
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={itemDrafts[item.id]?.actualPrice ?? ''}
-                      onChange={(event) => setItemDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyItemDraft }),
-                          actualPrice: event.target.value,
-                        },
-                      }))}
-                      placeholder="Фактическая цена"
-                      required
-                      disabled={!canEdit}
-                    />
-                  </div>
-                  <textarea
-                    rows={2}
-                    value={itemDrafts[item.id]?.comment ?? ''}
+              <form
+                className="purchase-item-editor"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  saveItem(item.id);
+                }}
+              >
+                <div className="purchase-item-fields">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={itemDrafts[item.id]?.plannedQuantity ?? ''}
                     onChange={(event) => setItemDrafts((current) => ({
                       ...current,
                       [item.id]: {
                         ...(current[item.id] ?? { ...emptyItemDraft }),
-                        comment: event.target.value,
+                        plannedQuantity: event.target.value,
                       },
                     }))}
-                    placeholder="Комментарий к позиции"
+                    placeholder="Плановое количество"
                     required
                     disabled={!canEdit}
                   />
-                  <div className="action-row">
-                    <button type="submit" className="ghost-button" disabled={!canEdit}>
-                      Сохранить позицию
-                    </button>
-                  </div>
-                </form>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={itemDrafts[item.id]?.plannedPrice ?? ''}
+                    onChange={(event) => setItemDrafts((current) => ({
+                      ...current,
+                      [item.id]: {
+                        ...(current[item.id] ?? { ...emptyItemDraft }),
+                        plannedPrice: event.target.value,
+                      },
+                    }))}
+                    placeholder="Плановая цена"
+                    required
+                    disabled={!canEdit}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={itemDrafts[item.id]?.actualQuantity ?? ''}
+                    onChange={(event) => setItemDrafts((current) => ({
+                      ...current,
+                      [item.id]: {
+                        ...(current[item.id] ?? { ...emptyItemDraft }),
+                        actualQuantity: event.target.value,
+                      },
+                    }))}
+                    placeholder="Фактическое количество"
+                    required
+                    disabled={!canEdit}
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={itemDrafts[item.id]?.actualPrice ?? ''}
+                    onChange={(event) => setItemDrafts((current) => ({
+                      ...current,
+                      [item.id]: {
+                        ...(current[item.id] ?? { ...emptyItemDraft }),
+                        actualPrice: event.target.value,
+                      },
+                    }))}
+                    placeholder="Фактическая цена"
+                    required
+                    disabled={!canEdit}
+                  />
+                </div>
+                <textarea
+                  rows={2}
+                  value={itemDrafts[item.id]?.comment ?? ''}
+                  onChange={(event) => setItemDrafts((current) => ({
+                    ...current,
+                    [item.id]: {
+                      ...(current[item.id] ?? { ...emptyItemDraft }),
+                      comment: event.target.value,
+                    },
+                  }))}
+                  placeholder="Комментарий к позиции"
+                  disabled={!canEdit}
+                />
+                <div className="action-row">
+                  <button type="submit" className="ghost-button" disabled={!canEdit}>
+                    Сохранить позицию
+                  </button>
+                </div>
+              </form>
 
-                <div className="purchase-offers-section">
-                  <div className="row-between">
-                    <div>
-                      <p className="eyebrow">Предложения поставщиков</p>
-                      <h4>Выбор лучшего варианта</h4>
-                    </div>
-                    <span className="tag">
-                    {(item.offers ?? []).length ? `Предложений: ${(item.offers ?? []).length}` : 'Предложений пока нет'}
+              <div className="purchase-offers-section">
+                <div className="row-between">
+                  <div>
+                    <p className="eyebrow">Подсказки по поставщикам</p>
+                    <h4>У кого можно купить эту позицию</h4>
+                  </div>
+                  <span className="tag">
+                    {(item.supplierHints ?? []).length ? `Подсказок: ${(item.supplierHints ?? []).length}` : 'Подсказок пока нет'}
                   </span>
                 </div>
 
-                <div className="purchase-offer-grid">
-                    {(item.offers ?? []).length ? (item.offers ?? []).map((offer) => (
-                      <article key={offer.id} className={`purchase-offer-card${offer.selected ? ' selected' : ''}`}>
-                        <div className="row-between">
-                          <strong>{offer.supplierName}</strong>
-                          {offer.selected ? <span className="tag tag-success">Выбрано</span> : null}
-                        </div>
-                        <p className="muted">
-                          {formatCurrency(offer.offeredPrice)} • {offer.deliveryDays} дн.
-                        </p>
-                        <p className="muted">{offer.comment}</p>
-                        {!offer.selected ? (
-                          <button
-                            type="button"
-                            className="ghost-button"
-                            onClick={() => selectOffer(item.id, offer.id)}
-                            disabled={!canEdit}
-                          >
-                            Выбрать предложение
-                          </button>
-                        ) : null}
-                      </article>
-                    )) : (
-                      <div className="empty-note">Пока нет предложений по этой позиции.</div>
-                    )}
-                  </div>
-
-                  <form
-                    className="purchase-offer-form"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      addOffer(item.id);
-                    }}
-                  >
-                    <select
-                      value={offerDrafts[item.id]?.supplierId ?? ''}
-                      onChange={(event) => setOfferDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyOfferDraft }),
-                          supplierId: event.target.value,
-                        },
-                      }))}
-                      required
-                      disabled={!canEdit}
-                    >
-                      <option value="">Выберите поставщика</option>
-                      {suppliers.map((supplier) => (
-                        <option key={supplier.id} value={supplier.id}>
-                          {supplier.name}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      value={offerDrafts[item.id]?.offeredPrice ?? ''}
-                      onChange={(event) => setOfferDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyOfferDraft }),
-                          offeredPrice: event.target.value,
-                        },
-                      }))}
-                      placeholder="Цена предложения"
-                      required
-                      disabled={!canEdit}
-                    />
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={offerDrafts[item.id]?.deliveryDays ?? ''}
-                      onChange={(event) => setOfferDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyOfferDraft }),
-                          deliveryDays: event.target.value,
-                        },
-                      }))}
-                      placeholder="Срок поставки, дней"
-                      required
-                      disabled={!canEdit}
-                    />
-                    <input
-                      value={offerDrafts[item.id]?.comment ?? ''}
-                      onChange={(event) => setOfferDrafts((current) => ({
-                        ...current,
-                        [item.id]: {
-                          ...(current[item.id] ?? { ...emptyOfferDraft }),
-                          comment: event.target.value,
-                        },
-                      }))}
-                      placeholder="Комментарий к предложению"
-                      required
-                      disabled={!canEdit}
-                    />
-                    <button type="submit" className="primary-button" disabled={!canEdit}>
-                      Добавить предложение
-                    </button>
-                  </form>
+                <div className="linked-grid">
+                  {(item.supplierHints ?? []).length ? (item.supplierHints ?? []).map((supplier) => (
+                    <Link key={supplier.supplierId} className="linked-card" to={`/suppliers/${supplier.supplierId}`}>
+                      <strong>{supplier.supplierName}</strong>
+                      <span>Рейтинг: {supplier.rating}</span>
+                      <span>{supplier.phone}</span>
+                      <span>{supplier.telegram || supplier.email}</span>
+                    </Link>
+                  )) : (
+                    <div className="empty-note">
+                      Для этой позиции пока нет подсказок по поставщикам. Это не блокирует закупку: место покупки можно зафиксировать вручную в карточке закупки.
+                    </div>
+                  )}
                 </div>
-              </article>
-            );
-          }) : <p className="muted">В этой закупке пока нет позиций.</p>}
+              </div>
+            </article>
+          )) : <p className="muted">В этой закупке пока нет позиций.</p>}
         </div>
       </article>
 
       <article className="page-card">
         <div className="row-between">
           <div>
-            <p className="eyebrow">Комментарии</p>
-            <h3>История согласования и замечания</h3>
+            <p className="eyebrow">Рабочие заметки</p>
+            <h3>История комментариев по закупке</h3>
           </div>
         </div>
 
@@ -691,7 +527,7 @@ export function PurchaseDetailsPage() {
               </div>
               <p>{comment.message}</p>
             </article>
-          )) : <p className="muted">Комментариев пока нет.</p>}
+          )) : <p className="muted">Заметок пока нет.</p>}
         </div>
 
         <form className="purchase-comment-form" onSubmit={addComment}>
@@ -699,12 +535,12 @@ export function PurchaseDetailsPage() {
             rows={3}
             value={commentMessage}
             onChange={(event) => setCommentMessage(event.target.value)}
-            placeholder="Оставьте комментарий для команды или зафиксируйте замечание"
+            placeholder="Оставьте заметку по закупке"
             required
           />
           <div className="action-row">
             <button type="submit" className="ghost-button">
-              Добавить комментарий
+              Добавить заметку
             </button>
           </div>
         </form>

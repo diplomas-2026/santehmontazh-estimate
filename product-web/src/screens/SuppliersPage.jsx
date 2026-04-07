@@ -15,7 +15,7 @@ export function SuppliersPage() {
       title="Поставщики"
       subtitle="Справочник контрагентов, каналов связи, отзывов и связанных материалов."
       premium
-      premiumMessage="С подпиской вы открываете сравнение предложений, рейтинг поставщиков и рекомендации по выбору."
+      premiumMessage="С подпиской вы открываете справочник поставщиков, отзывы, контакты и подсказки по материалам."
       columns={['Компания', 'Контакт', 'Телефон', 'Email', 'Рейтинг', 'Карточка']}
       rows={suppliers.map((supplier) => [
         <Link key={`supplier-name-${supplier.id}`} className="detail-link" to={`/suppliers/${supplier.id}`}>{supplier.name}</Link>,
