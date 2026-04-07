@@ -131,7 +131,7 @@ export function ProjectDetailsPage() {
         <Link className="ghost-button" to="/projects">К списку объектов</Link>
       </div>
 
-      <div className="detail-grid">
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
           <p className="eyebrow">Описание</p>
           <h3>Что это за объект</h3>
@@ -231,7 +231,7 @@ export function ProjectDetailsPage() {
       {purchaseError ? <div className="error-box">{purchaseError}</div> : null}
       {purchaseSuccess ? <div className="success-box">{purchaseSuccess}</div> : null}
 
-      <div className="detail-grid">
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
           <div className="row-between">
             <div>
