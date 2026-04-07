@@ -823,6 +823,29 @@ th {
   gap: 14px;
 }
 
+.purchase-item-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.purchase-item-summary-card {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.purchase-item-summary-card span {
+  color: rgba(221, 230, 246, 0.7);
+}
+
+.purchase-item-summary-card strong {
+  font-size: 1.1rem;
+}
+
 .purchase-item-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1283,7 +1306,8 @@ th {
 
   .purchase-item-fields,
   .purchase-offer-grid,
-  .purchase-finance-grid {
+  .purchase-finance-grid,
+  .purchase-item-summary-grid {
     grid-template-columns: 1fr;
   }
 

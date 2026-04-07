@@ -11,14 +11,6 @@ const emptyPurchaseForm = {
   comment: '',
 };
 
-const emptyItemDraft = {
-  plannedQuantity: '',
-  plannedPrice: '',
-  actualQuantity: '',
-  actualPrice: '',
-  comment: '',
-};
-
 const lifecycleActions = {
   DRAFT: [
     {
@@ -38,21 +30,6 @@ const lifecycleActions = {
   ],
 };
 
-function buildItemDrafts(items = []) {
-  return Object.fromEntries(
-    items.map((item) => [
-      item.id,
-      {
-        plannedQuantity: String(item.plannedQuantity ?? ''),
-        plannedPrice: String(item.plannedPrice ?? ''),
-        actualQuantity: String(item.actualQuantity ?? ''),
-        actualPrice: String(item.actualPrice ?? ''),
-        comment: item.comment ?? '',
-      },
-    ]),
-  );
-}
-
 function getLifecycleActions(status) {
   return lifecycleActions[status] ?? [];
 }
@@ -63,7 +40,6 @@ export function PurchaseDetailsPage() {
   const [purchase, setPurchase] = useState(null);
   const [loading, setLoading] = useState(true);
   const [purchaseForm, setPurchaseForm] = useState(emptyPurchaseForm);
-  const [itemDrafts, setItemDrafts] = useState({});
   const [commentMessage, setCommentMessage] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -111,7 +87,6 @@ export function PurchaseDetailsPage() {
       comment: purchase.comment ?? '',
     });
     setCommentMessage('');
-    setItemDrafts(buildItemDrafts(purchase.items ?? []));
   }, [purchase]);
 
   async function reloadPurchase(message) {
@@ -137,28 +112,6 @@ export function PurchaseDetailsPage() {
         }),
       });
       await reloadPurchase('Карточка закупки обновлена.');
-    } catch (submissionError) {
-      setError(submissionError.message);
-      setSuccess('');
-    }
-  }
-
-  async function saveItem(itemId) {
-    const draft = itemDrafts[itemId];
-    try {
-      const response = await api(`/api/purchase-items/${itemId}`, {
-        method: 'PUT',
-        body: JSON.stringify({
-          plannedQuantity: Number(draft.plannedQuantity),
-          plannedPrice: Number(draft.plannedPrice),
-          actualQuantity: Number(draft.actualQuantity),
-          actualPrice: Number(draft.actualPrice),
-          comment: draft.comment,
-        }),
-      });
-      setPurchase(response);
-      setError('');
-      setSuccess('Позиция закупки обновлена.');
     } catch (submissionError) {
       setError(submissionError.message);
       setSuccess('');
@@ -349,6 +302,9 @@ export function PurchaseDetailsPage() {
           </div>
           <strong>{formatCurrency(purchase.plannedTotal)}</strong>
         </div>
+        <p className="muted">
+          Внутри закупки виден краткий обзор всех позиций. Для редактирования конкретной позиции откройте отдельную карточку и работайте с ней без перегруза.
+        </p>
 
         <div className="stack-list">
           {(purchase.items ?? []).length ? purchase.items.map((item) => (
@@ -386,124 +342,25 @@ export function PurchaseDetailsPage() {
                 </div>
               </div>
 
-              <form
-                className="purchase-item-editor"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  saveItem(item.id);
-                }}
-              >
-                <div className="purchase-item-fields">
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={itemDrafts[item.id]?.plannedQuantity ?? ''}
-                    onChange={(event) => setItemDrafts((current) => ({
-                      ...current,
-                      [item.id]: {
-                        ...(current[item.id] ?? { ...emptyItemDraft }),
-                        plannedQuantity: event.target.value,
-                      },
-                    }))}
-                    placeholder="Плановое количество"
-                    required
-                    disabled={!canEdit}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={itemDrafts[item.id]?.plannedPrice ?? ''}
-                    onChange={(event) => setItemDrafts((current) => ({
-                      ...current,
-                      [item.id]: {
-                        ...(current[item.id] ?? { ...emptyItemDraft }),
-                        plannedPrice: event.target.value,
-                      },
-                    }))}
-                    placeholder="Плановая цена"
-                    required
-                    disabled={!canEdit}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={itemDrafts[item.id]?.actualQuantity ?? ''}
-                    onChange={(event) => setItemDrafts((current) => ({
-                      ...current,
-                      [item.id]: {
-                        ...(current[item.id] ?? { ...emptyItemDraft }),
-                        actualQuantity: event.target.value,
-                      },
-                    }))}
-                    placeholder="Фактическое количество"
-                    required
-                    disabled={!canEdit}
-                  />
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={itemDrafts[item.id]?.actualPrice ?? ''}
-                    onChange={(event) => setItemDrafts((current) => ({
-                      ...current,
-                      [item.id]: {
-                        ...(current[item.id] ?? { ...emptyItemDraft }),
-                        actualPrice: event.target.value,
-                      },
-                    }))}
-                    placeholder="Фактическая цена"
-                    required
-                    disabled={!canEdit}
-                  />
+              <div className="purchase-item-summary-grid">
+                <div className="purchase-item-summary-card">
+                  <span>По плану</span>
+                  <strong>{formatCurrency(item.plannedLineTotal)}</strong>
                 </div>
-                <textarea
-                  rows={2}
-                  value={itemDrafts[item.id]?.comment ?? ''}
-                  onChange={(event) => setItemDrafts((current) => ({
-                    ...current,
-                    [item.id]: {
-                      ...(current[item.id] ?? { ...emptyItemDraft }),
-                      comment: event.target.value,
-                    },
-                  }))}
-                  placeholder="Комментарий к позиции"
-                  disabled={!canEdit}
-                />
-                <div className="action-row">
-                  <button type="submit" className="ghost-button" disabled={!canEdit}>
-                    Сохранить позицию
-                  </button>
+                <div className="purchase-item-summary-card">
+                  <span>По факту</span>
+                  <strong>{formatCurrency(item.actualLineTotal)}</strong>
                 </div>
-              </form>
+                <div className="purchase-item-summary-card">
+                  <span>Подсказки</span>
+                  <strong>{(item.supplierHints ?? []).length || 'Нет'}</strong>
+                </div>
+              </div>
 
-              <div className="purchase-offers-section">
-                <div className="row-between">
-                  <div>
-                    <p className="eyebrow">Подсказки по поставщикам</p>
-                    <h4>У кого можно купить эту позицию</h4>
-                  </div>
-                  <span className="tag">
-                    {(item.supplierHints ?? []).length ? `Подсказок: ${(item.supplierHints ?? []).length}` : 'Подсказок пока нет'}
-                  </span>
-                </div>
-
-                <div className="linked-grid">
-                  {(item.supplierHints ?? []).length ? (item.supplierHints ?? []).map((supplier) => (
-                    <Link key={supplier.supplierId} className="linked-card" to={`/suppliers/${supplier.supplierId}`}>
-                      <strong>{supplier.supplierName}</strong>
-                      <span>Рейтинг: {supplier.rating}</span>
-                      <span>{supplier.phone}</span>
-                      <span>{supplier.telegram || supplier.email}</span>
-                    </Link>
-                  )) : (
-                    <div className="empty-note">
-                      Для этой позиции пока нет подсказок по поставщикам. Это не блокирует закупку: место покупки можно зафиксировать вручную в карточке закупки.
-                    </div>
-                  )}
-                </div>
+              <div className="action-row">
+                <Link className="ghost-button" to={`/purchases/${purchase.id}/items/${item.id}`}>
+                  Открыть позицию
+                </Link>
               </div>
             </article>
           )) : <p className="muted">В этой закупке пока нет позиций.</p>}
