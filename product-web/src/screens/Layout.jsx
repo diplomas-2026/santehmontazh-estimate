@@ -1,4 +1,5 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { formatRuDate } from '../i18n/date';
 import { translateRole, translateSubscriptionStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -54,7 +55,7 @@ export function Layout() {
             <h3>{subscription ? 'Premium уже включен' : 'Откройте платные сценарии'}</h3>
             <p>
               {subscription
-                ? `Активен тариф ${subscription.tierName} до ${new Date(subscription.expiresAt).toLocaleDateString('ru-RU')}.`
+                ? `Активен тариф ${subscription.tierName} до ${formatRuDate(subscription.expiresAt)}.`
                 : 'Подключите подписку, чтобы открыть аналитику, paywall-функции и расширенный контроль закупки.'}
             </p>
             <Link className="primary-button" to="/pricing">

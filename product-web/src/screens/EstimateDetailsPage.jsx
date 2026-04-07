@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -116,7 +117,6 @@ export function EstimateDetailsPage() {
           <button type="button" className="ghost-button" onClick={() => navigate(`/projects/${estimate.projectId}`)}>
             К объекту
           </button>
-          <Link className="ghost-button" to="/estimates">Архив смет</Link>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export function EstimateDetailsPage() {
           <h3>Описание расчета</h3>
           <p>{estimate.notes}</p>
           <div className="detail-meta">
-            <span className="tag">Сумма: {estimate.total}</span>
+            <span className="tag">Сумма: {formatCurrency(estimate.total)}</span>
             <span className="tag">Автор: {estimate.createdByName}</span>
             <span className="tag">Позиции: {estimate.items.length}</span>
           </div>
@@ -175,7 +175,7 @@ export function EstimateDetailsPage() {
             <option value="">Выберите материал</option>
             {materials.map((material) => (
               <option key={material.id} value={material.id}>
-                {material.name} • {material.unit} • {material.defaultPrice}
+                {material.name} • {material.unit} • {formatCurrency(material.defaultPrice)}
               </option>
             ))}
           </select>
@@ -217,7 +217,7 @@ export function EstimateDetailsPage() {
             <p className="eyebrow">Позиции сметы</p>
             <h3>Состав расчета</h3>
           </div>
-          <strong>{estimate.total}</strong>
+          <strong>{formatCurrency(estimate.total)}</strong>
         </div>
 
         <div className="stack-list">
@@ -225,11 +225,11 @@ export function EstimateDetailsPage() {
             <div key={item.id} className="detail-list-item">
               <div>
                 <strong>{item.workName}</strong>
-                <p className="muted">{item.materialName} • {item.quantity} {item.unit} • {item.unitPrice}</p>
+                <p className="muted">{item.materialName} • {item.quantity} {item.unit} • {formatCurrency(item.unitPrice)}</p>
                 <p className="muted">{item.comment}</p>
               </div>
               <div className="detail-actions">
-                <strong>{item.lineTotal}</strong>
+                <strong>{formatCurrency(item.lineTotal)}</strong>
                 {canEdit ? (
                   <button type="button" className="ghost-button" onClick={() => deleteItem(item.id)}>
                     Удалить

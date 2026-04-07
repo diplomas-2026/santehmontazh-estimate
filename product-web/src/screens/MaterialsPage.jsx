@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
 import { TableShell } from './shared/TableShell';
 
 export function MaterialsPage() {
@@ -19,7 +20,7 @@ export function MaterialsPage() {
         material.sku,
         material.categoryName,
         material.unit,
-        material.defaultPrice,
+        formatCurrency(material.defaultPrice),
       ])}
     />
   );

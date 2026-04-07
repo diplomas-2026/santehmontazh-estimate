@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
 import { useAuth } from '../modules/auth/AuthContext';
 import { TableShell } from './shared/TableShell';
 
@@ -37,9 +38,9 @@ export function ReportsPage() {
       rows={rows.map((row) => [
         row.projectName,
         row.estimateName,
-        row.plannedTotal,
-        row.actualTotal,
-        row.deviation,
+        formatCurrency(row.plannedTotal),
+        formatCurrency(row.actualTotal),
+        formatCurrency(row.deviation),
       ])}
     />
   );

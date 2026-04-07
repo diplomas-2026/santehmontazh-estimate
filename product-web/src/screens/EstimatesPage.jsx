@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -92,7 +93,7 @@ export function EstimatesPage() {
                 <h3>{estimate.name}</h3>
                 <p className="muted">{estimate.projectName} • {translateEstimateStatus(estimate.status)} • {estimate.items.length} поз.</p>
               </div>
-              <strong>{estimate.total}</strong>
+              <strong>{formatCurrency(estimate.total)}</strong>
             </div>
             <p>{estimate.notes}</p>
             <div className="tag-row">

@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
+import { formatRuDate } from '../i18n/date';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const premiumSignals = [
@@ -154,7 +155,7 @@ export function LandingPage() {
                 </Typography>
                 <Typography color="text.secondary">
                   {subscription
-                    ? `Доступ активен до ${new Date(subscription.expiresAt).toLocaleDateString('ru-RU')}.`
+                    ? `Доступ активен до ${formatRuDate(subscription.expiresAt)}.`
                     : 'Подключите подписку, чтобы открыть аналитику, поставщиков и платные сценарии продукта.'}
                 </Typography>
               </CardContent>

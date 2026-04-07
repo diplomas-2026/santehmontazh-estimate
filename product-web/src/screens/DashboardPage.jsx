@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { Link } from 'react-router-dom';
+import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus, translateRole } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -59,7 +60,7 @@ export function DashboardPage() {
         {cards.map(([label, value]) => (
           <article key={label} className="metric-card">
             <span>{label}</span>
-            <strong>{value}</strong>
+            <strong>{formatCurrency(value)}</strong>
             <p>{label === 'Отклонение' ? 'Показывает эффект решений закупки' : 'Данные обновляются из боевого контура'}</p>
           </article>
         ))}
@@ -76,7 +77,7 @@ export function DashboardPage() {
           <p className="eyebrow">Сценарии продукта</p>
           <h3>Что уже можно сделать в системе</h3>
           <div className="tag-row">
-            <span className="tag">Создать смету и версию</span>
+            <span className="tag">Создать смету и позиции</span>
             <span className="tag">Сформировать закупку</span>
             <span className="tag">Передать на согласование</span>
             <span className="tag">Сравнить план и факт</span>

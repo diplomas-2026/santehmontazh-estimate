@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { Link as RouterLink } from 'react-router-dom';
+import { formatRuDate } from '../i18n/date';
 import { useAuth } from '../modules/auth/AuthContext';
 
 export function PricingPage() {
@@ -36,7 +37,7 @@ export function PricingPage() {
                     <Typography variant="h5">{subscription ? subscription.tierName : 'Без подписки'}</Typography>
                     <Typography color="text.secondary">
                       {subscription
-                        ? `Действует до ${new Date(subscription.expiresAt).toLocaleDateString('ru-RU')}`
+                        ? `Действует до ${formatRuDate(subscription.expiresAt)}`
                         : 'Подключите тариф, чтобы открыть платные функции продукта.'}
                     </Typography>
                   </CardContent>

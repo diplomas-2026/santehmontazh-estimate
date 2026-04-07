@@ -1,6 +1,8 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
+import { formatRuDate } from '../i18n/date';
 import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -103,8 +105,8 @@ export function ProjectDetailsPage() {
           <p>{project.description}</p>
           <div className="detail-meta">
             <span className="tag">Адрес: {project.address}</span>
-            <span className="tag">Старт: {project.plannedStartDate}</span>
-            <span className="tag">Финиш: {project.plannedEndDate}</span>
+            <span className="tag">Старт: {formatRuDate(project.plannedStartDate)}</span>
+            <span className="tag">Финиш: {formatRuDate(project.plannedEndDate)}</span>
           </div>
         </article>
 
@@ -122,11 +124,11 @@ export function ProjectDetailsPage() {
             </div>
             <div className="metric-card">
               <span>План</span>
-              <strong>{summary.planned.toFixed(2)}</strong>
+              <strong>{formatCurrency(summary.planned)}</strong>
             </div>
             <div className="metric-card">
               <span>Факт</span>
-              <strong>{summary.actual.toFixed(2)}</strong>
+              <strong>{formatCurrency(summary.actual)}</strong>
             </div>
           </div>
         </article>
@@ -182,7 +184,6 @@ export function ProjectDetailsPage() {
               <p className="eyebrow">Связанные сметы</p>
               <h3>Расчеты по объекту</h3>
             </div>
-            <Link className="ghost-button" to="/estimates">Архив смет</Link>
           </div>
 
           <div className="stack-list">
@@ -193,7 +194,7 @@ export function ProjectDetailsPage() {
                   <p className="muted">{translateEstimateStatus(estimate.status)} • {estimate.items.length} поз.</p>
                 </div>
                 <div className="detail-actions">
-                  <strong>{estimate.total}</strong>
+                  <strong>{formatCurrency(estimate.total)}</strong>
                   <Link className="ghost-button" to={`/estimates/${estimate.id}`}>
                     Открыть смету
                   </Link>
@@ -234,8 +235,8 @@ export function ProjectDetailsPage() {
                   <p className="muted">{translatePurchaseStatus(purchase.status)} • {purchase.supplierName}</p>
                 </div>
                 <div className="metric-inline">
-                  <span>План: {purchase.plannedTotal}</span>
-                  <span>Факт: {purchase.actualTotal}</span>
+                  <span>План: {formatCurrency(purchase.plannedTotal)}</span>
+                  <span>Факт: {formatCurrency(purchase.actualTotal)}</span>
                 </div>
               </div>
             )) : <p className="muted">По объекту пока нет закупок.</p>}

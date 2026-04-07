@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
+import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus, translatePurchaseStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -73,9 +74,9 @@ export function PurchasesPage() {
                 <p className="muted">{purchase.estimateName} • {translatePurchaseStatus(purchase.status)}</p>
               </div>
               <div className="metric-inline">
-                <span>План: {purchase.plannedTotal}</span>
-                <span>Факт: {purchase.actualTotal}</span>
-                <strong>Δ {purchase.deviation}</strong>
+                <span>План: {formatCurrency(purchase.plannedTotal)}</span>
+                <span>Факт: {formatCurrency(purchase.actualTotal)}</span>
+                <strong>Δ {formatCurrency(purchase.deviation)}</strong>
               </div>
             </div>
 
