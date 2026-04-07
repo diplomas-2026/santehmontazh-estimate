@@ -40,6 +40,7 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.LinkedHashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +111,7 @@ public class SeedDataLoader {
             seedCategories();
             seedMaterials();
             seedSuppliers();
+            seedSupplierMaterials();
             seedMaterialReviews(users);
             seedSupplierReviews(users);
             if (projectRepository.count() == 0) {
@@ -190,6 +192,19 @@ public class SeedDataLoader {
             supplier.setTelegram(item.telegram().isBlank() ? null : item.telegram());
             supplier.setRating(item.rating());
             supplier.setActive(item.active());
+            supplierRepository.save(supplier);
+        }
+    }
+
+    private void seedSupplierMaterials() throws IOException {
+        List<SupplierMaterialsSeed> items = readList("seed-data/supplier-materials.json", new TypeReference<>() {});
+        for (SupplierMaterialsSeed item : items) {
+            Supplier supplier = supplierRepository.findByNameIgnoreCase(item.supplierName()).orElseThrow();
+            LinkedHashSet<Material> materials = item.materialSkus().stream()
+                .map(sku -> materialRepository.findBySkuIgnoreCase(sku).orElseThrow())
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+            supplier.getMaterials().clear();
+            supplier.getMaterials().addAll(materials);
             supplierRepository.save(supplier);
         }
     }
@@ -438,5 +453,8 @@ public class SeedDataLoader {
     }
 
     private record SupplierReviewSeed(String supplierName, String authorEmail, int rating, String comment) {
+    }
+
+    private record SupplierMaterialsSeed(String supplierName, List<String> materialSkus) {
     }
 }

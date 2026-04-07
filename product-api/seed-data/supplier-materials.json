@@ -1,0 +1,22 @@
+[
+  {
+    "supplierName": "ООО ТеплоСнаб",
+    "materialSkus": ["PP-25", "PP-32", "MF-25", "UG-25", "KR-12", "KR-34", "FG-01"]
+  },
+  {
+    "supplierName": "ООО ПрофТруба",
+    "materialSkus": ["PP-25", "PP-32", "MF-25", "UG-25", "HM-01"]
+  },
+  {
+    "supplierName": "ООО АкваМаркет",
+    "materialSkus": ["KR-12", "KR-34", "FG-01", "GR-01", "VN-100"]
+  },
+  {
+    "supplierName": "ООО ИнженерСклад",
+    "materialSkus": ["KL-4", "FG-01", "NS-01", "VN-100", "GR-01", "HM-01"]
+  },
+  {
+    "supplierName": "ООО МонтажКомплект",
+    "materialSkus": ["HM-01", "GR-01", "KR-12", "KR-34", "KL-4"]
+  }
+]

@@ -169,7 +169,10 @@ export function MaterialDetailsPage() {
       <div className="detail-grid">
         <article className="page-card">
           <p className="eyebrow">Связанные поставщики</p>
-          <h3>Кто уже предлагал этот материал</h3>
+          <h3>Какие поставщики могут поставить этот материал</h3>
+          <p className="muted">
+            Это справочный список поставщиков, у которых материал доступен к поставке.
+          </p>
           <div className="linked-grid">
             {material.suppliers.length ? material.suppliers.map((supplier) => (
               <Link key={supplier.id} className="linked-card" to={`/suppliers/${supplier.id}`}>
@@ -178,7 +181,7 @@ export function MaterialDetailsPage() {
                 <span>{supplier.phone}</span>
                 <span>{supplier.telegram || supplier.email}</span>
               </Link>
-            )) : <div className="empty-note">Поставщики появятся здесь после того, как по материалу будут предложения в закупках.</div>}
+            )) : <div className="empty-note">Для этого материала пока не указаны поставщики.</div>}
           </div>
         </article>
 

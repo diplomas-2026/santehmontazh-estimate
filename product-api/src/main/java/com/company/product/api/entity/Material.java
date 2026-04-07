@@ -7,9 +7,12 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -47,4 +50,7 @@ public class Material {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @ManyToMany(mappedBy = "materials")
+    private Set<Supplier> suppliers = new LinkedHashSet<>();
 }

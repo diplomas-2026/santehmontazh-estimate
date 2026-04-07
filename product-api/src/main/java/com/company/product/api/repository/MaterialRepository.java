@@ -11,10 +11,10 @@ public interface MaterialRepository extends JpaRepository<Material, Long> {
     Optional<Material> findBySkuIgnoreCase(String sku);
 
     @Query("""
-        select distinct pi.material from SupplierOffer so
-        join so.purchaseItem pi
-        where so.supplier.id = :supplierId
-        order by pi.material.name
+        select distinct m from Supplier s
+        join s.materials m
+        where s.id = :supplierId
+        order by m.name
         """)
     List<Material> findLinkedBySupplierId(Long supplierId);
 }

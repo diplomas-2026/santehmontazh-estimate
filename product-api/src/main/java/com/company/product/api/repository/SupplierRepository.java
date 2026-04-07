@@ -11,10 +11,10 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     Optional<Supplier> findByNameIgnoreCase(String name);
 
     @Query("""
-        select distinct so.supplier from SupplierOffer so
-        join so.purchaseItem pi
-        where pi.material.id = :materialId
-        order by so.supplier.name
+        select distinct s from Material m
+        join m.suppliers s
+        where m.id = :materialId
+        order by s.name
         """)
     List<Supplier> findLinkedByMaterialId(Long materialId);
 }

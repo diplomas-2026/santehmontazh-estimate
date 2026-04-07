@@ -163,9 +163,9 @@ export function SupplierDetailsPage() {
 
         <article className="page-card">
           <p className="eyebrow">Материалы</p>
-          <h3>С какими материалами поставщик уже работал</h3>
+          <h3>Какие материалы поставщик может поставить</h3>
           <p className="muted">
-            Здесь показываются материалы, по которым поставщик уже давал предложения в закупках. Это помогает быстро понять его рабочую историю в системе.
+            Это справочный список материалов, которые доступны у поставщика для закупки.
           </p>
           <div className="linked-grid">
             {supplier.materials.length ? supplier.materials.map((material) => (
@@ -175,7 +175,7 @@ export function SupplierDetailsPage() {
                 <span>{material.unit}</span>
                 <span>{formatCurrency(material.defaultPrice)}</span>
               </Link>
-            )) : <div className="empty-note">Список появится после того, как поставщик даст предложения по конкретным материалам в закупках.</div>}
+            )) : <div className="empty-note">Для этого поставщика пока не указан список материалов.</div>}
           </div>
         </article>
       </div>
