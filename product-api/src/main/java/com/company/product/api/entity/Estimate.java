@@ -33,9 +33,6 @@ public class Estimate {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private Integer version;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private EstimateStatus status;
@@ -46,10 +43,6 @@ public class Estimate {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     private UserAccount createdBy;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "base_estimate_id")
-    private Estimate baseEstimate;
 
     @Column(nullable = false)
     private OffsetDateTime createdAt;

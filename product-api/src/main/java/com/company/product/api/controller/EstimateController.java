@@ -49,12 +49,6 @@ public class EstimateController {
         return estimateService.update(id, request);
     }
 
-    @PostMapping("/estimates/{id}/create-version")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
-    public EstimateResponse createVersion(@PathVariable Long id) {
-        return estimateService.createVersion(id);
-    }
-
     @PostMapping("/estimates/{id}/items")
     @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
     public EstimateResponse addItem(@PathVariable Long id, @Valid @RequestBody EstimateItemRequest request) {

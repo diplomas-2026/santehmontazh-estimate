@@ -7,7 +7,7 @@ export const subscriptionPlans = [
     accent: 'Старт без перегруза',
     features: [
       'До 3 активных объектов',
-      'Базовые сметы и версии',
+      'Сметы и позиции затрат',
       'Каталог материалов',
       'История по объектам за 30 дней',
     ],
@@ -65,4 +65,3 @@ export function getPlanById(planId) {
 export function getPeriodById(plan, periodId) {
   return plan.periods.find((period) => period.id === periodId) ?? plan.periods[0];
 }
-

@@ -1,10 +1,10 @@
 [
-  {"projectCode":"OBJ-001","estimateVersion":1,"materialSku":"PP-25","workName":"Разводка воды по квартирам","quantity":120.00,"unitPrice":210.00,"comment":"Основная магистраль"},
-  {"projectCode":"OBJ-001","estimateVersion":1,"materialSku":"KR-12","workName":"Установка кранов на вводах","quantity":24.00,"unitPrice":390.00,"comment":"По одному комплекту на стояк"},
-  {"projectCode":"OBJ-001","estimateVersion":1,"materialSku":"HM-01","workName":"Крепление трубопровода","quantity":160.00,"unitPrice":38.00,"comment":"Крепеж по проекту"},
-  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"PP-32","workName":"Замена магистральной линии","quantity":85.00,"unitPrice":280.00,"comment":"Основная магистраль"},
-  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"KL-4","workName":"Монтаж распределительных коллекторов","quantity":6.00,"unitPrice":3600.00,"comment":"На санитарные зоны"},
-  {"projectCode":"OBJ-002","estimateVersion":1,"materialSku":"FG-01","workName":"Установка фильтров","quantity":8.00,"unitPrice":740.00,"comment":"На вводы"},
-  {"projectCode":"OBJ-003","estimateVersion":1,"materialSku":"VN-100","workName":"Монтаж водонагревателей","quantity":2.00,"unitPrice":26500.00,"comment":"Основной блок ГВС"},
-  {"projectCode":"OBJ-003","estimateVersion":1,"materialSku":"NS-01","workName":"Монтаж насосов","quantity":2.00,"unitPrice":12800.00,"comment":"Циркуляция контура"}
+  {"projectCode":"OBJ-001","estimateName":"Смета по секции А","materialSku":"PP-25","workName":"Разводка воды по квартирам","quantity":120.00,"unitPrice":210.00,"comment":"Основная магистраль"},
+  {"projectCode":"OBJ-001","estimateName":"Смета по секции А","materialSku":"KR-12","workName":"Установка кранов на вводах","quantity":24.00,"unitPrice":390.00,"comment":"По одному комплекту на стояк"},
+  {"projectCode":"OBJ-001","estimateName":"Смета по секции А","materialSku":"HM-01","workName":"Крепление трубопровода","quantity":160.00,"unitPrice":38.00,"comment":"Крепеж по проекту"},
+  {"projectCode":"OBJ-002","estimateName":"Смета по этажу 5","materialSku":"PP-32","workName":"Замена магистральной линии","quantity":85.00,"unitPrice":280.00,"comment":"Основная магистраль"},
+  {"projectCode":"OBJ-002","estimateName":"Смета по этажу 5","materialSku":"KL-4","workName":"Монтаж распределительных коллекторов","quantity":6.00,"unitPrice":3600.00,"comment":"На санитарные зоны"},
+  {"projectCode":"OBJ-002","estimateName":"Смета по этажу 5","materialSku":"FG-01","workName":"Установка фильтров","quantity":8.00,"unitPrice":740.00,"comment":"На вводы"},
+  {"projectCode":"OBJ-003","estimateName":"Смета по складу Север","materialSku":"VN-100","workName":"Монтаж водонагревателей","quantity":2.00,"unitPrice":26500.00,"comment":"Основной блок ГВС"},
+  {"projectCode":"OBJ-003","estimateName":"Смета по складу Север","materialSku":"NS-01","workName":"Монтаж насосов","quantity":2.00,"unitPrice":12800.00,"comment":"Циркуляция контура"}
 ]

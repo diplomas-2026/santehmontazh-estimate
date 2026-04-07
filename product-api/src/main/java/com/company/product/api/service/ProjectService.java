@@ -80,7 +80,7 @@ public class ProjectService {
     }
 
     private ProjectResponse toResponse(Project project) {
-        List<Estimate> estimates = estimateRepository.findByProjectIdOrderByVersionAsc(project.getId());
+        List<Estimate> estimates = estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId());
         List<Purchase> purchases = purchaseRepository.findAll().stream()
             .filter(purchase -> purchase.getProject().getId().equals(project.getId()))
             .toList();

@@ -36,11 +36,6 @@ export function EstimatesPage() {
     }
   }
 
-  async function createVersion(id) {
-    await api(`/api/estimates/${id}/create-version`, { method: 'POST' });
-    load();
-  }
-
   async function submitForPurchase(id) {
     await api(`/api/estimates/${id}/submit-for-purchase`, { method: 'POST' });
     load();
@@ -53,7 +48,7 @@ export function EstimatesPage() {
       <div className="page-header">
         <div>
           <p className="eyebrow">Сметный модуль</p>
-          <h2>Сметы и версии расчетов</h2>
+          <h2>Сметы и позиции затрат</h2>
         </div>
       </div>
 
@@ -78,7 +73,7 @@ export function EstimatesPage() {
             <div className="row-between">
               <div>
                 <h3>{estimate.name}</h3>
-                <p className="muted">{estimate.projectName} • версия {estimate.version} • {translateEstimateStatus(estimate.status)}</p>
+                <p className="muted">{estimate.projectName} • {translateEstimateStatus(estimate.status)} • {estimate.items.length} поз.</p>
               </div>
               <strong>{estimate.total}</strong>
             </div>
@@ -90,7 +85,6 @@ export function EstimatesPage() {
             </div>
             {canEdit ? (
               <div className="action-row">
-                <button type="button" className="ghost-button" onClick={() => createVersion(estimate.id)}>Новая версия</button>
                 {estimate.status === 'DRAFT' ? (
                   <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>В закупку</button>
                 ) : null}

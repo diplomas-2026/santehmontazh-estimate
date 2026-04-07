@@ -1,5 +1,5 @@
 [
-  {"projectCode":"OBJ-001","name":"Смета по секции А","version":1,"status":"READY_FOR_PURCHASE","notes":"Базовая смета на первый этап монтажа","createdByEmail":"estimator@santehmontazh.local","baseEstimateVersion":null},
-  {"projectCode":"OBJ-002","name":"Смета по этажу 5","version":1,"status":"IN_PURCHASE","notes":"Смета после согласования с заказчиком","createdByEmail":"estimator@santehmontazh.local","baseEstimateVersion":null},
-  {"projectCode":"OBJ-003","name":"Смета по складу Север","version":1,"status":"DRAFT","notes":"Черновой расчет потребности","createdByEmail":"estimator@santehmontazh.local","baseEstimateVersion":null}
+  {"projectCode":"OBJ-001","name":"Смета по секции А","status":"READY_FOR_PURCHASE","notes":"Базовая смета на первый этап монтажа","createdByEmail":"estimator@santehmontazh.local"},
+  {"projectCode":"OBJ-002","name":"Смета по этажу 5","status":"IN_PURCHASE","notes":"Смета после согласования с заказчиком","createdByEmail":"estimator@santehmontazh.local"},
+  {"projectCode":"OBJ-003","name":"Смета по складу Север","status":"DRAFT","notes":"Черновой расчет потребности","createdByEmail":"estimator@santehmontazh.local"}
 ]

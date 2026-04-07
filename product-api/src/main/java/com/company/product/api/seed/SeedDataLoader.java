@@ -204,7 +204,6 @@ public class SeedDataLoader {
             Estimate estimate = new Estimate();
             estimate.setProject(project);
             estimate.setName(item.name());
-            estimate.setVersion(item.version());
             estimate.setStatus(EstimateStatus.valueOf(item.status()));
             estimate.setNotes(item.notes());
             estimate.setCreatedBy(user);
@@ -216,7 +215,7 @@ public class SeedDataLoader {
     private void seedEstimateItems() throws IOException {
         List<EstimateItemSeed> items = readList("seed-data/estimate-items.json", new TypeReference<>() {});
         for (EstimateItemSeed item : items) {
-            Estimate estimate = findEstimate(item.projectCode(), item.estimateVersion());
+            Estimate estimate = findEstimate(item.projectCode(), item.estimateName());
             Material material = materialRepository.findBySkuIgnoreCase(item.materialSku()).orElseThrow();
             EstimateItem estimateItem = new EstimateItem();
             estimateItem.setEstimate(estimate);
@@ -233,7 +232,7 @@ public class SeedDataLoader {
     private void seedPurchases(Map<String, UserAccount> users) throws IOException {
         List<PurchaseSeed> items = readList("seed-data/purchases.json", new TypeReference<>() {});
         for (PurchaseSeed item : items) {
-            Estimate estimate = findEstimate(item.projectCode(), item.estimateVersion());
+            Estimate estimate = findEstimate(item.projectCode(), item.estimateName());
             Purchase purchase = new Purchase();
             purchase.setProject(estimate.getProject());
             purchase.setEstimate(estimate);
@@ -251,7 +250,7 @@ public class SeedDataLoader {
     private void seedPurchaseItems() throws IOException {
         List<PurchaseItemSeed> items = readList("seed-data/purchase-items.json", new TypeReference<>() {});
         for (PurchaseItemSeed item : items) {
-            Purchase purchase = findPurchase(item.projectCode(), item.estimateVersion());
+            Purchase purchase = findPurchase(item.projectCode(), item.estimateName());
             Material material = materialRepository.findBySkuIgnoreCase(item.materialSku()).orElseThrow();
             PurchaseItem purchaseItem = new PurchaseItem();
             purchaseItem.setPurchase(purchase);
@@ -271,7 +270,7 @@ public class SeedDataLoader {
     private void seedSupplierOffers() throws IOException {
         List<SupplierOfferSeed> items = readList("seed-data/supplier-offers.json", new TypeReference<>() {});
         for (SupplierOfferSeed item : items) {
-            Purchase purchase = findPurchase(item.projectCode(), item.estimateVersion());
+            Purchase purchase = findPurchase(item.projectCode(), item.estimateName());
             Material material = materialRepository.findBySkuIgnoreCase(item.materialSku()).orElseThrow();
             PurchaseItem purchaseItem = purchaseItemRepository.findByPurchaseId(purchase.getId()).stream()
                 .filter(current -> current.getMaterial().getId().equals(material.getId()))
@@ -304,15 +303,15 @@ public class SeedDataLoader {
         Files.write(path, lines);
     }
 
-    private Purchase findPurchase(String projectCode, int estimateVersion) {
-        Estimate estimate = findEstimate(projectCode, estimateVersion);
+    private Purchase findPurchase(String projectCode, String estimateName) {
+        Estimate estimate = findEstimate(projectCode, estimateName);
         return purchaseRepository.findByEstimateId(estimate.getId()).stream().findFirst().orElseThrow();
     }
 
-    private Estimate findEstimate(String projectCode, int version) {
+    private Estimate findEstimate(String projectCode, String estimateName) {
         Project project = projectRepository.findAll().stream().filter(p -> p.getCode().equals(projectCode)).findFirst().orElseThrow();
-        return estimateRepository.findByProjectIdOrderByVersionAsc(project.getId()).stream()
-            .filter(estimate -> estimate.getVersion() == version)
+        return estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId()).stream()
+            .filter(estimate -> estimate.getName().equals(estimateName))
             .findFirst()
             .orElseThrow();
     }
@@ -363,24 +362,24 @@ public class SeedDataLoader {
                                java.time.LocalDate plannedStartDate, java.time.LocalDate plannedEndDate) {
     }
 
-    private record EstimateSeed(String projectCode, String name, int version, String status, String notes,
-                                String createdByEmail, Integer baseEstimateVersion) {
+    private record EstimateSeed(String projectCode, String name, String status, String notes,
+                                String createdByEmail) {
     }
 
-    private record EstimateItemSeed(String projectCode, int estimateVersion, String materialSku, String workName,
+    private record EstimateItemSeed(String projectCode, String estimateName, String materialSku, String workName,
                                     BigDecimal quantity, BigDecimal unitPrice, String comment) {
     }
 
-    private record PurchaseSeed(String projectCode, int estimateVersion, String createdByEmail, String status,
+    private record PurchaseSeed(String projectCode, String estimateName, String createdByEmail, String status,
                                 String supplierName, String comment) {
     }
 
-    private record PurchaseItemSeed(String projectCode, int estimateVersion, String materialSku, BigDecimal plannedQuantity,
+    private record PurchaseItemSeed(String projectCode, String estimateName, String materialSku, BigDecimal plannedQuantity,
                                     BigDecimal plannedPrice, BigDecimal actualQuantity, BigDecimal actualPrice,
                                     String comment) {
     }
 
-    private record SupplierOfferSeed(String projectCode, int estimateVersion, String materialSku, String supplierName,
+    private record SupplierOfferSeed(String projectCode, String estimateName, String materialSku, String supplierName,
                                      BigDecimal offeredPrice, int deliveryDays, String comment, boolean selected) {
     }
 }

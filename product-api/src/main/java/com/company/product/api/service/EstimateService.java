@@ -70,15 +70,10 @@ public class EstimateService {
         Project project = projectRepository.findById(request.projectId())
             .orElseThrow(() -> new NotFoundException("Объект не найден"));
         UserAccount actor = currentActor();
-        int nextVersion = estimateRepository.findByProjectIdOrderByVersionAsc(project.getId()).stream()
-            .map(Estimate::getVersion)
-            .max(Integer::compareTo)
-            .orElse(0) + 1;
 
         Estimate estimate = new Estimate();
         estimate.setProject(project);
         estimate.setName(request.name());
-        estimate.setVersion(nextVersion);
         estimate.setStatus(EstimateStatus.DRAFT);
         estimate.setNotes(request.notes());
         estimate.setCreatedBy(actor);
@@ -99,38 +94,6 @@ public class EstimateService {
         estimate.setUpdatedAt(OffsetDateTime.now());
         Estimate saved = estimateRepository.save(estimate);
         auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "UPDATED", currentActor(), "Обновлены метаданные сметы");
-        return toResponse(saved);
-    }
-
-    @Transactional
-    public EstimateResponse createVersion(Long estimateId) {
-        Estimate source = getEstimate(estimateId);
-        UserAccount actor = currentActor();
-
-        Estimate version = new Estimate();
-        version.setProject(source.getProject());
-        version.setName(source.getName());
-        version.setVersion(source.getVersion() + 1);
-        version.setStatus(EstimateStatus.DRAFT);
-        version.setNotes(source.getNotes());
-        version.setCreatedBy(actor);
-        version.setBaseEstimate(source);
-        version.setUpdatedAt(OffsetDateTime.now());
-        Estimate saved = estimateRepository.save(version);
-
-        estimateItemRepository.findByEstimateId(source.getId()).forEach(item -> {
-            EstimateItem copy = new EstimateItem();
-            copy.setEstimate(saved);
-            copy.setMaterial(item.getMaterial());
-            copy.setWorkName(item.getWorkName());
-            copy.setQuantity(item.getQuantity());
-            copy.setUnitPrice(item.getUnitPrice());
-            copy.setLineTotal(item.getLineTotal());
-            copy.setComment(item.getComment());
-            estimateItemRepository.save(copy);
-        });
-
-        auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "VERSION_CREATED", actor, "Создана новая версия сметы");
         return toResponse(saved);
     }
 
@@ -241,12 +204,10 @@ public class EstimateService {
             estimate.getProject().getId(),
             estimate.getProject().getName(),
             estimate.getName(),
-            estimate.getVersion(),
             estimate.getStatus(),
             estimate.getNotes(),
             estimate.getCreatedBy().getId(),
             estimate.getCreatedBy().getFullName(),
-            estimate.getBaseEstimate() == null ? null : estimate.getBaseEstimate().getId(),
             estimate.getCreatedAt(),
             estimate.getUpdatedAt(),
             total,

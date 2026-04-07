@@ -57,11 +57,6 @@ export function ProjectDetailsPage() {
     }
   }
 
-  async function createVersion(estimateId) {
-    await api(`/api/estimates/${estimateId}/create-version`, { method: 'POST' });
-    load();
-  }
-
   async function submitForPurchase(estimateId) {
     await api(`/api/estimates/${estimateId}/submit-for-purchase`, { method: 'POST' });
     load();
@@ -127,7 +122,7 @@ export function ProjectDetailsPage() {
         <h3>Основной сценарий</h3>
         <div className="tag-row">
           <span className="tag">1. Подготовить смету</span>
-          <span className="tag">2. Проверить версии расчета</span>
+          <span className="tag">2. Заполнить позиции сметы</span>
           <span className="tag">3. Передать в закупку</span>
           <span className="tag">4. Согласовать закупку</span>
           <span className="tag">5. Сравнить план и факт</span>
@@ -177,15 +172,12 @@ export function ProjectDetailsPage() {
               <div key={estimate.id} className="detail-list-item">
                 <div>
                   <strong>{estimate.name}</strong>
-                  <p className="muted">Версия {estimate.version} • {translateEstimateStatus(estimate.status)}</p>
+                  <p className="muted">{translateEstimateStatus(estimate.status)} • {estimate.items.length} поз.</p>
                 </div>
                 <div className="detail-actions">
                   <strong>{estimate.total}</strong>
                   {canEditEstimates ? (
                     <div className="action-row">
-                      <button type="button" className="ghost-button" onClick={() => createVersion(estimate.id)}>
-                        Новая версия
-                      </button>
                       {estimate.status === 'DRAFT' ? (
                         <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>
                           В закупку
