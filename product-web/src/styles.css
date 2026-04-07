@@ -1035,6 +1035,135 @@ th {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.purchase-registry {
+  margin-top: 18px;
+}
+
+.purchase-registry-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 22px;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(255, 169, 105, 0.08), transparent 24%),
+    rgba(255, 255, 255, 0.03);
+}
+
+.purchase-registry-main,
+.purchase-summary-block,
+.purchase-registry-actions {
+  display: grid;
+  gap: 16px;
+}
+
+.purchase-registry-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.purchase-registry-head h4 {
+  margin: 6px 0 0;
+  font-size: 1.4rem;
+}
+
+.purchase-finance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.purchase-finance-card,
+.deviation-badge {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.purchase-finance-card span,
+.deviation-badge span,
+.purchase-source-line span,
+.purchase-meta-line span {
+  color: rgba(221, 230, 246, 0.7);
+}
+
+.purchase-finance-card strong,
+.deviation-badge strong {
+  font-size: 1.2rem;
+}
+
+.deviation-positive {
+  background: rgba(61, 205, 146, 0.1);
+  border-color: rgba(61, 205, 146, 0.18);
+}
+
+.deviation-negative {
+  background: rgba(255, 108, 84, 0.12);
+  border-color: rgba(255, 108, 84, 0.18);
+}
+
+.deviation-neutral {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.purchase-meta-line,
+.purchase-source-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+}
+
+.purchase-source-line {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.purchase-source-line strong {
+  text-align: right;
+}
+
+.purchase-registry-actions {
+  align-content: center;
+  min-width: 220px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-pill-draft {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(235, 240, 252, 0.8);
+}
+
+.status-pill-in_progress {
+  background: rgba(255, 208, 137, 0.14);
+  color: #ffd089;
+  border: 1px solid rgba(255, 208, 137, 0.16);
+}
+
+.status-pill-completed {
+  background: rgba(61, 205, 146, 0.14);
+  color: #8ef0c2;
+  border: 1px solid rgba(61, 205, 146, 0.18);
+}
+
 .status-card {
   display: grid;
   gap: 8px;
@@ -1153,13 +1282,33 @@ th {
   }
 
   .purchase-item-fields,
-  .purchase-offer-grid {
+  .purchase-offer-grid,
+  .purchase-finance-grid {
     grid-template-columns: 1fr;
   }
 
   .linked-grid,
   .review-grid {
     grid-template-columns: 1fr;
+  }
+
+  .purchase-registry-card {
+    grid-template-columns: 1fr;
+  }
+
+  .purchase-registry-actions {
+    min-width: 0;
+  }
+
+  .purchase-registry-head,
+  .purchase-meta-line,
+  .purchase-source-line {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .purchase-source-line strong {
+    text-align: left;
   }
 
   .purchase-item-badge {

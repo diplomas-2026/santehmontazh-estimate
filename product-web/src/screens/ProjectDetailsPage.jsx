@@ -113,6 +113,17 @@ export function ProjectDetailsPage() {
     [purchases],
   );
 
+  function renderDeviationClass(value) {
+    const numericValue = Number(value ?? 0);
+    if (numericValue > 0) {
+      return 'deviation-badge deviation-negative';
+    }
+    if (numericValue < 0) {
+      return 'deviation-badge deviation-positive';
+    }
+    return 'deviation-badge deviation-neutral';
+  }
+
   if (!project) {
     return <div className="page-card">Загрузка данных по объекту...</div>;
   }
@@ -294,68 +305,89 @@ export function ProjectDetailsPage() {
         <article className="page-card">
           <p className="eyebrow">Связанные закупки</p>
           <h3>Закупочный контур объекта</h3>
-          <div className="table-card">
-            <table>
-              <thead>
-                <tr>
-                  <th>Закупка</th>
-                  <th>Смета</th>
-                  <th>Статус</th>
-                  <th>План</th>
-                  <th>Факт</th>
-                  <th>Отклонение</th>
-                  <th>Позиции</th>
-                  <th>Действия</th>
-                </tr>
-              </thead>
-              <tbody>
-                {purchases.length ? purchases.map((purchase) => (
-                  <tr key={purchase.id}>
-                    <td>
-                      <Link className="detail-link" to={`/purchases/${purchase.id}`}>
-                        {purchase.projectName}
-                      </Link>
-                    </td>
-                    <td>{purchase.estimateName}</td>
-                    <td>{translatePurchaseStatus(purchase.status)}</td>
-                    <td>{formatCurrency(purchase.plannedTotal)}</td>
-                    <td>{formatCurrency(purchase.actualTotal)}</td>
-                    <td>{formatCurrency(purchase.deviation)}</td>
-                    <td>
+          <p className="muted">
+            Здесь важны три сигнала: в каком статусе находится закупка, сколько уже потрачено по факту и зафиксировано ли место покупки.
+          </p>
+          <div className="stack-list purchase-registry">
+            {purchases.length ? purchases.map((purchase) => {
+              const visibleItems = purchase.items.slice(0, 2);
+              const hiddenItemsCount = Math.max(0, purchase.items.length - visibleItems.length);
+
+              return (
+                <article key={purchase.id} className="purchase-registry-card">
+                  <div className="purchase-registry-main">
+                    <div className="purchase-registry-head">
+                      <div>
+                        <p className="eyebrow">Закупка по смете</p>
+                        <h4>
+                          <Link className="detail-link" to={`/purchases/${purchase.id}`}>
+                            {purchase.estimateName}
+                          </Link>
+                        </h4>
+                      </div>
+                      <span className={`status-pill status-pill-${purchase.status.toLowerCase()}`}>
+                        {translatePurchaseStatus(purchase.status)}
+                      </span>
+                    </div>
+
+                    <div className="purchase-finance-grid">
+                      <div className="purchase-finance-card">
+                        <span>План</span>
+                        <strong>{formatCurrency(purchase.plannedTotal)}</strong>
+                      </div>
+                      <div className="purchase-finance-card">
+                        <span>Факт</span>
+                        <strong>{formatCurrency(purchase.actualTotal)}</strong>
+                      </div>
+                      <div className={renderDeviationClass(purchase.deviation)}>
+                        <span>Отклонение</span>
+                        <strong>{formatCurrency(purchase.deviation)}</strong>
+                      </div>
+                    </div>
+
+                    <div className="purchase-summary-block">
+                      <div className="purchase-meta-line">
+                        <strong>Позиции</strong>
+                        <span>{purchase.items.length} шт.</span>
+                      </div>
                       <div className="tag-row">
-                        {purchase.items.map((item) => (
+                        {visibleItems.map((item) => (
                           <span key={item.id} className="tag">
                             {item.materialName} • {item.plannedQuantity} {item.unit}
                           </span>
                         ))}
-                        <span className="tag">Где купили: {purchase.supplierName || 'не указано'}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="action-row">
-                        <Link className="ghost-button" to={`/purchases/${purchase.id}`}>
-                          Открыть закупку
-                        </Link>
-                        {canManagePurchase && purchase.status === 'DRAFT' ? (
-                          <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'start')}>
-                            Начать закупку
-                          </button>
-                        ) : null}
-                        {canManagePurchase && purchase.status === 'IN_PROGRESS' ? (
-                          <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'complete')}>
-                            Завершить закупку
-                          </button>
+                        {hiddenItemsCount > 0 ? (
+                          <span className="tag">Еще {hiddenItemsCount}</span>
                         ) : null}
                       </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td className="empty-row" colSpan={8}>По объекту пока нет закупок.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    </div>
+
+                    <div className="purchase-source-line">
+                      <span>Где купили</span>
+                      <strong>{purchase.supplierName || 'Пока не указано'}</strong>
+                    </div>
+                  </div>
+
+                  <div className="purchase-registry-actions">
+                    <Link className="ghost-button" to={`/purchases/${purchase.id}`}>
+                      Открыть
+                    </Link>
+                    {canManagePurchase && purchase.status === 'DRAFT' ? (
+                      <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'start')}>
+                        Начать закупку
+                      </button>
+                    ) : null}
+                    {canManagePurchase && purchase.status === 'IN_PROGRESS' ? (
+                      <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'complete')}>
+                        Завершить закупку
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              );
+            }) : (
+              <div className="empty-note">По объекту пока нет закупок.</div>
+            )}
           </div>
         </article>
       </div>
