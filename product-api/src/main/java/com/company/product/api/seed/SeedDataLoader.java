@@ -40,12 +40,12 @@ import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
-import java.util.LinkedHashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -67,6 +67,7 @@ public class SeedDataLoader {
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
     private final SupplierOfferRepository supplierOfferRepository;
+    private final JdbcTemplate jdbcTemplate;
     private final AuditService auditService;
 
     public SeedDataLoader(AppProperties appProperties,
@@ -84,6 +85,7 @@ public class SeedDataLoader {
                           PurchaseRepository purchaseRepository,
                           PurchaseItemRepository purchaseItemRepository,
                           SupplierOfferRepository supplierOfferRepository,
+                          JdbcTemplate jdbcTemplate,
                           AuditService auditService) {
         this.appProperties = appProperties;
         this.objectMapper = objectMapper;
@@ -100,6 +102,7 @@ public class SeedDataLoader {
         this.purchaseRepository = purchaseRepository;
         this.purchaseItemRepository = purchaseItemRepository;
         this.supplierOfferRepository = supplierOfferRepository;
+        this.jdbcTemplate = jdbcTemplate;
         this.auditService = auditService;
     }
 
@@ -200,12 +203,15 @@ public class SeedDataLoader {
         List<SupplierMaterialsSeed> items = readList("seed-data/supplier-materials.json", new TypeReference<>() {});
         for (SupplierMaterialsSeed item : items) {
             Supplier supplier = supplierRepository.findByNameIgnoreCase(item.supplierName()).orElseThrow();
-            LinkedHashSet<Material> materials = item.materialSkus().stream()
-                .map(sku -> materialRepository.findBySkuIgnoreCase(sku).orElseThrow())
-                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
-            supplier.getMaterials().clear();
-            supplier.getMaterials().addAll(materials);
-            supplierRepository.save(supplier);
+            jdbcTemplate.update("delete from supplier_materials where supplier_id = ?", supplier.getId());
+            for (String sku : item.materialSkus()) {
+                Material material = materialRepository.findBySkuIgnoreCase(sku).orElseThrow();
+                jdbcTemplate.update(
+                    "insert into supplier_materials (supplier_id, material_id) values (?, ?) on conflict do nothing",
+                    supplier.getId(),
+                    material.getId()
+                );
+            }
         }
     }
 
