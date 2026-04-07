@@ -63,7 +63,7 @@ public class AuthService {
         user.setFullName(request.fullName().trim());
         user.setEmail(request.email().trim().toLowerCase());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRole(Role.ESTIMATOR);
+        user.setRole(Role.BASE_USER);
         user.setActive(true);
         UserAccount savedUser = userRepository.save(user);
         auditService.log(AuditEntityType.USER, savedUser.getId(), "REGISTERED", savedUser, "Самостоятельная регистрация");

@@ -1,8 +1,6 @@
 const roleLabels = {
   ADMIN: 'Администратор',
-  ESTIMATOR: 'Сметчик',
-  PURCHASER: 'Снабженец',
-  MANAGER: 'Руководитель',
+  BASE_USER: 'Пользователь',
 };
 
 const projectStatusLabels = {

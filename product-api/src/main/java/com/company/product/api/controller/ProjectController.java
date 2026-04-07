@@ -35,13 +35,13 @@ public class ProjectController {
     }
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public ProjectResponse create(@Valid @RequestBody ProjectRequest request) {
         return projectService.create(request);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public ProjectResponse update(@PathVariable Long id, @Valid @RequestBody ProjectRequest request) {
         return projectService.update(id, request);
     }

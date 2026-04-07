@@ -54,8 +54,8 @@ export function EstimatesPage() {
     }
   }
 
-  const canEdit = ['ADMIN', 'ESTIMATOR'].includes(user.role);
-  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role);
+  const canEdit = ['ADMIN', 'BASE_USER'].includes(user.role);
+  const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
   const purchasesByEstimateId = new Map(purchases.map((purchase) => [purchase.estimateId, purchase]));
 
   return (

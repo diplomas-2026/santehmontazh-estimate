@@ -52,8 +52,8 @@ export function EstimateDetailsPage() {
     setItemForm((current) => ({ ...current, unitPrice: String(selectedMaterial.defaultPrice ?? '') }));
   }, [selectedMaterial, itemForm.unitPrice]);
 
-  const canEdit = ['ADMIN', 'ESTIMATOR'].includes(user.role) && estimate?.status === 'DRAFT';
-  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role) && purchasableItemsCount > 0 && !purchase;
+  const canEdit = ['ADMIN', 'BASE_USER'].includes(user.role) && estimate?.status === 'DRAFT';
+  const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role) && purchasableItemsCount > 0 && !purchase;
 
   async function addItem(event) {
     event.preventDefault();

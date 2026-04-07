@@ -40,8 +40,8 @@ export function PurchasesPage() {
     load();
   }
 
-  const canCreate = ['ADMIN', 'PURCHASER'].includes(user.role);
-  const canApprove = ['ADMIN', 'MANAGER'].includes(user.role);
+  const canCreate = ['ADMIN', 'BASE_USER'].includes(user.role);
+  const canApprove = ['ADMIN', 'BASE_USER'].includes(user.role);
 
   return (
     <section className="page-section">

@@ -6,6 +6,8 @@ import com.company.product.api.entity.AuditEntityType;
 import com.company.product.api.entity.Estimate;
 import com.company.product.api.entity.Project;
 import com.company.product.api.entity.Purchase;
+import com.company.product.api.entity.Role;
+import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
@@ -44,17 +46,22 @@ public class ProjectService {
     }
 
     public List<ProjectResponse> findAll() {
-        return projectRepository.findAll().stream().map(this::toResponse).toList();
+        UserAccount actor = currentActor();
+        List<Project> projects = actor.getRole() == Role.ADMIN
+            ? projectRepository.findAll()
+            : projectRepository.findByOwnerId(actor.getId());
+        return projects.stream().map(this::toResponse).toList();
     }
 
     public ProjectResponse findById(Long id) {
-        return toResponse(projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Объект не найден")));
+        return toResponse(getAccessibleProject(id));
     }
 
     @Transactional
     public ProjectResponse create(ProjectRequest request) {
         Project project = new Project();
         apply(project, request);
+        project.setOwner(currentActor());
         Project saved = projectRepository.save(project);
         auditService.log(AuditEntityType.PROJECT, saved.getId(), "CREATED", currentActor(), "Создан новый объект");
         return toResponse(saved);
@@ -62,7 +69,7 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse update(Long id, ProjectRequest request) {
-        Project project = projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Объект не найден"));
+        Project project = getAccessibleProject(id);
         apply(project, request);
         Project saved = projectRepository.save(project);
         auditService.log(AuditEntityType.PROJECT, saved.getId(), "UPDATED", currentActor(), "Обновлены данные объекта");
@@ -81,7 +88,7 @@ public class ProjectService {
 
     private ProjectResponse toResponse(Project project) {
         List<Estimate> estimates = estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId());
-        List<Purchase> purchases = purchaseRepository.findAll().stream()
+        List<Purchase> purchases = purchaseRepository.findByProjectOwnerId(project.getOwner().getId()).stream()
             .filter(purchase -> purchase.getProject().getId().equals(project.getId()))
             .toList();
         BigDecimal estimateTotal = estimates.stream()
@@ -99,5 +106,12 @@ public class ProjectService {
     private com.company.product.api.entity.UserAccount currentActor() {
         return userRepository.findById(SecurityUtils.currentUser().id())
             .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+    }
+
+    private Project getAccessibleProject(Long id) {
+        UserAccount actor = currentActor();
+        return actor.getRole() == Role.ADMIN
+            ? projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Объект не найден"))
+            : projectRepository.findByIdAndOwnerId(id, actor.getId()).orElseThrow(() -> new NotFoundException("Объект не найден"));
     }
 }

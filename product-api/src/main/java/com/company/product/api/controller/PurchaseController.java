@@ -41,25 +41,25 @@ public class PurchaseController {
     }
 
     @PostMapping("/purchases")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse create(@Valid @RequestBody PurchaseRequest request) {
         return purchaseService.create(request);
     }
 
     @PostMapping("/purchases/from-estimate/{estimateId}")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse createFromEstimate(@PathVariable Long estimateId) {
         return purchaseService.createFromEstimate(estimateId);
     }
 
     @PutMapping("/purchases/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse update(@PathVariable Long id, @Valid @RequestBody PurchaseRequest request) {
         return purchaseService.update(id, request);
     }
 
     @PutMapping("/purchase-items/{itemId}")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse updateItem(@PathVariable Long itemId, @Valid @RequestBody PurchaseItemRequest request) {
         return purchaseService.updateItem(itemId, request);
     }
@@ -70,43 +70,43 @@ public class PurchaseController {
     }
 
     @PostMapping("/purchase-items/{itemId}/offers")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public List<SupplierOfferResponse> addOffer(@PathVariable Long itemId, @Valid @RequestBody SupplierOfferRequest request) {
         return purchaseService.addOffer(itemId, request);
     }
 
     @PostMapping("/purchase-items/{itemId}/offers/{offerId}/select")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public List<SupplierOfferResponse> selectOffer(@PathVariable Long itemId, @PathVariable Long offerId) {
         return purchaseService.selectOffer(itemId, offerId);
     }
 
     @PostMapping("/purchases/{id}/submit")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse submit(@PathVariable Long id) {
         return purchaseService.submit(id);
     }
 
     @PostMapping("/purchases/{id}/approve")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse approve(@PathVariable Long id) {
         return purchaseService.approve(id);
     }
 
     @PostMapping("/purchases/{id}/return-for-revision")
-    @PreAuthorize("hasAnyRole('ADMIN','MANAGER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse returnForRevision(@PathVariable Long id, @Valid @RequestBody ApprovalCommentRequest request) {
         return purchaseService.returnForRevision(id, request);
     }
 
     @PostMapping("/purchases/{id}/order")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse order(@PathVariable Long id) {
         return purchaseService.order(id);
     }
 
     @PostMapping("/purchases/{id}/receive")
-    @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public PurchaseResponse receive(@PathVariable Long id) {
         return purchaseService.receive(id);
     }

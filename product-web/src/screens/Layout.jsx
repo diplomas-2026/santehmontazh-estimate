@@ -7,8 +7,8 @@ const baseLinks = [
   { to: '/dashboard', label: 'Командный центр' },
   { to: '/projects', label: 'Объекты' },
   { to: '/materials', label: 'Материалы' },
-  { to: '/suppliers', label: 'Поставщики', roles: ['ADMIN', 'PURCHASER', 'MANAGER'] },
-  { to: '/reports/deviations', label: 'План / факт', roles: ['ADMIN', 'MANAGER'] },
+  { to: '/suppliers', label: 'Поставщики', roles: ['ADMIN', 'BASE_USER'] },
+  { to: '/reports/deviations', label: 'План / факт', roles: ['ADMIN', 'BASE_USER'] },
   { to: '/admin/users', label: 'Пользователи', roles: ['ADMIN'] },
 ];
 

@@ -89,10 +89,10 @@ export function ProjectDetailsPage() {
     }
   }
 
-  const canEditEstimates = ['ADMIN', 'ESTIMATOR'].includes(user.role);
-  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role);
-  const canManagePurchase = ['ADMIN', 'PURCHASER'].includes(user.role);
-  const canApprovePurchase = ['ADMIN', 'MANAGER'].includes(user.role);
+  const canEditEstimates = ['ADMIN', 'BASE_USER'].includes(user.role);
+  const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
+  const canManagePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
+  const canApprovePurchase = ['ADMIN', 'BASE_USER'].includes(user.role);
   const purchasesByEstimateId = useMemo(
     () => new Map(purchases.map((purchase) => [purchase.estimateId, purchase])),
     [purchases],

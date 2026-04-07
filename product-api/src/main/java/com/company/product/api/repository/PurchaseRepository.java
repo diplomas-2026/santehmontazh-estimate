@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     List<Purchase> findByEstimateId(Long estimateId);
+
+    List<Purchase> findByProjectOwnerId(Long ownerId);
 }

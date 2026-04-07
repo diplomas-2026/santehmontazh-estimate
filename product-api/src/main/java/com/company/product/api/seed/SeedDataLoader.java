@@ -100,7 +100,7 @@ public class SeedDataLoader {
             seedCategories();
             seedMaterials();
             seedSuppliers();
-            seedProjects();
+            seedProjects(users);
             seedEstimates(users);
             seedEstimateItems();
             seedPurchases(users);
@@ -113,9 +113,9 @@ public class SeedDataLoader {
     private Map<String, UserAccount> ensureDemoUsers() {
         Map<String, DemoUser> demoUsers = Map.of(
             "admin@santehmontazh.local", new DemoUser("Администратор системы", "Admin123!", Role.ADMIN),
-            "estimator@santehmontazh.local", new DemoUser("Инженер-сметчик", "Estimator123!", Role.ESTIMATOR),
-            "purchaser@santehmontazh.local", new DemoUser("Специалист по снабжению", "Purchaser123!", Role.PURCHASER),
-            "manager@santehmontazh.local", new DemoUser("Руководитель проекта", "Manager123!", Role.MANAGER)
+            "estimator@santehmontazh.local", new DemoUser("Пользователь проекта 1", "Estimator123!", Role.BASE_USER),
+            "purchaser@santehmontazh.local", new DemoUser("Пользователь проекта 2", "Purchaser123!", Role.BASE_USER),
+            "manager@santehmontazh.local", new DemoUser("Пользователь проекта 3", "Manager123!", Role.BASE_USER)
         );
         Map<String, UserAccount> created = new HashMap<>();
         demoUsers.forEach((email, data) -> {
@@ -181,7 +181,7 @@ public class SeedDataLoader {
         }
     }
 
-    private void seedProjects() throws IOException {
+    private void seedProjects(Map<String, UserAccount> users) throws IOException {
         List<ProjectSeed> items = readList("seed-data/projects.json", new TypeReference<>() {});
         for (ProjectSeed item : items) {
             Project project = new Project();
@@ -192,6 +192,7 @@ public class SeedDataLoader {
             project.setStatus(ProjectStatus.valueOf(item.status()));
             project.setPlannedStartDate(item.plannedStartDate());
             project.setPlannedEndDate(item.plannedEndDate());
+            project.setOwner(users.get(item.ownerEmail()));
             projectRepository.save(project);
         }
     }
@@ -296,9 +297,9 @@ public class SeedDataLoader {
         }
         List<String> lines = List.of(
             "email=admin@santehmontazh.local; password=Admin123!; role=ADMIN",
-            "email=estimator@santehmontazh.local; password=Estimator123!; role=ESTIMATOR",
-            "email=purchaser@santehmontazh.local; password=Purchaser123!; role=PURCHASER",
-            "email=manager@santehmontazh.local; password=Manager123!; role=MANAGER"
+            "email=estimator@santehmontazh.local; password=Estimator123!; role=BASE_USER",
+            "email=purchaser@santehmontazh.local; password=Purchaser123!; role=BASE_USER",
+            "email=manager@santehmontazh.local; password=Manager123!; role=BASE_USER"
         );
         Files.write(path, lines);
     }
@@ -359,7 +360,8 @@ public class SeedDataLoader {
     }
 
     private record ProjectSeed(String name, String code, String address, String description, String status,
-                               java.time.LocalDate plannedStartDate, java.time.LocalDate plannedEndDate) {
+                               java.time.LocalDate plannedStartDate, java.time.LocalDate plannedEndDate,
+                               String ownerEmail) {
     }
 
     private record EstimateSeed(String projectCode, String name, String status, String notes,

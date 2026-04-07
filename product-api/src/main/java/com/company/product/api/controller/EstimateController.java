@@ -38,31 +38,31 @@ public class EstimateController {
     }
 
     @PostMapping("/estimates")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public EstimateResponse create(@Valid @RequestBody EstimateRequest request) {
         return estimateService.create(request);
     }
 
     @PutMapping("/estimates/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public EstimateResponse update(@PathVariable Long id, @Valid @RequestBody EstimateRequest request) {
         return estimateService.update(id, request);
     }
 
     @PostMapping("/estimates/{id}/items")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public EstimateResponse addItem(@PathVariable Long id, @Valid @RequestBody EstimateItemRequest request) {
         return estimateService.addItem(id, request);
     }
 
     @PutMapping("/estimate-items/{itemId}")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public EstimateResponse updateItem(@PathVariable Long itemId, @Valid @RequestBody EstimateItemRequest request) {
         return estimateService.updateItem(itemId, request);
     }
 
     @DeleteMapping("/estimate-items/{itemId}")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public void deleteItem(@PathVariable Long itemId) {
         estimateService.deleteItem(itemId);
     }
@@ -73,7 +73,7 @@ public class EstimateController {
     }
 
     @PostMapping("/estimates/{id}/submit-for-purchase")
-    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
     public EstimateResponse submitForPurchase(@PathVariable Long id) {
         return estimateService.submitForPurchase(id);
     }

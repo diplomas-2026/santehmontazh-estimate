@@ -11,6 +11,7 @@ import com.company.product.api.entity.EstimateItem;
 import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Material;
 import com.company.product.api.entity.Project;
+import com.company.product.api.entity.Role;
 import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.BadRequestException;
 import com.company.product.api.exception.NotFoundException;
@@ -55,7 +56,11 @@ public class EstimateService {
     }
 
     public List<EstimateResponse> findAll() {
-        return estimateRepository.findAll().stream()
+        UserAccount actor = currentActor();
+        List<Estimate> estimates = actor.getRole() == Role.ADMIN
+            ? estimateRepository.findAll()
+            : estimateRepository.findByProjectOwnerIdOrderByUpdatedAtDesc(actor.getId());
+        return estimates.stream()
             .sorted(Comparator.comparing(Estimate::getUpdatedAt).reversed())
             .map(this::toResponse)
             .toList();
@@ -67,9 +72,8 @@ public class EstimateService {
 
     @Transactional
     public EstimateResponse create(EstimateRequest request) {
-        Project project = projectRepository.findById(request.projectId())
-            .orElseThrow(() -> new NotFoundException("Объект не найден"));
         UserAccount actor = currentActor();
+        Project project = getAccessibleProject(request.projectId(), actor);
 
         Estimate estimate = new Estimate();
         estimate.setProject(project);
@@ -86,8 +90,7 @@ public class EstimateService {
     @Transactional
     public EstimateResponse update(Long id, EstimateRequest request) {
         Estimate estimate = getEditableEstimate(id);
-        Project project = projectRepository.findById(request.projectId())
-            .orElseThrow(() -> new NotFoundException("Объект не найден"));
+        Project project = getAccessibleProject(request.projectId(), currentActor());
         estimate.setProject(project);
         estimate.setName(request.name());
         estimate.setNotes(request.notes());
@@ -186,7 +189,12 @@ public class EstimateService {
     }
 
     private Estimate getEstimate(Long id) {
-        return estimateRepository.findById(id).orElseThrow(() -> new NotFoundException("Смета не найдена"));
+        Estimate estimate = estimateRepository.findById(id).orElseThrow(() -> new NotFoundException("Смета не найдена"));
+        UserAccount actor = currentActor();
+        if (actor.getRole() != Role.ADMIN && !estimate.getProject().getOwner().getId().equals(actor.getId())) {
+            throw new NotFoundException("Смета не найдена");
+        }
+        return estimate;
     }
 
     private Estimate getEditableEstimate(Long id) {
@@ -253,6 +261,12 @@ public class EstimateService {
         if (material == null && workName.isBlank()) {
             throw new BadRequestException("Укажите материал или название работы");
         }
+    }
+
+    private Project getAccessibleProject(Long projectId, UserAccount actor) {
+        return actor.getRole() == Role.ADMIN
+            ? projectRepository.findById(projectId).orElseThrow(() -> new NotFoundException("Объект не найден"))
+            : projectRepository.findByIdAndOwnerId(projectId, actor.getId()).orElseThrow(() -> new NotFoundException("Объект не найден"));
     }
 
     private static final class MaterialRequirementAccumulator {

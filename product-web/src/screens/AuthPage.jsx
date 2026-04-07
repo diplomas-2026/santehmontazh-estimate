@@ -58,7 +58,7 @@ export function AuthPage({ mode }) {
                 Платформа помогает считать сметы, закупать материалы и продавать руководству прозрачную картину по бюджету объекта.
               </Typography>
               <Stack direction="row" flexWrap="wrap" gap={1}>
-                <Button variant="outlined" color="inherit">Версии смет</Button>
+                <Button variant="outlined" color="inherit">Позиции смет</Button>
                 <Button variant="outlined" color="inherit">Premium-аналитика</Button>
                 <Button variant="outlined" color="inherit">Согласование закупок</Button>
               </Stack>
@@ -76,11 +76,11 @@ export function AuthPage({ mode }) {
               <Box>
                 <Typography className="eyebrow">Производственная платформа</Typography>
                 <Typography variant="h3" sx={{ mb: 1.5 }}>
-                  {isRegister ? 'Регистрация сметчика' : 'Вход в систему'}
+                  {isRegister ? 'Регистрация пользователя' : 'Вход в систему'}
                 </Typography>
                 <Typography color="text.secondary">
                   {isRegister
-                    ? 'Новый пользователь создается с ролью ESTIMATOR и может сразу подключить платный тариф.'
+                    ? 'Новый пользователь создается с ролью BASE_USER и получает личные объекты, сметы и закупки.'
                     : 'Авторизуйтесь, чтобы работать со сметами, закупками и premium-аналитикой по объектам.'}
                 </Typography>
               </Box>

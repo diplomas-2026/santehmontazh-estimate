@@ -17,6 +17,7 @@ import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Purchase;
 import com.company.product.api.entity.PurchaseItem;
 import com.company.product.api.entity.PurchaseStatus;
+import com.company.product.api.entity.Role;
 import com.company.product.api.entity.Supplier;
 import com.company.product.api.entity.SupplierOffer;
 import com.company.product.api.entity.UserAccount;
@@ -72,7 +73,11 @@ public class PurchaseService {
     }
 
     public List<PurchaseResponse> findAll() {
-        return purchaseRepository.findAll().stream().map(this::toResponse).toList();
+        UserAccount actor = currentActor();
+        List<Purchase> purchases = actor.getRole() == Role.ADMIN
+            ? purchaseRepository.findAll()
+            : purchaseRepository.findByProjectOwnerId(actor.getId());
+        return purchases.stream().map(this::toResponse).toList();
     }
 
     public PurchaseResponse findById(Long id) {
@@ -358,7 +363,12 @@ public class PurchaseService {
     }
 
     private Purchase getPurchase(Long id) {
-        return purchaseRepository.findById(id).orElseThrow(() -> new NotFoundException("Закупка не найдена"));
+        Purchase purchase = purchaseRepository.findById(id).orElseThrow(() -> new NotFoundException("Закупка не найдена"));
+        UserAccount actor = currentActor();
+        if (actor.getRole() != Role.ADMIN && !purchase.getProject().getOwner().getId().equals(actor.getId())) {
+            throw new NotFoundException("Закупка не найдена");
+        }
+        return purchase;
     }
 
     private Purchase getEditablePurchase(Long id) {
