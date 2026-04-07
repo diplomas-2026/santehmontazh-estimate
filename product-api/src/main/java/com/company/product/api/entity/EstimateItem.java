@@ -27,11 +27,11 @@ public class EstimateItem {
     @JoinColumn(name = "estimate_id", nullable = false)
     private Estimate estimate;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "material_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "material_id")
     private Material material;
 
-    @Column(nullable = false)
+    @Column
     private String workName;
 
     @Column(nullable = false, precision = 12, scale = 2)

@@ -122,6 +122,12 @@ public class PurchaseService {
         if (estimateItems.isEmpty()) {
             throw new BadRequestException("Нельзя создать закупку по пустой смете");
         }
+        List<EstimateItem> purchasableItems = estimateItems.stream()
+            .filter(item -> item.getMaterial() != null)
+            .toList();
+        if (purchasableItems.isEmpty()) {
+            throw new BadRequestException("В смете нет позиций с материалами для закупки");
+        }
 
         Purchase purchase = new Purchase();
         purchase.setProject(estimate.getProject());
@@ -136,7 +142,7 @@ public class PurchaseService {
         Purchase saved = purchaseRepository.save(purchase);
 
         BigDecimal plannedTotal = BigDecimal.ZERO;
-        for (EstimateItem estimateItem : estimateItems) {
+        for (EstimateItem estimateItem : purchasableItems) {
             PurchaseItem item = new PurchaseItem();
             item.setPurchase(saved);
             item.setMaterial(estimateItem.getMaterial());

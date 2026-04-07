@@ -40,6 +40,10 @@ export function EstimateDetailsPage() {
     () => materials.find((material) => String(material.id) === String(itemForm.materialId)) ?? null,
     [materials, itemForm.materialId],
   );
+  const purchasableItemsCount = useMemo(
+    () => estimate?.items?.filter((item) => item.materialId != null).length ?? 0,
+    [estimate],
+  );
 
   useEffect(() => {
     if (!selectedMaterial || itemForm.unitPrice) {
@@ -49,7 +53,7 @@ export function EstimateDetailsPage() {
   }, [selectedMaterial, itemForm.unitPrice]);
 
   const canEdit = ['ADMIN', 'ESTIMATOR'].includes(user.role) && estimate?.status === 'DRAFT';
-  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role) && estimate?.items?.length > 0 && !purchase;
+  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role) && purchasableItemsCount > 0 && !purchase;
 
   async function addItem(event) {
     event.preventDefault();
@@ -57,7 +61,7 @@ export function EstimateDetailsPage() {
       const updated = await api(`/api/estimates/${id}/items`, {
         method: 'POST',
         body: JSON.stringify({
-          materialId: Number(itemForm.materialId),
+          materialId: itemForm.materialId ? Number(itemForm.materialId) : null,
           workName: itemForm.workName,
           quantity: Number(itemForm.quantity),
           unitPrice: Number(itemForm.unitPrice),
@@ -129,6 +133,7 @@ export function EstimateDetailsPage() {
             <span className="tag">Сумма: {formatCurrency(estimate.total)}</span>
             <span className="tag">Автор: {estimate.createdByName}</span>
             <span className="tag">Позиции: {estimate.items.length}</span>
+            <span className="tag">Материалов к закупке: {purchasableItemsCount}</span>
           </div>
         </article>
 
@@ -153,8 +158,8 @@ export function EstimateDetailsPage() {
               </button>
             )}
           </div>
-          {!purchase && estimate.items.length === 0 ? (
-            <p className="muted">Сначала добавьте хотя бы одну позицию сметы.</p>
+          {!purchase && purchasableItemsCount === 0 ? (
+            <p className="muted">Для создания закупки нужна хотя бы одна позиция с указанным материалом.</p>
           ) : null}
         </article>
       </div>
@@ -165,25 +170,25 @@ export function EstimateDetailsPage() {
             <p className="eyebrow">Новая позиция</p>
             <h3>Добавить строку в смету</h3>
             <p className="muted">
-              Здесь вы добавляете конкретный пункт расчета: материал, работу, количество, цену и пояснение.
+              Укажите материал или название работы. Можно заполнить только одно из этих полей или оба сразу.
             </p>
           </div>
+          <input
+            value={itemForm.workName}
+            onChange={(event) => setItemForm((current) => ({ ...current, workName: event.target.value }))}
+            placeholder="Название работы, например: Монтаж гарнитура"
+          />
           <select
             value={itemForm.materialId}
             onChange={(event) => setItemForm((current) => ({ ...current, materialId: event.target.value }))}
           >
-            <option value="">Выберите материал</option>
+            <option value="">Материал можно не указывать</option>
             {materials.map((material) => (
               <option key={material.id} value={material.id}>
                 {material.name} • {material.unit} • {formatCurrency(material.defaultPrice)}
               </option>
             ))}
           </select>
-          <input
-            value={itemForm.workName}
-            onChange={(event) => setItemForm((current) => ({ ...current, workName: event.target.value }))}
-            placeholder="Например: Монтаж гарнитура"
-          />
           <input
             type="number"
             min="0.01"
@@ -224,9 +229,11 @@ export function EstimateDetailsPage() {
           {estimate.items.length ? estimate.items.map((item) => (
             <div key={item.id} className="detail-list-item">
               <div>
-                <strong>{item.workName}</strong>
-                <p className="muted">{item.materialName} • {item.quantity} {item.unit} • {formatCurrency(item.unitPrice)}</p>
-                <p className="muted">{item.comment}</p>
+                <strong>{item.workName || item.materialName || 'Позиция сметы'}</strong>
+                <p className="muted">
+                  {item.materialName ?? 'Без материала'} • {item.quantity} {item.unit ?? 'ед.'} • {formatCurrency(item.unitPrice)}
+                </p>
+                {item.comment ? <p className="muted">{item.comment}</p> : null}
               </div>
               <div className="detail-actions">
                 <strong>{formatCurrency(item.lineTotal)}</strong>

@@ -100,17 +100,18 @@ public class EstimateService {
     @Transactional
     public EstimateResponse addItem(Long estimateId, EstimateItemRequest request) {
         Estimate estimate = getEditableEstimate(estimateId);
-        Material material = materialRepository.findById(request.materialId())
-            .orElseThrow(() -> new NotFoundException("Материал не найден"));
+        Material material = resolveMaterial(request.materialId());
+        String workName = normalizeWorkName(request.workName());
+        validateEstimateItem(material, workName);
 
         EstimateItem item = new EstimateItem();
         item.setEstimate(estimate);
         item.setMaterial(material);
-        item.setWorkName(request.workName());
+        item.setWorkName(workName);
         item.setQuantity(request.quantity());
         item.setUnitPrice(request.unitPrice());
         item.setLineTotal(request.quantity().multiply(request.unitPrice()));
-        item.setComment(request.comment());
+        item.setComment(normalizeComment(request.comment()));
         estimateItemRepository.save(item);
 
         estimate.setUpdatedAt(OffsetDateTime.now());
@@ -124,15 +125,16 @@ public class EstimateService {
         EstimateItem item = estimateItemRepository.findById(itemId)
             .orElseThrow(() -> new NotFoundException("Позиция сметы не найдена"));
         Estimate estimate = getEditableEstimate(item.getEstimate().getId());
-        Material material = materialRepository.findById(request.materialId())
-            .orElseThrow(() -> new NotFoundException("Материал не найден"));
+        Material material = resolveMaterial(request.materialId());
+        String workName = normalizeWorkName(request.workName());
+        validateEstimateItem(material, workName);
 
         item.setMaterial(material);
-        item.setWorkName(request.workName());
+        item.setWorkName(workName);
         item.setQuantity(request.quantity());
         item.setUnitPrice(request.unitPrice());
         item.setLineTotal(request.quantity().multiply(request.unitPrice()));
-        item.setComment(request.comment());
+        item.setComment(normalizeComment(request.comment()));
         estimateItemRepository.save(item);
 
         estimate.setUpdatedAt(OffsetDateTime.now());
@@ -156,6 +158,9 @@ public class EstimateService {
         Estimate estimate = getEstimate(estimateId);
         Map<Long, MaterialRequirementAccumulator> map = new LinkedHashMap<>();
         for (EstimateItem item : estimateItemRepository.findByEstimateId(estimate.getId())) {
+            if (item.getMaterial() == null) {
+                continue;
+            }
             map.computeIfAbsent(item.getMaterial().getId(), key -> new MaterialRequirementAccumulator(
                 item.getMaterial().getId(),
                 item.getMaterial().getName(),
@@ -194,9 +199,17 @@ public class EstimateService {
 
     private EstimateResponse toResponse(Estimate estimate) {
         List<EstimateItemResponse> items = estimateItemRepository.findByEstimateId(estimate.getId()).stream()
-            .map(item -> new EstimateItemResponse(item.getId(), item.getMaterial().getId(), item.getMaterial().getName(),
-                item.getMaterial().getUnit(), item.getWorkName(), item.getQuantity(), item.getUnitPrice(), item.getLineTotal(),
-                item.getComment()))
+            .map(item -> new EstimateItemResponse(
+                item.getId(),
+                item.getMaterial() != null ? item.getMaterial().getId() : null,
+                item.getMaterial() != null ? item.getMaterial().getName() : null,
+                item.getMaterial() != null ? item.getMaterial().getUnit() : null,
+                item.getWorkName(),
+                item.getQuantity(),
+                item.getUnitPrice(),
+                item.getLineTotal(),
+                item.getComment()
+            ))
             .toList();
         BigDecimal total = items.stream().map(EstimateItemResponse::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new EstimateResponse(
@@ -218,6 +231,28 @@ public class EstimateService {
     private UserAccount currentActor() {
         return userRepository.findById(SecurityUtils.currentUser().id())
             .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
+    }
+
+    private String normalizeComment(String comment) {
+        return comment == null ? "" : comment.trim();
+    }
+
+    private String normalizeWorkName(String workName) {
+        return workName == null ? "" : workName.trim();
+    }
+
+    private Material resolveMaterial(Long materialId) {
+        if (materialId == null) {
+            return null;
+        }
+        return materialRepository.findById(materialId)
+            .orElseThrow(() -> new NotFoundException("Материал не найден"));
+    }
+
+    private void validateEstimateItem(Material material, String workName) {
+        if (material == null && workName.isBlank()) {
+            throw new BadRequestException("Укажите материал или название работы");
+        }
     }
 
     private static final class MaterialRequirementAccumulator {
