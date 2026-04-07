@@ -239,106 +239,142 @@ export function ProjectDetailsPage() {
               <h3>Расчеты по объекту</h3>
             </div>
           </div>
-
-          <div className="stack-list">
-            {estimates.length ? estimates.map((estimate) => (
-              <div key={estimate.id} className="detail-list-item">
-                <div>
-                  <strong>{estimate.name}</strong>
-                  <p className="muted">{translateEstimateStatus(estimate.status)} • {estimate.items.length} поз.</p>
-                </div>
-                <div className="detail-actions">
-                  <strong>{formatCurrency(estimate.total)}</strong>
-                  <Link className="ghost-button" to={`/estimates/${estimate.id}`}>
-                    Открыть смету
-                  </Link>
-                  {purchasesByEstimateId.has(estimate.id) ? (
-                    <Link
-                      className="primary-button"
-                      to={`/purchases/${purchasesByEstimateId.get(estimate.id).id}`}
-                    >
-                      Открыть закупку
-                    </Link>
-                  ) : null}
-                  {canCreatePurchase ? (
-                    <div className="action-row">
-                      {estimate.status === 'DRAFT' && estimate.items.length > 0 && !purchasesByEstimateId.has(estimate.id) ? (
-                        <button type="button" className="primary-button" onClick={() => createPurchase(estimate.id)}>
-                          Создать закупку
-                        </button>
-                      ) : null}
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            )) : <p className="muted">По объекту пока нет смет.</p>}
+          <div className="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Смета</th>
+                  <th>Статус</th>
+                  <th>Позиции</th>
+                  <th>Сумма</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {estimates.length ? estimates.map((estimate) => (
+                  <tr key={estimate.id}>
+                    <td>
+                      <Link className="detail-link" to={`/estimates/${estimate.id}`}>
+                        {estimate.name}
+                      </Link>
+                    </td>
+                    <td>{translateEstimateStatus(estimate.status)}</td>
+                    <td>{estimate.items.length}</td>
+                    <td>{formatCurrency(estimate.total)}</td>
+                    <td>
+                      <div className="action-row">
+                        <Link className="ghost-button" to={`/estimates/${estimate.id}`}>
+                          Открыть смету
+                        </Link>
+                        {purchasesByEstimateId.has(estimate.id) ? (
+                          <Link
+                            className="primary-button"
+                            to={`/purchases/${purchasesByEstimateId.get(estimate.id).id}`}
+                          >
+                            Открыть закупку
+                          </Link>
+                        ) : null}
+                        {canCreatePurchase && estimate.status === 'DRAFT' && estimate.items.length > 0 && !purchasesByEstimateId.has(estimate.id) ? (
+                          <button type="button" className="primary-button" onClick={() => createPurchase(estimate.id)}>
+                            Создать закупку
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td className="empty-row" colSpan={5}>По объекту пока нет смет.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </article>
 
         <article className="page-card">
           <p className="eyebrow">Связанные закупки</p>
           <h3>Закупочный контур объекта</h3>
-
-          <div className="stack-list">
-            {purchases.length ? purchases.map((purchase) => (
-              <article key={purchase.id} className="page-card">
-                <div className="row-between">
-                  <div>
-                    <h3>
+          <div className="table-card">
+            <table>
+              <thead>
+                <tr>
+                  <th>Закупка</th>
+                  <th>Смета</th>
+                  <th>Статус</th>
+                  <th>План</th>
+                  <th>Факт</th>
+                  <th>Отклонение</th>
+                  <th>Позиции</th>
+                  <th>Действия</th>
+                </tr>
+              </thead>
+              <tbody>
+                {purchases.length ? purchases.map((purchase) => (
+                  <tr key={purchase.id}>
+                    <td>
                       <Link className="detail-link" to={`/purchases/${purchase.id}`}>
                         {purchase.projectName}
                       </Link>
-                    </h3>
-                    <p className="muted">{purchase.estimateName} • {translatePurchaseStatus(purchase.status)}</p>
-                  </div>
-                  <div className="metric-inline">
-                    <span>План: {formatCurrency(purchase.plannedTotal)}</span>
-                    <span>Факт: {formatCurrency(purchase.actualTotal)}</span>
-                    <strong>Δ {formatCurrency(purchase.deviation)}</strong>
-                  </div>
-                </div>
-
-                <div className="tag-row">
-                  {purchase.items.map((item) => (
-                    <span key={item.id} className="tag">
-                      {item.materialName} • {item.plannedQuantity} {item.unit} • {item.offers.find((offer) => offer.selected)?.supplierName ?? 'без выбора'}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="action-row">
-                  {canManagePurchase && purchase.status === 'DRAFT' ? (
-                    <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'submit')}>
-                      На согласование
-                    </button>
-                  ) : null}
-                  {canApprovePurchase && purchase.status === 'SUBMITTED' ? (
-                    <>
-                      <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'approve')}>
-                        Утвердить
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => changePurchaseStatus(purchase.id, 'return-for-revision', { message: 'Нужно скорректировать выбор поставщика' })}
-                      >
-                        Вернуть
-                      </button>
-                    </>
-                  ) : null}
-                  {canManagePurchase && purchase.status === 'APPROVED' ? (
-                    <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'order')}>
-                      Оформить заказ
-                    </button>
-                  ) : null}
-                  {canManagePurchase && purchase.status === 'ORDERED' ? (
-                    <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'receive')}>
-                      Подтвердить получение
-                    </button>
-                  ) : null}
-                </div>
-              </article>
-            )) : <p className="muted">По объекту пока нет закупок.</p>}
+                    </td>
+                    <td>{purchase.estimateName}</td>
+                    <td>{translatePurchaseStatus(purchase.status)}</td>
+                    <td>{formatCurrency(purchase.plannedTotal)}</td>
+                    <td>{formatCurrency(purchase.actualTotal)}</td>
+                    <td>{formatCurrency(purchase.deviation)}</td>
+                    <td>
+                      <div className="tag-row">
+                        {purchase.items.map((item) => (
+                          <span key={item.id} className="tag">
+                            {item.materialName} • {item.plannedQuantity} {item.unit} • {item.offers.find((offer) => offer.selected)?.supplierName ?? 'без выбора'}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="action-row">
+                        <Link className="ghost-button" to={`/purchases/${purchase.id}`}>
+                          Открыть закупку
+                        </Link>
+                        {canManagePurchase && purchase.status === 'DRAFT' ? (
+                          <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'submit')}>
+                            На согласование
+                          </button>
+                        ) : null}
+                        {canApprovePurchase && purchase.status === 'SUBMITTED' ? (
+                          <>
+                            <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'approve')}>
+                              Утвердить
+                            </button>
+                            <button
+                              type="button"
+                              className="ghost-button"
+                              onClick={() => changePurchaseStatus(purchase.id, 'return-for-revision', { message: 'Нужно скорректировать выбор поставщика' })}
+                            >
+                              Вернуть
+                            </button>
+                          </>
+                        ) : null}
+                        {canManagePurchase && purchase.status === 'APPROVED' ? (
+                          <button type="button" className="ghost-button" onClick={() => changePurchaseStatus(purchase.id, 'order')}>
+                            Оформить заказ
+                          </button>
+                        ) : null}
+                        {canManagePurchase && purchase.status === 'ORDERED' ? (
+                          <button type="button" className="primary-button" onClick={() => changePurchaseStatus(purchase.id, 'receive')}>
+                            Подтвердить получение
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td className="empty-row" colSpan={8}>По объекту пока нет закупок.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </article>
       </div>
