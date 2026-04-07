@@ -307,15 +307,13 @@ public class SeedDataLoader {
         for (MaterialReviewSeed item : items) {
             Material material = materialRepository.findBySkuIgnoreCase(item.materialSku()).orElseThrow();
             UserAccount author = users.get(item.authorEmail());
-            boolean exists = materialReviewRepository.findByMaterialIdOrderByCreatedAtDesc(material.getId()).stream()
-                .anyMatch(review -> review.getAuthor().getEmail().equalsIgnoreCase(item.authorEmail())
-                    && review.getComment().equals(item.comment()));
-            if (exists) {
-                continue;
-            }
-            MaterialReview review = new MaterialReview();
-            review.setMaterial(material);
-            review.setAuthor(author);
+            MaterialReview review = materialReviewRepository.findByMaterialIdAndAuthorId(material.getId(), author.getId())
+                .orElseGet(() -> {
+                    MaterialReview created = new MaterialReview();
+                    created.setMaterial(material);
+                    created.setAuthor(author);
+                    return created;
+                });
             review.setRating(item.rating());
             review.setComment(item.comment());
             materialReviewRepository.save(review);
@@ -327,15 +325,13 @@ public class SeedDataLoader {
         for (SupplierReviewSeed item : items) {
             Supplier supplier = supplierRepository.findByNameIgnoreCase(item.supplierName()).orElseThrow();
             UserAccount author = users.get(item.authorEmail());
-            boolean exists = supplierReviewRepository.findBySupplierIdOrderByCreatedAtDesc(supplier.getId()).stream()
-                .anyMatch(review -> review.getAuthor().getEmail().equalsIgnoreCase(item.authorEmail())
-                    && review.getComment().equals(item.comment()));
-            if (exists) {
-                continue;
-            }
-            SupplierReview review = new SupplierReview();
-            review.setSupplier(supplier);
-            review.setAuthor(author);
+            SupplierReview review = supplierReviewRepository.findBySupplierIdAndAuthorId(supplier.getId(), author.getId())
+                .orElseGet(() -> {
+                    SupplierReview created = new SupplierReview();
+                    created.setSupplier(supplier);
+                    created.setAuthor(author);
+                    return created;
+                });
             review.setRating(item.rating());
             review.setComment(item.comment());
             supplierReviewRepository.save(review);

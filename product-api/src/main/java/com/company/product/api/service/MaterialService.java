@@ -12,6 +12,7 @@ import com.company.product.api.entity.Material;
 import com.company.product.api.entity.MaterialCategory;
 import com.company.product.api.entity.MaterialReview;
 import com.company.product.api.entity.Supplier;
+import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.MaterialCategoryRepository;
 import com.company.product.api.repository.MaterialRepository;
@@ -106,13 +107,25 @@ public class MaterialService {
     public List<ReviewResponse> addReview(Long materialId, ReviewRequest request) {
         Material material = materialRepository.findById(materialId)
             .orElseThrow(() -> new NotFoundException("Материал не найден"));
-        MaterialReview review = new MaterialReview();
-        review.setMaterial(material);
-        review.setAuthor(currentActor());
+        UserAccount actor = currentActor();
+        boolean creating = materialReviewRepository.findByMaterialIdAndAuthorId(materialId, actor.getId()).isEmpty();
+        MaterialReview review = materialReviewRepository.findByMaterialIdAndAuthorId(materialId, actor.getId())
+            .orElseGet(() -> {
+                MaterialReview created = new MaterialReview();
+                created.setMaterial(material);
+                created.setAuthor(actor);
+                return created;
+            });
         review.setRating(request.rating());
         review.setComment(request.comment());
         materialReviewRepository.save(review);
-        auditService.log(AuditEntityType.MATERIAL, materialId, "REVIEW_ADDED", currentActor(), "Добавлен отзыв по материалу");
+        auditService.log(
+            AuditEntityType.MATERIAL,
+            materialId,
+            creating ? "REVIEW_ADDED" : "REVIEW_UPDATED",
+            actor,
+            creating ? "Добавлен отзыв по материалу" : "Обновлен отзыв по материалу"
+        );
         return materialReviewRepository.findByMaterialIdOrderByCreatedAtDesc(materialId).stream()
             .map(this::toReviewResponse)
             .toList();
@@ -150,12 +163,15 @@ public class MaterialService {
     }
 
     private ReviewResponse toReviewResponse(MaterialReview review) {
+        Long currentUserId = SecurityUtils.currentUser().id();
         return new ReviewResponse(
             review.getId(),
+            review.getAuthor().getId(),
             review.getAuthor().getFullName(),
             review.getRating(),
             review.getComment(),
-            review.getCreatedAt()
+            review.getCreatedAt(),
+            review.getAuthor().getId().equals(currentUserId)
         );
     }
 

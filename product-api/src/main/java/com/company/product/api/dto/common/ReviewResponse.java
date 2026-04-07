@@ -4,9 +4,11 @@ import java.time.OffsetDateTime;
 
 public record ReviewResponse(
     Long id,
+    Long authorId,
     String authorName,
     int rating,
     String comment,
-    OffsetDateTime createdAt
+    OffsetDateTime createdAt,
+    boolean currentUser
 ) {
 }

@@ -2,9 +2,16 @@ import { Link, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { formatCurrency } from '../i18n/currency';
+import { formatRuDate } from '../i18n/date';
 import { useAuth } from '../modules/auth/AuthContext';
 
 const emptyReviewForm = { rating: 5, comment: '' };
+
+function reviewFormFromReview(review) {
+  return review
+    ? { rating: String(review.rating), comment: review.comment }
+    : { rating: 5, comment: '' };
+}
 
 function placeholderLabel(name) {
   return name
@@ -13,6 +20,10 @@ function placeholderLabel(name) {
     .map((part) => part[0] ?? '')
     .join('')
     .toUpperCase();
+}
+
+function renderStars(rating) {
+  return Array.from({ length: 5 }, (_, index) => (index < rating ? '★' : '☆')).join('');
 }
 
 export function MaterialDetailsPage() {
@@ -33,10 +44,15 @@ export function MaterialDetailsPage() {
     const total = material.reviews.reduce((sum, review) => sum + Number(review.rating), 0);
     return (total / material.reviews.length).toFixed(1);
   }, [material]);
+  const ownReview = useMemo(
+    () => material?.reviews?.find((review) => review.currentUser) ?? null,
+    [material],
+  );
 
   useEffect(() => {
     api(`/api/materials/${id}`).then((response) => {
       setMaterial(response);
+      setReviewForm(reviewFormFromReview(response.reviews.find((review) => review.currentUser)));
       setForm({
         name: response.name,
         sku: response.sku,
@@ -93,9 +109,9 @@ export function MaterialDetailsPage() {
         }),
       });
       setMaterial((current) => ({ ...current, reviews }));
-      setReviewForm(emptyReviewForm);
+      setReviewForm(reviewFormFromReview(reviews.find((review) => review.currentUser)));
       setError('');
-      setSuccess('Отзыв по материалу добавлен.');
+      setSuccess(ownReview ? 'Ваш отзыв по материалу обновлен.' : 'Ваш отзыв по материалу сохранен.');
     } catch (submissionError) {
       setError(submissionError.message);
       setSuccess('');
@@ -144,7 +160,7 @@ export function MaterialDetailsPage() {
             <span className="tag">Базовая цена: {formatCurrency(material.defaultPrice)}</span>
             <span className="tag">{material.active ? 'Активный материал' : 'Скрыт из активной работы'}</span>
             <span className="tag">
-              {averageRating ? `Средняя оценка: ${averageRating}/5` : 'Пока без отзывов'}
+              {averageRating ? `Средняя оценка: ${averageRating} ${renderStars(Math.round(Number(averageRating)))}` : 'Пока без отзывов'}
             </span>
           </div>
         </article>
@@ -168,34 +184,57 @@ export function MaterialDetailsPage() {
 
         <article className="page-card">
           <p className="eyebrow">Отзывы</p>
-          <h3>Что пишут о материале</h3>
+          <h3>Что команда пишет о материале</h3>
+          <p className="muted">
+            Один пользователь может оставить только один отзыв и потом редактировать его.
+          </p>
           <div className="review-grid">
             {material.reviews.length ? material.reviews.map((review) => (
               <div key={review.id} className="review-card">
-                <div className="row-between">
-                  <strong>{review.authorName}</strong>
-                  <span>{review.rating}/5</span>
+                <div className="review-card-top">
+                  <div>
+                    <div className="review-card-header">
+                      <strong>{review.authorName}</strong>
+                      {review.currentUser ? <span className="review-pill">Ваш отзыв</span> : null}
+                    </div>
+                    <div className="review-stars" aria-label={`Оценка ${review.rating} из 5`}>
+                      <span>{renderStars(review.rating)}</span>
+                      <strong>{review.rating}/5</strong>
+                    </div>
+                  </div>
+                  <span className="review-date">{formatRuDate(review.createdAt)}</span>
                 </div>
-                <p>{review.comment}</p>
+                <p className="review-card-body">{review.comment}</p>
               </div>
             )) : <div className="empty-note">Пока никто не оставил отзыв об этом материале.</div>}
           </div>
 
-          <form className="purchase-comment-form" onSubmit={addReview}>
-            <select value={reviewForm.rating} onChange={(event) => setReviewForm((current) => ({ ...current, rating: event.target.value }))}>
-              {[5, 4, 3, 2, 1].map((value) => (
-                <option key={value} value={value}>{value} из 5</option>
-              ))}
-            </select>
-            <textarea
-              rows={3}
-              value={reviewForm.comment}
-              onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))}
-              placeholder="Напишите, насколько материал удобен в работе, есть ли проблемы с качеством или поставкой"
-              required
-            />
-            <button type="submit" className="ghost-button">Оставить отзыв</button>
-          </form>
+          <div className="review-form-card">
+            <div className="review-form-head">
+              <div>
+                <strong>{ownReview ? 'Редактирование вашего отзыва' : 'Оставьте отзыв о материале'}</strong>
+                <p className="muted">
+                  Расскажите, как материал показал себя в работе, по качеству и по стабильности поставки.
+                </p>
+              </div>
+              {ownReview ? <span className="review-pill">Можно редактировать</span> : null}
+            </div>
+            <form className="purchase-comment-form" onSubmit={addReview}>
+              <select value={reviewForm.rating} onChange={(event) => setReviewForm((current) => ({ ...current, rating: event.target.value }))}>
+                {[5, 4, 3, 2, 1].map((value) => (
+                  <option key={value} value={value}>{renderStars(value)} · {value} из 5</option>
+                ))}
+              </select>
+              <textarea
+                rows={3}
+                value={reviewForm.comment}
+                onChange={(event) => setReviewForm((current) => ({ ...current, comment: event.target.value }))}
+                placeholder="Напишите, насколько материал удобен в работе, есть ли проблемы с качеством или поставкой"
+                required
+              />
+              <button type="submit" className="ghost-button">{ownReview ? 'Обновить отзыв' : 'Сохранить отзыв'}</button>
+            </form>
+          </div>
         </article>
       </div>
 

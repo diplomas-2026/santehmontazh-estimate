@@ -10,6 +10,7 @@ import com.company.product.api.entity.AuditEntityType;
 import com.company.product.api.entity.Material;
 import com.company.product.api.entity.Supplier;
 import com.company.product.api.entity.SupplierReview;
+import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.MaterialRepository;
 import com.company.product.api.repository.SupplierRepository;
@@ -94,13 +95,25 @@ public class SupplierService {
     public List<ReviewResponse> addReview(Long supplierId, ReviewRequest request) {
         Supplier supplier = supplierRepository.findById(supplierId)
             .orElseThrow(() -> new NotFoundException("Поставщик не найден"));
-        SupplierReview review = new SupplierReview();
-        review.setSupplier(supplier);
-        review.setAuthor(currentActor());
+        UserAccount actor = currentActor();
+        boolean creating = supplierReviewRepository.findBySupplierIdAndAuthorId(supplierId, actor.getId()).isEmpty();
+        SupplierReview review = supplierReviewRepository.findBySupplierIdAndAuthorId(supplierId, actor.getId())
+            .orElseGet(() -> {
+                SupplierReview created = new SupplierReview();
+                created.setSupplier(supplier);
+                created.setAuthor(actor);
+                return created;
+            });
         review.setRating(request.rating());
         review.setComment(request.comment());
         supplierReviewRepository.save(review);
-        auditService.log(AuditEntityType.SUPPLIER, supplierId, "REVIEW_ADDED", currentActor(), "Добавлен отзыв по поставщику");
+        auditService.log(
+            AuditEntityType.SUPPLIER,
+            supplierId,
+            creating ? "REVIEW_ADDED" : "REVIEW_UPDATED",
+            actor,
+            creating ? "Добавлен отзыв по поставщику" : "Обновлен отзыв по поставщику"
+        );
         return supplierReviewRepository.findBySupplierIdOrderByCreatedAtDesc(supplierId).stream()
             .map(this::toReviewResponse)
             .toList();
@@ -136,12 +149,15 @@ public class SupplierService {
     }
 
     private ReviewResponse toReviewResponse(SupplierReview review) {
+        Long currentUserId = SecurityUtils.currentUser().id();
         return new ReviewResponse(
             review.getId(),
+            review.getAuthor().getId(),
             review.getAuthor().getFullName(),
             review.getRating(),
             review.getComment(),
-            review.getCreatedAt()
+            review.getCreatedAt(),
+            review.getAuthor().getId().equals(currentUserId)
         );
     }
 

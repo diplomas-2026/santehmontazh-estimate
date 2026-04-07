@@ -86,7 +86,9 @@ public class DashboardService {
         return purchases.stream()
             .map(purchase -> new DeviationRowResponse(
                 purchase.getId(),
+                purchase.getProject().getId(),
                 purchase.getProject().getName(),
+                purchase.getEstimate().getId(),
                 purchase.getEstimate().getName(),
                 purchase.getPlannedTotal(),
                 purchase.getActualTotal(),

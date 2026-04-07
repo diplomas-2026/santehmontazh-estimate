@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 
 public record DeviationRowResponse(
     Long purchaseId,
+    Long projectId,
     String projectName,
+    Long estimateId,
     String estimateName,
     BigDecimal plannedTotal,
     BigDecimal actualTotal,

@@ -36,8 +36,8 @@ export function ReportsPage() {
       subtitle="Контроль отклонений по закупкам и объектам"
       columns={['Объект', 'Смета', 'План', 'Факт', 'Отклонение']}
       rows={rows.map((row) => [
-        row.projectName,
-        row.estimateName,
+        <Link className="detail-link" to={`/projects/${row.projectId}`}>{row.projectName}</Link>,
+        <Link className="detail-link" to={`/estimates/${row.estimateId}`}>{row.estimateName}</Link>,
         formatCurrency(row.plannedTotal),
         formatCurrency(row.actualTotal),
         formatCurrency(row.deviation),
