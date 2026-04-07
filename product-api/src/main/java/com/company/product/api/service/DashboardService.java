@@ -7,6 +7,7 @@ import com.company.product.api.entity.Purchase;
 import com.company.product.api.entity.Project;
 import com.company.product.api.entity.Role;
 import com.company.product.api.entity.UserAccount;
+import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
 import com.company.product.api.repository.ProjectRepository;
@@ -96,6 +97,6 @@ public class DashboardService {
 
     private UserAccount currentActor() {
         return userRepository.findById(SecurityUtils.currentUser().id())
-            .orElseThrow();
+            .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
     }
 }

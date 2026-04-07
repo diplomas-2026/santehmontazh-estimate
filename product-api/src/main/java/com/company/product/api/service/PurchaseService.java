@@ -18,6 +18,7 @@ import com.company.product.api.entity.Purchase;
 import com.company.product.api.entity.PurchaseItem;
 import com.company.product.api.entity.PurchaseStatus;
 import com.company.product.api.entity.Role;
+import com.company.product.api.entity.Project;
 import com.company.product.api.entity.Supplier;
 import com.company.product.api.entity.SupplierOffer;
 import com.company.product.api.entity.UserAccount;
@@ -28,6 +29,7 @@ import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
 import com.company.product.api.repository.PurchaseItemRepository;
 import com.company.product.api.repository.PurchaseRepository;
+import com.company.product.api.repository.ProjectRepository;
 import com.company.product.api.repository.SupplierOfferRepository;
 import com.company.product.api.repository.SupplierRepository;
 import com.company.product.api.repository.UserRepository;
@@ -46,6 +48,7 @@ public class PurchaseService {
     private final PurchaseItemRepository purchaseItemRepository;
     private final EstimateRepository estimateRepository;
     private final EstimateItemRepository estimateItemRepository;
+    private final ProjectRepository projectRepository;
     private final SupplierRepository supplierRepository;
     private final SupplierOfferRepository supplierOfferRepository;
     private final ApprovalCommentRepository approvalCommentRepository;
@@ -56,6 +59,7 @@ public class PurchaseService {
                            PurchaseItemRepository purchaseItemRepository,
                            EstimateRepository estimateRepository,
                            EstimateItemRepository estimateItemRepository,
+                           ProjectRepository projectRepository,
                            SupplierRepository supplierRepository,
                            SupplierOfferRepository supplierOfferRepository,
                            ApprovalCommentRepository approvalCommentRepository,
@@ -65,6 +69,7 @@ public class PurchaseService {
         this.purchaseItemRepository = purchaseItemRepository;
         this.estimateRepository = estimateRepository;
         this.estimateItemRepository = estimateItemRepository;
+        this.projectRepository = projectRepository;
         this.supplierRepository = supplierRepository;
         this.supplierOfferRepository = supplierOfferRepository;
         this.approvalCommentRepository = approvalCommentRepository;
@@ -86,8 +91,7 @@ public class PurchaseService {
 
     @Transactional
     public PurchaseResponse create(PurchaseRequest request) {
-        Estimate estimate = estimateRepository.findById(request.estimateId())
-            .orElseThrow(() -> new NotFoundException("Смета не найдена"));
+        Estimate estimate = getAccessibleEstimate(request.estimateId());
         UserAccount actor = currentActor();
         return createPurchaseFromEstimate(
             estimate,
@@ -100,8 +104,7 @@ public class PurchaseService {
 
     @Transactional
     public PurchaseResponse createFromEstimate(Long estimateId) {
-        Estimate estimate = estimateRepository.findById(estimateId)
-            .orElseThrow(() -> new NotFoundException("Смета не найдена"));
+        Estimate estimate = getAccessibleEstimate(estimateId);
         UserAccount actor = currentActor();
         return createPurchaseFromEstimate(
             estimate,
@@ -117,6 +120,9 @@ public class PurchaseService {
                                                         String supplierName,
                                                         String comment,
                                                         boolean requireReadyStatus) {
+        if (estimate.getProject().getStatus() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
+            throw new BadRequestException("Нельзя создать закупку для завершенного объекта");
+        }
         if (requireReadyStatus && estimate.getStatus() != EstimateStatus.READY_FOR_PURCHASE) {
             throw new BadRequestException("Закупку можно создать только для сметы, готовой к закупке");
         }
@@ -253,6 +259,9 @@ public class PurchaseService {
     @Transactional
     public PurchaseResponse submit(Long purchaseId) {
         Purchase purchase = getEditablePurchase(purchaseId);
+        if (purchase.getStatus() != PurchaseStatus.DRAFT) {
+            throw new BadRequestException("Отправить на согласование можно только закупку в статусе DRAFT");
+        }
         purchase.setStatus(PurchaseStatus.SUBMITTED);
         purchase.setUpdatedAt(OffsetDateTime.now());
         purchaseRepository.save(purchase);
@@ -276,6 +285,9 @@ public class PurchaseService {
     @Transactional
     public PurchaseResponse returnForRevision(Long purchaseId, ApprovalCommentRequest request) {
         Purchase purchase = getPurchase(purchaseId);
+        if (purchase.getStatus() != PurchaseStatus.SUBMITTED) {
+            throw new BadRequestException("Вернуть на доработку можно только закупку в статусе SUBMITTED");
+        }
         ApprovalComment comment = new ApprovalComment();
         comment.setEntityType(CommentEntityType.PURCHASE);
         comment.setEntityId(purchaseId);
@@ -373,10 +385,33 @@ public class PurchaseService {
 
     private Purchase getEditablePurchase(Long id) {
         Purchase purchase = getPurchase(id);
-        if (!(purchase.getStatus() == PurchaseStatus.DRAFT || purchase.getStatus() == PurchaseStatus.SUBMITTED)) {
+        if (purchase.getStatus() != PurchaseStatus.DRAFT) {
             throw new BadRequestException("Закупка недоступна для редактирования в текущем статусе");
         }
         return purchase;
+    }
+
+    public List<PurchaseResponse> findByProject(Long projectId) {
+        Project project = getAccessibleProject(projectId);
+        return purchaseRepository.findByProjectId(project.getId()).stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    private Estimate getAccessibleEstimate(Long id) {
+        Estimate estimate = estimateRepository.findById(id).orElseThrow(() -> new NotFoundException("Смета не найдена"));
+        UserAccount actor = currentActor();
+        if (actor.getRole() != Role.ADMIN && !estimate.getProject().getOwner().getId().equals(actor.getId())) {
+            throw new NotFoundException("Смета не найдена");
+        }
+        return estimate;
+    }
+
+    private Project getAccessibleProject(Long id) {
+        UserAccount actor = currentActor();
+        return actor.getRole() == Role.ADMIN
+            ? projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Объект не найден"))
+            : projectRepository.findByIdAndOwnerId(id, actor.getId()).orElseThrow(() -> new NotFoundException("Объект не найден"));
     }
 
     private PurchaseResponse toResponse(Purchase purchase) {

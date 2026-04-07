@@ -45,4 +45,10 @@ public class ProjectController {
     public ProjectResponse update(@PathVariable Long id, @Valid @RequestBody ProjectRequest request) {
         return projectService.update(id, request);
     }
+
+    @PostMapping("/{id}/complete")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
+    public ProjectResponse complete(@PathVariable Long id) {
+        return projectService.complete(id);
+    }
 }

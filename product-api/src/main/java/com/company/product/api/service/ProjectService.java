@@ -4,10 +4,13 @@ import com.company.product.api.dto.project.ProjectRequest;
 import com.company.product.api.dto.project.ProjectResponse;
 import com.company.product.api.entity.AuditEntityType;
 import com.company.product.api.entity.Estimate;
+import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Project;
 import com.company.product.api.entity.Purchase;
+import com.company.product.api.entity.PurchaseStatus;
 import com.company.product.api.entity.Role;
 import com.company.product.api.entity.UserAccount;
+import com.company.product.api.exception.BadRequestException;
 import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
@@ -69,14 +72,43 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse update(Long id, ProjectRequest request) {
-        Project project = getAccessibleProject(id);
+        Project project = getEditableProject(id);
         apply(project, request);
         Project saved = projectRepository.save(project);
         auditService.log(AuditEntityType.PROJECT, saved.getId(), "UPDATED", currentActor(), "Обновлены данные объекта");
         return toResponse(saved);
     }
 
+    @Transactional
+    public ProjectResponse complete(Long id) {
+        Project project = getAccessibleProject(id);
+        if (project.getStatus() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
+            throw new BadRequestException("Объект уже завершен");
+        }
+
+        List<Estimate> estimates = estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId());
+        boolean hasOpenEstimates = estimates.stream().anyMatch(estimate ->
+            estimate.getStatus() != EstimateStatus.ARCHIVED && estimate.getStatus() != EstimateStatus.COMPLETED);
+        if (hasOpenEstimates) {
+            throw new BadRequestException("Нельзя завершить объект, пока не архивированы все сметы");
+        }
+
+        List<Purchase> purchases = purchaseRepository.findByProjectId(project.getId());
+        boolean hasOpenPurchases = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.RECEIVED);
+        if (hasOpenPurchases) {
+            throw new BadRequestException("Нельзя завершить объект, пока не завершены все закупки");
+        }
+
+        project.setStatus(com.company.product.api.entity.ProjectStatus.COMPLETED);
+        Project saved = projectRepository.save(project);
+        auditService.log(AuditEntityType.PROJECT, saved.getId(), "COMPLETED", currentActor(), "Объект завершен");
+        return toResponse(saved);
+    }
+
     private void apply(Project project, ProjectRequest request) {
+        if (request.status() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
+            throw new BadRequestException("Завершить объект можно только отдельным действием");
+        }
         project.setName(request.name());
         project.setCode(request.code());
         project.setAddress(request.address());
@@ -88,9 +120,7 @@ public class ProjectService {
 
     private ProjectResponse toResponse(Project project) {
         List<Estimate> estimates = estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId());
-        List<Purchase> purchases = purchaseRepository.findByProjectOwnerId(project.getOwner().getId()).stream()
-            .filter(purchase -> purchase.getProject().getId().equals(project.getId()))
-            .toList();
+        List<Purchase> purchases = purchaseRepository.findByProjectId(project.getId());
         BigDecimal estimateTotal = estimates.stream()
             .flatMap(estimate -> estimateItemRepository.findByEstimateId(estimate.getId()).stream())
             .map(item -> item.getLineTotal())
@@ -113,5 +143,13 @@ public class ProjectService {
         return actor.getRole() == Role.ADMIN
             ? projectRepository.findById(id).orElseThrow(() -> new NotFoundException("Объект не найден"))
             : projectRepository.findByIdAndOwnerId(id, actor.getId()).orElseThrow(() -> new NotFoundException("Объект не найден"));
+    }
+
+    private Project getEditableProject(Long id) {
+        Project project = getAccessibleProject(id);
+        if (project.getStatus() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
+            throw new BadRequestException("Объект недоступен для редактирования в текущем статусе");
+        }
+        return project;
     }
 }

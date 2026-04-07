@@ -12,6 +12,8 @@ import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Material;
 import com.company.product.api.entity.Project;
 import com.company.product.api.entity.Role;
+import com.company.product.api.entity.Purchase;
+import com.company.product.api.entity.PurchaseStatus;
 import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.BadRequestException;
 import com.company.product.api.exception.NotFoundException;
@@ -19,6 +21,7 @@ import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
 import com.company.product.api.repository.MaterialRepository;
 import com.company.product.api.repository.ProjectRepository;
+import com.company.product.api.repository.PurchaseRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.security.SecurityUtils;
 import java.math.BigDecimal;
@@ -38,6 +41,7 @@ public class EstimateService {
     private final EstimateItemRepository estimateItemRepository;
     private final ProjectRepository projectRepository;
     private final MaterialRepository materialRepository;
+    private final PurchaseRepository purchaseRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
 
@@ -45,12 +49,14 @@ public class EstimateService {
                            EstimateItemRepository estimateItemRepository,
                            ProjectRepository projectRepository,
                            MaterialRepository materialRepository,
+                           PurchaseRepository purchaseRepository,
                            UserRepository userRepository,
                            AuditService auditService) {
         this.estimateRepository = estimateRepository;
         this.estimateItemRepository = estimateItemRepository;
         this.projectRepository = projectRepository;
         this.materialRepository = materialRepository;
+        this.purchaseRepository = purchaseRepository;
         this.userRepository = userRepository;
         this.auditService = auditService;
     }
@@ -73,7 +79,7 @@ public class EstimateService {
     @Transactional
     public EstimateResponse create(EstimateRequest request) {
         UserAccount actor = currentActor();
-        Project project = getAccessibleProject(request.projectId(), actor);
+        Project project = getEditableProject(request.projectId(), actor);
 
         Estimate estimate = new Estimate();
         estimate.setProject(project);
@@ -90,7 +96,7 @@ public class EstimateService {
     @Transactional
     public EstimateResponse update(Long id, EstimateRequest request) {
         Estimate estimate = getEditableEstimate(id);
-        Project project = getAccessibleProject(request.projectId(), currentActor());
+        Project project = getEditableProject(request.projectId(), currentActor());
         estimate.setProject(project);
         estimate.setName(request.name());
         estimate.setNotes(request.notes());
@@ -188,6 +194,31 @@ public class EstimateService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public EstimateResponse archive(Long estimateId) {
+        Estimate estimate = getEstimate(estimateId);
+        if (estimate.getStatus() == EstimateStatus.ARCHIVED || estimate.getStatus() == EstimateStatus.COMPLETED) {
+            return toResponse(estimate);
+        }
+        List<Purchase> purchases = purchaseRepository.findByEstimateId(estimate.getId());
+        boolean hasOpenPurchase = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.RECEIVED);
+        if (hasOpenPurchase) {
+            throw new BadRequestException("Нельзя архивировать смету, пока по ней есть незавершенная закупка");
+        }
+        estimate.setStatus(EstimateStatus.ARCHIVED);
+        estimate.setUpdatedAt(OffsetDateTime.now());
+        Estimate saved = estimateRepository.save(estimate);
+        auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "ARCHIVED", currentActor(), "Смета архивирована");
+        return toResponse(saved);
+    }
+
+    public List<EstimateResponse> findByProject(Long projectId) {
+        Project project = getAccessibleProject(projectId, currentActor());
+        return estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId()).stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
     private Estimate getEstimate(Long id) {
         Estimate estimate = estimateRepository.findById(id).orElseThrow(() -> new NotFoundException("Смета не найдена"));
         UserAccount actor = currentActor();
@@ -267,6 +298,14 @@ public class EstimateService {
         return actor.getRole() == Role.ADMIN
             ? projectRepository.findById(projectId).orElseThrow(() -> new NotFoundException("Объект не найден"))
             : projectRepository.findByIdAndOwnerId(projectId, actor.getId()).orElseThrow(() -> new NotFoundException("Объект не найден"));
+    }
+
+    private Project getEditableProject(Long projectId, UserAccount actor) {
+        Project project = getAccessibleProject(projectId, actor);
+        if (project.getStatus() == com.company.product.api.entity.ProjectStatus.COMPLETED) {
+            throw new BadRequestException("Объект недоступен для редактирования в текущем статусе");
+        }
+        return project;
     }
 
     private static final class MaterialRequirementAccumulator {

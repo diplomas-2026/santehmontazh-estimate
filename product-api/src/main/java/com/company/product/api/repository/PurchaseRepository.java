@@ -8,5 +8,7 @@ public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
 
     List<Purchase> findByEstimateId(Long estimateId);
 
+    List<Purchase> findByProjectId(Long projectId);
+
     List<Purchase> findByProjectOwnerId(Long ownerId);
 }

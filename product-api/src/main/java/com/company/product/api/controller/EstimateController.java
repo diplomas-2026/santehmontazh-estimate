@@ -77,4 +77,15 @@ public class EstimateController {
     public EstimateResponse submitForPurchase(@PathVariable Long id) {
         return estimateService.submitForPurchase(id);
     }
+
+    @PostMapping("/estimates/{id}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
+    public EstimateResponse archive(@PathVariable Long id) {
+        return estimateService.archive(id);
+    }
+
+    @GetMapping("/projects/{projectId}/estimates")
+    public List<EstimateResponse> findByProject(@PathVariable Long projectId) {
+        return estimateService.findByProject(projectId);
+    }
 }

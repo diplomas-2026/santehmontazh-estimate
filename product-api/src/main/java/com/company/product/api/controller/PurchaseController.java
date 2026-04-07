@@ -111,6 +111,11 @@ public class PurchaseController {
         return purchaseService.receive(id);
     }
 
+    @GetMapping("/projects/{projectId}/purchases")
+    public List<PurchaseResponse> findByProject(@PathVariable Long projectId) {
+        return purchaseService.findByProject(projectId);
+    }
+
     @GetMapping("/purchases/{id}/comments")
     public List<ApprovalCommentResponse> comments(@PathVariable Long id) {
         return purchaseService.comments(id);
