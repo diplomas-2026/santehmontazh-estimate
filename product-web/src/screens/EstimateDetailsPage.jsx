@@ -84,7 +84,7 @@ export function EstimateDetailsPage() {
     try {
       const createdPurchase = await api(`/api/purchases/from-estimate/${id}`, { method: 'POST' });
       setPurchase(createdPurchase);
-      setSuccess('Закупка создана по этой смете. Теперь можно продолжить работу с поставщиками.');
+      setSuccess('Закупка создана по этой смете. Теперь можно перейти в позиции закупки и зафиксировать факт.');
       setError('');
       load();
     } catch (submissionError) {
@@ -155,8 +155,7 @@ export function EstimateDetailsPage() {
           <p className="eyebrow">Переход в закупку</p>
           <h3>Что делает система дальше</h3>
           <p className="muted">
-            После передачи в закупку из позиций этой сметы создается черновик закупки. Дальше работа продолжается в закупочном контуре:
-            пользователь выберет поставщиков, согласует и доведет покупку до факта.
+            Из позиций этой сметы создается закупка по материалам. Дальше пользователь открывает позиции закупки, вносит факт и фиксирует, где именно купил каждую позицию.
           </p>
           <div className="action-row">
             {purchase ? (
@@ -195,56 +194,71 @@ export function EstimateDetailsPage() {
               Укажите материал или название работы. Можно заполнить только одно из этих полей или оба сразу.
             </p>
           </div>
-          <input
-            value={itemForm.workName}
-            onChange={(event) => setItemForm((current) => ({ ...current, workName: event.target.value }))}
-            placeholder="Название работы, например: Монтаж гарнитура"
-          />
-          <select
-            value={itemForm.materialId}
-            onChange={(event) => {
-              const materialId = event.target.value;
-              const selectedMaterialOnChange = materials.find((material) => String(material.id) === String(materialId));
-              setItemForm((current) => {
-                if (current.unitPrice || !selectedMaterialOnChange) {
-                  return { ...current, materialId };
-                }
-                return {
-                  ...current,
-                  materialId,
-                  unitPrice: String(selectedMaterialOnChange.defaultPrice ?? ''),
-                };
-              });
-            }}
-          >
-            <option value="">Материал можно не указывать</option>
-            {materials.map((material) => (
-              <option key={material.id} value={material.id}>
-                {material.name} • {material.unit} • {formatCurrency(material.defaultPrice)}
-              </option>
-            ))}
-          </select>
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={itemForm.quantity}
-            onChange={(event) => setItemForm((current) => ({ ...current, quantity: event.target.value }))}
-            placeholder="Количество"
-          />
-          <input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={itemForm.unitPrice}
-            onChange={(event) => setItemForm((current) => ({ ...current, unitPrice: event.target.value }))}
-            placeholder="Цена за единицу"
-          />
-          <input
-            value={itemForm.comment}
-            onChange={(event) => setItemForm((current) => ({ ...current, comment: event.target.value }))}
-            placeholder="Комментарий к позиции"
-          />
+          <label className="form-field">
+            <span className="form-label">Название работы</span>
+            <input
+              value={itemForm.workName}
+              onChange={(event) => setItemForm((current) => ({ ...current, workName: event.target.value }))}
+              placeholder="Название работы, например: Монтаж гарнитура"
+            />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Материал</span>
+            <select
+              value={itemForm.materialId}
+              onChange={(event) => {
+                const materialId = event.target.value;
+                const selectedMaterialOnChange = materials.find((material) => String(material.id) === String(materialId));
+                setItemForm((current) => {
+                  if (current.unitPrice || !selectedMaterialOnChange) {
+                    return { ...current, materialId };
+                  }
+                  return {
+                    ...current,
+                    materialId,
+                    unitPrice: String(selectedMaterialOnChange.defaultPrice ?? ''),
+                  };
+                });
+              }}
+            >
+              <option value="">Материал можно не указывать</option>
+              {materials.map((material) => (
+                <option key={material.id} value={material.id}>
+                  {material.name} • {material.unit} • {formatCurrency(material.defaultPrice)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="form-field">
+            <span className="form-label">Количество</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={itemForm.quantity}
+              onChange={(event) => setItemForm((current) => ({ ...current, quantity: event.target.value }))}
+              placeholder="Количество"
+            />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Цена за единицу</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={itemForm.unitPrice}
+              onChange={(event) => setItemForm((current) => ({ ...current, unitPrice: event.target.value }))}
+              placeholder="Цена за единицу"
+            />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Комментарий к позиции</span>
+            <input
+              value={itemForm.comment}
+              onChange={(event) => setItemForm((current) => ({ ...current, comment: event.target.value }))}
+              placeholder="Комментарий к позиции"
+            />
+          </label>
           {error ? <div className="error-box">{error}</div> : null}
           {success ? <div className="success-box">{success}</div> : null}
           <button type="submit" className="primary-button">Добавить позицию</button>

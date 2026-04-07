@@ -196,6 +196,11 @@ export function PurchaseDetailsPage() {
   const canEdit = purchase.status !== 'COMPLETED';
   const sourcedItemsCount = (purchase.items ?? []).filter((item) => item.supplierName?.trim()).length;
   const totalItemsCount = purchase.items?.length ?? 0;
+  const incompleteItems = (purchase.items ?? []).filter((item) => {
+    const missingSource = !item.supplierName?.trim();
+    const missingFact = Number(item.actualQuantity ?? 0) <= 0 || Number(item.actualPrice ?? 0) <= 0;
+    return missingSource || missingFact;
+  });
 
   return (
     <section className="page-section purchase-workbench">
@@ -264,7 +269,7 @@ export function PurchaseDetailsPage() {
             <span className={`tag${purchase.status === 'COMPLETED' ? ' tag-active' : ''}`}>Завершена</span>
           </div>
           <p className="muted">
-            BASE_USER сам ведет закупку от начала до конца: выбирает, где купить, фиксирует факт и завершает процесс без согласования.
+            BASE_USER сам ведет закупку от начала до конца: заполняет позиции, фиксирует источник покупки и завершает процесс без дополнительных ролей.
           </p>
           <div className="action-row">
             {currentActions.length ? currentActions.map((action) => (
@@ -280,6 +285,48 @@ export function PurchaseDetailsPage() {
           </div>
         </article>
       </div>
+
+      {incompleteItems.length ? (
+        <article className="page-card">
+          <p className="eyebrow">Требует внимания</p>
+          <h3>Какие позиции еще не заполнены до конца</h3>
+          <p className="muted">
+            Чтобы закупка была полностью оформлена, у каждой позиции должен быть зафиксирован факт и указан источник покупки.
+          </p>
+          <div className="stack-list">
+            {incompleteItems.map((item) => {
+              const reasons = [];
+              if (!item.supplierName?.trim()) {
+                reasons.push('не указан источник покупки');
+              }
+              if (Number(item.actualQuantity ?? 0) <= 0 || Number(item.actualPrice ?? 0) <= 0) {
+                reasons.push('не заполнен факт');
+              }
+              return (
+                <div key={item.id} className="detail-list-item">
+                  <div>
+                    <strong>{item.materialName}</strong>
+                    <p className="muted">{reasons.join(' • ')}</p>
+                  </div>
+                  <div className="detail-actions">
+                    <Link className="ghost-button" to={`/purchases/${purchase.id}/items/${item.id}`}>
+                      Заполнить
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </article>
+      ) : (
+        <article className="page-card">
+          <p className="eyebrow">Готовность закупки</p>
+          <h3>Все позиции заполнены</h3>
+          <p className="muted">
+            По каждой позиции уже указан источник покупки и внесен фактический результат. Закупку можно завершать, когда работа по документу действительно закончена.
+          </p>
+        </article>
+      )}
 
       <form className="page-card form-grid purchase-form-card" onSubmit={savePurchase}>
         <div>
@@ -313,7 +360,7 @@ export function PurchaseDetailsPage() {
           <strong>{formatCurrency(purchase.plannedTotal)}</strong>
         </div>
         <p className="muted">
-          Внутри закупки виден краткий обзор всех позиций. Для редактирования конкретной позиции откройте отдельную карточку и работайте с ней без перегруза.
+          Это обзорный экран. Для редактирования конкретной позиции откройте ее карточку: там вносится факт, источник покупки и рабочий комментарий.
         </p>
 
         <div className="stack-list">

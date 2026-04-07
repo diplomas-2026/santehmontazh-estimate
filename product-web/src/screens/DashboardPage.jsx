@@ -34,10 +34,10 @@ export function DashboardPage() {
     <section className="page-section">
       <div className="dashboard-hero">
         <div className="dashboard-hero-copy">
-          <p className="eyebrow">Главный экран продукта</p>
-          <h2>Единая панель по объектам, сметам и закупкам.</h2>
+          <p className="eyebrow">Оперативный обзор</p>
+          <h2>Единая панель по вашим объектам, сметам и закупкам.</h2>
           <p className="muted">
-            Здесь видна аналитика именно по вашим объектам: где теряются деньги, какие закупки тормозят работу и какие premium-модули уже помогают быстрее принимать решения.
+            Здесь видно, на каком этапе находятся ваши объекты, где уже есть закупки и как меняется план / факт по рабочему контуру.
           </p>
           <div className="hero-actions">
             <Link className="primary-button hero-button" to="/projects">Открыть объекты</Link>
@@ -48,7 +48,7 @@ export function DashboardPage() {
         </div>
 
         <div className="status-card premium">
-          <span>Аккаунт</span>
+          <span>Аккаунт и доступ</span>
           <strong>{user.fullName}</strong>
           <p>
             {translateRole(user.role)} • {subscription ? `тариф ${subscription.tierName} активен` : 'используется бесплатный доступ'}
@@ -74,13 +74,13 @@ export function DashboardPage() {
 
       <div className="table-grid">
         <article className="page-card">
-          <p className="eyebrow">Сценарии продукта</p>
-          <h3>Что уже можно сделать в системе</h3>
+          <p className="eyebrow">Рабочий сценарий</p>
+          <h3>Что вы делаете в системе день за днем</h3>
           <div className="tag-row">
             <span className="tag">Создать объект</span>
             <span className="tag">Создать смету и позиции</span>
             <span className="tag">Сформировать закупку</span>
-            <span className="tag">Зафиксировать место покупки</span>
+            <span className="tag">Зафиксировать источник покупки по позициям</span>
             <span className="tag">Сравнить план и факт</span>
           </div>
         </article>
@@ -108,8 +108,9 @@ export function DashboardPage() {
           <span className="tag">1. Создайте объект</span>
           <span className="tag">2. Сформируйте смету</span>
           <span className="tag">3. Добавьте позиции</span>
-          <span className="tag">4. Передайте в закупку</span>
-          <span className="tag">5. Смотрите план / факт</span>
+          <span className="tag">4. Создайте закупку</span>
+          <span className="tag">5. Заполните позиции закупки</span>
+          <span className="tag">6. Смотрите план / факт</span>
         </div>
         <p className="muted">
           Сервис нужен для того, чтобы связать объект, расчет сметы и реальную закупку материалов в один процесс.

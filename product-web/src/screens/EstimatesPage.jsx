@@ -22,10 +22,10 @@ export function EstimatesPage() {
     <section className="page-section">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Реестр смет</p>
+          <p className="eyebrow">Вторичный реестр смет</p>
           <h2>Сметы и позиции затрат</h2>
           <p className="muted">
-            Сметы создаются внутри объекта. Этот экран нужен, чтобы быстро найти нужный расчет и перейти в карточку объекта.
+            Сметы создаются внутри объекта. Этот экран нужен, чтобы быстро найти нужный расчет, проверить его состояние и перейти в объект или закупку.
           </p>
         </div>
         <Link className="ghost-button" to="/projects">К объектам</Link>

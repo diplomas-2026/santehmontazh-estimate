@@ -19,10 +19,10 @@ export function PurchasesPage() {
     <section className="page-section">
       <div className="page-header">
         <div>
-          <p className="eyebrow">Реестр закупок</p>
+          <p className="eyebrow">Вторичный реестр закупок</p>
           <h2>Закупки по вашим объектам</h2>
           <p className="muted">
-            Закупка всегда начинается со сметы внутри объекта. Здесь видно, что уже куплено, что еще в работе и где пользователь зафиксировал покупку.
+            Основной путь идет через объект и карточку сметы. Этот экран нужен для быстрого поиска закупки, контроля статусов и перехода в нужный документ.
           </p>
         </div>
         <Link className="ghost-button" to="/projects">К объектам</Link>
