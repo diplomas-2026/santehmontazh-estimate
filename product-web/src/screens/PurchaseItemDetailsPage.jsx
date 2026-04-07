@@ -182,54 +182,69 @@ export function PurchaseItemDetailsPage() {
           </p>
         </div>
         <div className="purchase-item-fields">
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={draft.plannedQuantity}
-            onChange={(event) => setDraft((current) => ({ ...current, plannedQuantity: event.target.value }))}
-            placeholder="Плановое количество"
-            required
-            disabled={!canEdit}
-          />
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={draft.plannedPrice}
-            onChange={(event) => setDraft((current) => ({ ...current, plannedPrice: event.target.value }))}
-            placeholder="Плановая цена"
-            required
-            disabled={!canEdit}
-          />
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={draft.actualQuantity}
-            onChange={(event) => setDraft((current) => ({ ...current, actualQuantity: event.target.value }))}
-            placeholder="Фактическое количество"
-            required
-            disabled={!canEdit}
-          />
-          <input
-            type="number"
-            min="0"
-            step="0.01"
-            value={draft.actualPrice}
-            onChange={(event) => setDraft((current) => ({ ...current, actualPrice: event.target.value }))}
-            placeholder="Фактическая цена"
-            required
-            disabled={!canEdit}
-          />
+          <label className="form-field">
+            <span className="form-label">Плановое количество</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={draft.plannedQuantity}
+              onChange={(event) => setDraft((current) => ({ ...current, plannedQuantity: event.target.value }))}
+              placeholder="Плановое количество"
+              required
+              disabled={!canEdit}
+            />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Плановая цена</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={draft.plannedPrice}
+              onChange={(event) => setDraft((current) => ({ ...current, plannedPrice: event.target.value }))}
+              placeholder="Плановая цена"
+              required
+              disabled={!canEdit}
+            />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Фактическое количество</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={draft.actualQuantity}
+              onChange={(event) => setDraft((current) => ({ ...current, actualQuantity: event.target.value }))}
+              placeholder="Фактическое количество"
+              required
+              disabled={!canEdit}
+            />
+          </label>
+          <label className="form-field">
+            <span className="form-label">Фактическая цена</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={draft.actualPrice}
+              onChange={(event) => setDraft((current) => ({ ...current, actualPrice: event.target.value }))}
+              placeholder="Фактическая цена"
+              required
+              disabled={!canEdit}
+            />
+          </label>
         </div>
-        <textarea
-          rows={3}
-          value={draft.comment}
-          onChange={(event) => setDraft((current) => ({ ...current, comment: event.target.value }))}
-          placeholder="Комментарий к позиции"
-          disabled={!canEdit}
-        />
+        <label className="form-field">
+          <span className="form-label">Комментарий к позиции</span>
+          <textarea
+            rows={3}
+            value={draft.comment}
+            onChange={(event) => setDraft((current) => ({ ...current, comment: event.target.value }))}
+            placeholder="Комментарий к позиции"
+            disabled={!canEdit}
+          />
+        </label>
         <div className="action-row">
           <button type="submit" className="primary-button" disabled={!canEdit}>
             Сохранить позицию

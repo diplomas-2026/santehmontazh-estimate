@@ -784,6 +784,17 @@ th {
   align-items: start;
 }
 
+.form-field {
+  display: grid;
+  gap: 8px;
+}
+
+.form-label {
+  color: rgba(221, 230, 246, 0.86);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
 .purchase-item-card {
   display: grid;
   gap: 18px;

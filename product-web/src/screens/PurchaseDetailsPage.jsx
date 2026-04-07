@@ -301,25 +301,34 @@ export function PurchaseDetailsPage() {
             Это может быть поставщик из каталога, внешний магазин, маркетплейс или любой другой источник. Ссылка необязательна.
           </p>
         </div>
-        <input
-          value={purchaseForm.supplierName}
-          onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierName: event.target.value }))}
-          placeholder="Например: ООО ТеплоСнаб или Леруа Мерлен"
-          disabled={!canEdit}
-        />
-        <input
-          value={purchaseForm.supplierUrl}
-          onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierUrl: event.target.value }))}
-          placeholder="Ссылка на поставщика, магазин или карточку товара"
-          disabled={!canEdit}
-        />
-        <textarea
-          rows={3}
-          value={purchaseForm.comment}
-          onChange={(event) => setPurchaseForm((current) => ({ ...current, comment: event.target.value }))}
-          placeholder="Краткий комментарий по закупке"
-          disabled={!canEdit}
-        />
+        <label className="form-field">
+          <span className="form-label">Где купили</span>
+          <input
+            value={purchaseForm.supplierName}
+            onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierName: event.target.value }))}
+            placeholder="Например: ООО ТеплоСнаб или Леруа Мерлен"
+            disabled={!canEdit}
+          />
+        </label>
+        <label className="form-field">
+          <span className="form-label">Ссылка на место покупки</span>
+          <input
+            value={purchaseForm.supplierUrl}
+            onChange={(event) => setPurchaseForm((current) => ({ ...current, supplierUrl: event.target.value }))}
+            placeholder="Ссылка на поставщика, магазин или карточку товара"
+            disabled={!canEdit}
+          />
+        </label>
+        <label className="form-field">
+          <span className="form-label">Комментарий к закупке</span>
+          <textarea
+            rows={3}
+            value={purchaseForm.comment}
+            onChange={(event) => setPurchaseForm((current) => ({ ...current, comment: event.target.value }))}
+            placeholder="Краткий комментарий по закупке"
+            disabled={!canEdit}
+          />
+        </label>
         <button type="submit" className="primary-button" disabled={!canEdit}>
           Сохранить карточку закупки
         </button>
@@ -419,13 +428,16 @@ export function PurchaseDetailsPage() {
         </div>
 
         <form className="purchase-comment-form" onSubmit={addComment}>
-          <textarea
-            rows={3}
-            value={commentMessage}
-            onChange={(event) => setCommentMessage(event.target.value)}
-            placeholder="Оставьте заметку по закупке"
-            required
-          />
+          <label className="form-field">
+            <span className="form-label">Текст заметки</span>
+            <textarea
+              rows={3}
+              value={commentMessage}
+              onChange={(event) => setCommentMessage(event.target.value)}
+              placeholder="Оставьте заметку по закупке"
+              required
+            />
+          </label>
           <div className="action-row">
             <button type="submit" className="ghost-button">
               Добавить заметку
