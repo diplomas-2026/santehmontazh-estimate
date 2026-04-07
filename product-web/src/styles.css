@@ -740,6 +740,10 @@ th {
   gap: 18px;
 }
 
+.detail-grid-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .detail-meta {
   display: flex;
   flex-wrap: wrap;

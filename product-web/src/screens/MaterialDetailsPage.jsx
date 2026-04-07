@@ -166,7 +166,7 @@ export function MaterialDetailsPage() {
         </article>
       </div>
 
-      <div className="detail-grid">
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
           <p className="eyebrow">Связанные поставщики</p>
           <h3>Какие поставщики могут поставить этот материал</h3>

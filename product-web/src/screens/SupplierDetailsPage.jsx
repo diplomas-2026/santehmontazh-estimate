@@ -130,7 +130,7 @@ export function SupplierDetailsPage() {
       {error ? <div className="error-box">{error}</div> : null}
       {success ? <div className="success-box">{success}</div> : null}
 
-      <div className="detail-grid">
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
           <p className="eyebrow">Контакты</p>
           <h3>Как связаться с поставщиком</h3>
@@ -180,7 +180,7 @@ export function SupplierDetailsPage() {
         </article>
       </div>
 
-      <div className="detail-grid">
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
           <p className="eyebrow">Отзывы</p>
           <h3>Как команда оценивает поставщика</h3>
