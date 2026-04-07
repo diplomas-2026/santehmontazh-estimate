@@ -10,6 +10,7 @@ import { ProjectsPage } from '../screens/ProjectsPage';
 import { MaterialsPage } from '../screens/MaterialsPage';
 import { SuppliersPage } from '../screens/SuppliersPage';
 import { EstimatesPage } from '../screens/EstimatesPage';
+import { EstimateDetailsPage } from '../screens/EstimateDetailsPage';
 import { PurchasesPage } from '../screens/PurchasesPage';
 import { PricingPage } from '../screens/PricingPage';
 import { ReportsPage } from '../screens/ReportsPage';
@@ -59,6 +60,7 @@ export function AppRouter() {
         <Route path="dashboard" element={<DashboardPage />} />
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/:id" element={<ProjectDetailsPage />} />
+        <Route path="estimates/:id" element={<EstimateDetailsPage />} />
         <Route path="materials" element={<MaterialsPage />} />
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="estimates" element={<EstimatesPage />} />

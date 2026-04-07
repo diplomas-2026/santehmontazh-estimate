@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { translateEstimateStatus } from '../i18n/enums';
@@ -9,12 +10,16 @@ export function EstimatesPage() {
   const { user } = useAuth();
   const [estimates, setEstimates] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [purchases, setPurchases] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState('');
+  const [purchaseError, setPurchaseError] = useState('');
+  const [purchaseSuccess, setPurchaseSuccess] = useState('');
 
   function load() {
     api('/api/estimates').then(setEstimates).catch(() => setEstimates([]));
     api('/api/projects').then(setProjects).catch(() => setProjects([]));
+    api('/api/purchases').then(setPurchases).catch(() => setPurchases([]));
   }
 
   useEffect(() => {
@@ -37,11 +42,20 @@ export function EstimatesPage() {
   }
 
   async function submitForPurchase(id) {
-    await api(`/api/estimates/${id}/submit-for-purchase`, { method: 'POST' });
-    load();
+    try {
+      await api(`/api/purchases/from-estimate/${id}`, { method: 'POST' });
+      setPurchaseError('');
+      setPurchaseSuccess('Закупка создана по смете.');
+      load();
+    } catch (submissionError) {
+      setPurchaseError(submissionError.message);
+      setPurchaseSuccess('');
+    }
   }
 
   const canEdit = ['ADMIN', 'ESTIMATOR'].includes(user.role);
+  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role);
+  const purchasesByEstimateId = new Map(purchases.map((purchase) => [purchase.estimateId, purchase]));
 
   return (
     <section className="page-section">
@@ -67,6 +81,9 @@ export function EstimatesPage() {
         </form>
       ) : null}
 
+      {purchaseError ? <div className="error-box">{purchaseError}</div> : null}
+      {purchaseSuccess ? <div className="success-box">{purchaseSuccess}</div> : null}
+
       <div className="stack-list">
         {estimates.map((estimate) => (
           <article key={estimate.id} className="page-card">
@@ -83,10 +100,14 @@ export function EstimatesPage() {
                 <span key={item.id} className="tag">{item.materialName} • {item.quantity} {item.unit}</span>
               ))}
             </div>
-            {canEdit ? (
+            {canCreatePurchase ? (
               <div className="action-row">
-                {estimate.status === 'DRAFT' ? (
-                  <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>В закупку</button>
+                <Link className="ghost-button" to={`/estimates/${estimate.id}`}>Открыть смету</Link>
+                {purchasesByEstimateId.has(estimate.id) ? (
+                  <span className="tag">Закупка создана</span>
+                ) : null}
+                {estimate.status === 'DRAFT' && estimate.items.length > 0 && !purchasesByEstimateId.has(estimate.id) ? (
+                  <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>Создать закупку</button>
                 ) : null}
               </div>
             ) : null}

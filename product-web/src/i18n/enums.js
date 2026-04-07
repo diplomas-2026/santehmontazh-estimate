@@ -24,7 +24,7 @@ const purchaseStatusLabels = {
   DRAFT: 'Черновик',
   SUBMITTED: 'На согласовании',
   APPROVED: 'Утверждена',
-  IN_ORDER: 'Заказ оформлен',
+  ORDERED: 'Заказ оформлен',
   RECEIVED: 'Получена',
   RETURNED_FOR_REVISION: 'Возвращена на доработку',
 };
@@ -60,4 +60,3 @@ export function translatePurchaseStatus(status) {
 export function translateSubscriptionStatus(status) {
   return translateFromMap(status, subscriptionStatusLabels);
 }
-

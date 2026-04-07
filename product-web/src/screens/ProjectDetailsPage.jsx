@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { api } from '../api';
 import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus } from '../i18n/enums';
@@ -9,11 +9,14 @@ const emptyEstimateForm = { name: '', notes: '' };
 export function ProjectDetailsPage() {
   const { user } = useAuth();
   const { id } = useParams();
+  const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [estimates, setEstimates] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [estimateForm, setEstimateForm] = useState(emptyEstimateForm);
   const [estimateError, setEstimateError] = useState('');
+  const [purchaseError, setPurchaseError] = useState('');
+  const [purchaseSuccess, setPurchaseSuccess] = useState('');
 
   function load() {
     api(`/api/projects/${id}`).then(setProject).catch(() => setProject(null));
@@ -57,12 +60,24 @@ export function ProjectDetailsPage() {
     }
   }
 
-  async function submitForPurchase(estimateId) {
-    await api(`/api/estimates/${estimateId}/submit-for-purchase`, { method: 'POST' });
-    load();
+  async function createPurchase(estimateId) {
+    try {
+      await api(`/api/purchases/from-estimate/${estimateId}`, { method: 'POST' });
+      setPurchaseError('');
+      setPurchaseSuccess('Закупка создана по выбранной смете.');
+      load();
+    } catch (submissionError) {
+      setPurchaseError(submissionError.message);
+      setPurchaseSuccess('');
+    }
   }
 
   const canEditEstimates = ['ADMIN', 'ESTIMATOR'].includes(user.role);
+  const canCreatePurchase = ['ADMIN', 'ESTIMATOR', 'PURCHASER'].includes(user.role);
+  const purchasesByEstimateId = useMemo(
+    () => new Map(purchases.map((purchase) => [purchase.estimateId, purchase])),
+    [purchases],
+  );
 
   if (!project) {
     return <div className="page-card">Загрузка данных по объекту...</div>;
@@ -157,6 +172,9 @@ export function ProjectDetailsPage() {
         </form>
       ) : null}
 
+      {purchaseError ? <div className="error-box">{purchaseError}</div> : null}
+      {purchaseSuccess ? <div className="success-box">{purchaseSuccess}</div> : null}
+
       <div className="detail-grid">
         <article className="page-card">
           <div className="row-between">
@@ -176,11 +194,19 @@ export function ProjectDetailsPage() {
                 </div>
                 <div className="detail-actions">
                   <strong>{estimate.total}</strong>
-                  {canEditEstimates ? (
+                  <Link className="ghost-button" to={`/estimates/${estimate.id}`}>
+                    Открыть смету
+                  </Link>
+                  {purchasesByEstimateId.has(estimate.id) ? (
+                    <button type="button" className="ghost-button" onClick={() => navigate('/purchases')}>
+                      Закупка создана
+                    </button>
+                  ) : null}
+                  {canCreatePurchase ? (
                     <div className="action-row">
-                      {estimate.status === 'DRAFT' ? (
-                        <button type="button" className="primary-button" onClick={() => submitForPurchase(estimate.id)}>
-                          В закупку
+                      {estimate.status === 'DRAFT' && estimate.items.length > 0 ? (
+                        <button type="button" className="primary-button" onClick={() => createPurchase(estimate.id)}>
+                          Создать закупку
                         </button>
                       ) : null}
                     </div>

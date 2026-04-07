@@ -83,24 +83,60 @@ public class PurchaseService {
     public PurchaseResponse create(PurchaseRequest request) {
         Estimate estimate = estimateRepository.findById(request.estimateId())
             .orElseThrow(() -> new NotFoundException("Смета не найдена"));
-        if (estimate.getStatus() != EstimateStatus.READY_FOR_PURCHASE) {
+        UserAccount actor = currentActor();
+        return createPurchaseFromEstimate(
+            estimate,
+            actor,
+            request.supplierName(),
+            request.comment(),
+            true
+        );
+    }
+
+    @Transactional
+    public PurchaseResponse createFromEstimate(Long estimateId) {
+        Estimate estimate = estimateRepository.findById(estimateId)
+            .orElseThrow(() -> new NotFoundException("Смета не найдена"));
+        UserAccount actor = currentActor();
+        return createPurchaseFromEstimate(
+            estimate,
+            actor,
+            "Поставщик не выбран",
+            "Закупка создана автоматически из сметы",
+            false
+        );
+    }
+
+    private PurchaseResponse createPurchaseFromEstimate(Estimate estimate,
+                                                        UserAccount actor,
+                                                        String supplierName,
+                                                        String comment,
+                                                        boolean requireReadyStatus) {
+        if (requireReadyStatus && estimate.getStatus() != EstimateStatus.READY_FOR_PURCHASE) {
             throw new BadRequestException("Закупку можно создать только для сметы, готовой к закупке");
         }
-        UserAccount actor = currentActor();
+        if (purchaseRepository.findByEstimateId(estimate.getId()).stream().findFirst().isPresent()) {
+            throw new BadRequestException("По этой смете уже создана закупка");
+        }
+        List<EstimateItem> estimateItems = estimateItemRepository.findByEstimateId(estimate.getId());
+        if (estimateItems.isEmpty()) {
+            throw new BadRequestException("Нельзя создать закупку по пустой смете");
+        }
+
         Purchase purchase = new Purchase();
         purchase.setProject(estimate.getProject());
         purchase.setEstimate(estimate);
         purchase.setCreatedBy(actor);
         purchase.setStatus(PurchaseStatus.DRAFT);
-        purchase.setSupplierName(request.supplierName());
-        purchase.setComment(request.comment());
+        purchase.setSupplierName(supplierName);
+        purchase.setComment(comment);
         purchase.setPlannedTotal(BigDecimal.ZERO);
         purchase.setActualTotal(BigDecimal.ZERO);
         purchase.setUpdatedAt(OffsetDateTime.now());
         Purchase saved = purchaseRepository.save(purchase);
 
         BigDecimal plannedTotal = BigDecimal.ZERO;
-        for (EstimateItem estimateItem : estimateItemRepository.findByEstimateId(estimate.getId())) {
+        for (EstimateItem estimateItem : estimateItems) {
             PurchaseItem item = new PurchaseItem();
             item.setPurchase(saved);
             item.setMaterial(estimateItem.getMaterial());

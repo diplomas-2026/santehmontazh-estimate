@@ -46,6 +46,12 @@ public class PurchaseController {
         return purchaseService.create(request);
     }
 
+    @PostMapping("/purchases/from-estimate/{estimateId}")
+    @PreAuthorize("hasAnyRole('ADMIN','ESTIMATOR','PURCHASER')")
+    public PurchaseResponse createFromEstimate(@PathVariable Long estimateId) {
+        return purchaseService.createFromEstimate(estimateId);
+    }
+
     @PutMapping("/purchases/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','PURCHASER')")
     public PurchaseResponse update(@PathVariable Long id, @Valid @RequestBody PurchaseRequest request) {
