@@ -26,9 +26,11 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.poi.ss.usermodel.CellStyle;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
@@ -436,9 +438,10 @@ public class EstimateService {
         try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             CellStyle headerStyle = createHeaderStyle(workbook);
             CellStyle sectionStyle = createSectionStyle(workbook);
+            Set<String> usedSheetNames = new HashSet<>();
 
             for (Estimate estimate : estimates) {
-                writeEstimateSheet(workbook, project, toResponse(estimate), headerStyle, sectionStyle);
+                writeEstimateSheet(workbook, project, toResponse(estimate), headerStyle, sectionStyle, usedSheetNames);
             }
 
             workbook.write(outputStream);
@@ -452,8 +455,9 @@ public class EstimateService {
                                     Project project,
                                     EstimateResponse estimate,
                                     CellStyle headerStyle,
-                                    CellStyle sectionStyle) {
-        Sheet sheet = workbook.createSheet(buildSheetName(estimate.name(), estimate.id()));
+                                    CellStyle sectionStyle,
+                                    Set<String> usedSheetNames) {
+        Sheet sheet = workbook.createSheet(buildUniqueSheetName(estimate.name(), estimate.id(), usedSheetNames));
         int rowIndex = 0;
 
         rowIndex = writeMetaRow(sheet, rowIndex, "Объект", project.getName(), headerStyle);
@@ -536,7 +540,22 @@ public class EstimateService {
         return style;
     }
 
-    private String buildSheetName(String estimateName, Long estimateId) {
+    private String buildUniqueSheetName(String estimateName, Long estimateId, Set<String> usedSheetNames) {
+        String base = baseSheetName(estimateName, estimateId);
+        String candidate = base;
+        int suffix = 2;
+        while (usedSheetNames.contains(candidate)) {
+            String postfix = " (" + suffix + ")";
+            int maxBaseLength = Math.max(1, 31 - postfix.length());
+            String trimmedBase = base.length() > maxBaseLength ? base.substring(0, maxBaseLength) : base;
+            candidate = trimmedBase + postfix;
+            suffix++;
+        }
+        usedSheetNames.add(candidate);
+        return candidate;
+    }
+
+    private String baseSheetName(String estimateName, Long estimateId) {
         String base = (estimateName == null || estimateName.isBlank()) ? "Смета " + estimateId : estimateName;
         String sanitized = base.replaceAll("[\\\\/*?:\\[\\]]", " ").trim();
         if (sanitized.isBlank()) {
