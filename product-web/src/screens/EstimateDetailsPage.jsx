@@ -89,11 +89,11 @@ export function EstimateDetailsPage() {
     }
   }
 
-  async function downloadProjectWorkbook() {
+  async function downloadEstimateWorkbook() {
     try {
-      await downloadBinary(`/api/estimates/${id}/project-report.xlsx`, `project-${estimate.projectId}-estimates.xlsx`);
+      await downloadBinary(`/api/estimates/${id}/report.xlsx`, `estimate-${id}.xlsx`);
       setError('');
-      setSuccess('Excel по всем сметам объекта скачан.');
+      setSuccess('Excel по текущей смете скачан.');
     } catch (downloadError) {
       setError(downloadError.message);
       setSuccess('');
@@ -115,8 +115,8 @@ export function EstimateDetailsPage() {
           </p>
         </div>
         <div className="action-row">
-          <button type="button" className="ghost-button" onClick={downloadProjectWorkbook}>
-            Скачать все сметы Excel
+          <button type="button" className="ghost-button" onClick={downloadEstimateWorkbook}>
+            Скачать смету Excel
           </button>
           <button type="button" className="ghost-button" onClick={() => navigate(`/projects/${estimate.projectId}`)}>
             К объекту

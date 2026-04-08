@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../api';
+import { api, downloadBinary } from '../api';
 import { formatCurrency } from '../i18n/currency';
 import { formatRuDate } from '../i18n/date';
 import { translateEstimateStatus, translateProjectStatus } from '../i18n/enums';
@@ -84,6 +84,17 @@ export function ProjectDetailsPage() {
       setProjectSuccess('Объект завершен.');
     } catch (submissionError) {
       setProjectError(submissionError.message);
+      setProjectSuccess('');
+    }
+  }
+
+  async function downloadProjectWorkbook() {
+    try {
+      await downloadBinary(`/api/estimates/${id}/project-report.xlsx`, `project-${id}-estimates.xlsx`);
+      setProjectError('');
+      setProjectSuccess('Excel по всем сметам объекта скачан.');
+    } catch (downloadError) {
+      setProjectError(downloadError.message);
       setProjectSuccess('');
     }
   }
@@ -172,7 +183,12 @@ export function ProjectDetailsPage() {
             {project.code} • {translateProjectStatus(project.status)}
           </p>
         </div>
-        <Link className="ghost-button" to="/projects">К списку объектов</Link>
+        <div className="action-row">
+          <button type="button" className="ghost-button" onClick={downloadProjectWorkbook}>
+            Скачать все сметы Excel
+          </button>
+          <Link className="ghost-button" to="/projects">К списку объектов</Link>
+        </div>
       </div>
 
       <div className="detail-grid detail-grid-single">
