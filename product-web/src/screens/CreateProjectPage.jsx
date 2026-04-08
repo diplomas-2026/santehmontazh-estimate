@@ -26,7 +26,7 @@ const emptyProjectForm = {
 const projectLifecycle = [
   ['DRAFT', 'Черновик'],
   ['IN_PROGRESS', 'В работе'],
-  ['PURCHASE_IN_PROGRESS', 'Закупка идет'],
+  ['PURCHASE_IN_PROGRESS', 'Факт фиксируется'],
 ];
 
 export function CreateProjectPage() {
@@ -58,7 +58,7 @@ export function CreateProjectPage() {
           <p className="eyebrow">Новый объект</p>
           <h2>Создание объекта</h2>
           <p className="muted">
-            Сначала оформляется объект. После сохранения вы сразу перейдете в его карточку и сможете вести сметы и закупки.
+            Сначала оформляется объект. После сохранения вы сразу перейдете в его карточку и сможете вести сметы и фиксировать факт по позициям.
           </p>
         </div>
         <Button component={Link} to="/projects" variant="outlined" color="inherit">
@@ -105,7 +105,7 @@ export function CreateProjectPage() {
                   label="Описание"
                   value={form.description}
                   onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                  placeholder="Что это за объект, какие работы и какой контур закупки планируется"
+                  placeholder="Что это за объект, какие работы и какой контур смет планируется"
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>

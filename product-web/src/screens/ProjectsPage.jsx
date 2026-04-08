@@ -18,7 +18,7 @@ import { useAuth } from '../modules/auth/AuthContext';
 const projectLifecycle = [
   ['DRAFT', 'Черновик'],
   ['IN_PROGRESS', 'В работе'],
-  ['PURCHASE_IN_PROGRESS', 'Закупка идет'],
+  ['PURCHASE_IN_PROGRESS', 'Факт фиксируется'],
   ['COMPLETED', 'Завершен'],
 ];
 
@@ -26,8 +26,8 @@ export function ProjectsPage() {
   const { user } = useAuth();
   const [projects, setProjects] = useState([]);
 
-  const totalPurchases = useMemo(
-    () => projects.reduce((sum, project) => sum + Number(project.purchaseTotal ?? 0), 0),
+  const totalActual = useMemo(
+    () => projects.reduce((sum, project) => sum + Number(project.actualTotal ?? 0), 0),
     [projects],
   );
 
@@ -42,7 +42,7 @@ export function ProjectsPage() {
           <p className="eyebrow">Главный рабочий контур</p>
           <h2>Объекты</h2>
           <p className="muted">
-            Основной путь в системе начинается с объекта. Уже внутри объекта ведутся сметы, позиции, закупки и итоговый контроль.
+            Основной путь в системе начинается с объекта. Уже внутри объекта ведутся сметы, позиции, факт затрат и итоговый контроль.
           </p>
         </div>
         <Button component={Link} to="/projects/new" variant="contained" size="large">
@@ -87,7 +87,7 @@ export function ProjectsPage() {
                   От расчета до завершения
                 </Typography>
                 <Typography color="text.secondary" sx={{ mb: 2 }}>
-                  Статусы помогают быстро понять, где объект только начинается, где уже идет закупка и какие объекты закрыты.
+                  Статусы помогают быстро понять, где объект только начинается, где уже идет активная работа по сметам и какие объекты закрыты.
                 </Typography>
                 <Stack direction="row" flexWrap="wrap" gap={1}>
                   {projectLifecycle.map(([value, label]) => (
@@ -110,7 +110,7 @@ export function ProjectsPage() {
                 </Typography>
                 <Stack spacing={1.5} sx={{ mt: 2 }}>
                   <Typography color="text.secondary">Всего объектов: <strong>{projects.length}</strong></Typography>
-                  <Typography color="text.secondary">Сумма закупок: <strong>{formatCurrency(totalPurchases)}</strong></Typography>
+                  <Typography color="text.secondary">Факт по сметам: <strong>{formatCurrency(totalActual)}</strong></Typography>
                   <Typography color="text.secondary">Текущий пользователь: <strong>{user.fullName}</strong></Typography>
                 </Stack>
               </CardContent>
@@ -122,14 +122,14 @@ export function ProjectsPage() {
       <div style={{ marginTop: '24px' }}>
         <TableShell
           title="Реестр объектов"
-          subtitle="Откройте объект, чтобы перейти к сметам, закупкам и детальному контролю по нему."
-          columns={['Название', 'Код', 'Адрес', 'Статус', 'Закупки', 'Карточка']}
+          subtitle="Откройте объект, чтобы перейти к сметам, позициям и детальному контролю план / факт."
+          columns={['Название', 'Код', 'Адрес', 'Статус', 'Факт', 'Карточка']}
           rows={projects.map((project) => [
             project.name,
             project.code,
             project.address,
             translateProjectStatus(project.status),
-            formatCurrency(project.purchaseTotal),
+            formatCurrency(project.actualTotal),
             <Link key={`project-${project.id}`} className="primary-button" to={`/projects/${project.id}`}>Открыть объект</Link>,
           ])}
         />

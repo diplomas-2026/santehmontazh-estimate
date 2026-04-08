@@ -17,6 +17,8 @@ public record EstimateResponse(
     OffsetDateTime createdAt,
     OffsetDateTime updatedAt,
     BigDecimal total,
+    BigDecimal actualTotal,
+    BigDecimal deviation,
     List<EstimateItemResponse> items
 ) {
 }

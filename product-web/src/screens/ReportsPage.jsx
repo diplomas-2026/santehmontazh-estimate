@@ -19,9 +19,9 @@ export function ReportsPage() {
         <div className="page-card premium-banner premium-banner-block">
           <div>
             <p className="eyebrow">Premium-аналитика</p>
-            <h2>План / факт — сильный модуль, который раскрывает отклонения по объектам.</h2>
+            <h2>План / факт — сильный модуль, который раскрывает отклонения по сметам и объектам.</h2>
             <p>
-              В платном доступе находятся отклонения по объектам, приоритеты закупки и управленческие сигналы для команды.
+              В платном доступе находятся отклонения по сметам, приоритеты по объектам и управленческие сигналы для команды.
             </p>
           </div>
           <Link className="primary-button" to="/pricing">Открыть premium</Link>
@@ -33,7 +33,7 @@ export function ReportsPage() {
   return (
     <TableShell
       title="Аналитика план / факт"
-      subtitle="Контроль отклонений по закупкам и объектам"
+      subtitle="Контроль отклонений по сметам и объектам"
       columns={['Объект', 'Смета', 'План', 'Факт', 'Отклонение']}
       rows={rows.map((row) => [
         <Link className="detail-link" to={`/projects/${row.projectId}`}>{row.projectName}</Link>,

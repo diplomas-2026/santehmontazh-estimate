@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api';
 import { Link } from 'react-router-dom';
+import { api } from '../api';
 import { formatCurrency } from '../i18n/currency';
-import { translateEstimateStatus, translateProjectStatus, translatePurchaseStatus, translateRole } from '../i18n/enums';
+import { translateEstimateStatus, translateProjectStatus, translateRole } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
 export function DashboardPage() {
@@ -18,16 +18,9 @@ export function DashboardPage() {
   }
 
   const cards = [
-    ['План по активным сметам', summary.activeEstimateTotal],
-    ['План по закупкам', summary.activePurchasePlannedTotal],
-    ['Факт по закупкам', summary.completedPurchaseActualTotal],
+    ['План по сметам', summary.plannedEstimateTotal],
+    ['Факт по сметам', summary.actualEstimateTotal],
     ['Отклонение', summary.totalDeviation],
-  ];
-
-  const premiumInsights = [
-    'Рейтинг объектов по маржинальности',
-    'Прогноз роста закупочного бюджета',
-    'Подсказки по материалам с риском перерасхода',
   ];
 
   return (
@@ -35,15 +28,14 @@ export function DashboardPage() {
       <div className="dashboard-hero">
         <div className="dashboard-hero-copy">
           <p className="eyebrow">Оперативный обзор</p>
-          <h2>Единая панель по вашим объектам, сметам и закупкам.</h2>
+          <h2>Одна смета теперь хранит и план, и реальный факт исполнения.</h2>
           <p className="muted">
-            Здесь видно, на каком этапе находятся ваши объекты, где уже есть закупки и как меняется план / факт по рабочему контуру.
+            Пользователь работает через объекты и сметы: создает расчет, фиксирует фактические цены и место покупки прямо в позициях,
+            а затем сравнивает план и факт без отдельной сущности закупки.
           </p>
           <div className="hero-actions">
             <Link className="primary-button hero-button" to="/projects">Открыть объекты</Link>
-            <Link className="ghost-button hero-button" to="/pricing">
-              {subscription ? 'Усилить тариф' : 'Включить premium'}
-            </Link>
+            <Link className="ghost-button hero-button" to="/estimates">Открыть сметы</Link>
           </div>
         </div>
 
@@ -61,7 +53,7 @@ export function DashboardPage() {
           <article key={label} className="metric-card">
             <span>{label}</span>
             <strong>{formatCurrency(value)}</strong>
-            <p>{label === 'Отклонение' ? 'Показывает эффект решений закупки' : 'Данные обновляются из боевого контура'}</p>
+            <p>{label === 'Отклонение' ? 'Разница между суммой смет и фактическими затратами' : 'Сводка по вашим сметам'}</p>
           </article>
         ))}
       </div>
@@ -69,29 +61,29 @@ export function DashboardPage() {
       <div className="table-grid">
         <StatusCard title="Объекты" data={summary.projectStatuses} translator={translateProjectStatus} />
         <StatusCard title="Сметы" data={summary.estimateStatuses} translator={translateEstimateStatus} />
-        <StatusCard title="Закупки" data={summary.purchaseStatuses} translator={translatePurchaseStatus} />
       </div>
 
       <div className="table-grid">
         <article className="page-card">
           <p className="eyebrow">Рабочий сценарий</p>
-          <h3>Что вы делаете в системе день за днем</h3>
+          <h3>Как теперь идет работа</h3>
           <div className="tag-row">
             <span className="tag">Создать объект</span>
-            <span className="tag">Создать смету и позиции</span>
-            <span className="tag">Сформировать закупку</span>
-            <span className="tag">Зафиксировать источник покупки по позициям</span>
+            <span className="tag">Создать смету</span>
+            <span className="tag">Добавить позиции</span>
+            <span className="tag">Зафиксировать факт</span>
+            <span className="tag">Указать где купили</span>
             <span className="tag">Сравнить план и факт</span>
           </div>
         </article>
 
         <article className="page-card">
-          <p className="eyebrow">Монетизация внутри продукта</p>
-          <h3>Premium-функции, которые хочется купить</h3>
+          <p className="eyebrow">Premium</p>
+          <h3>Дополнительная аналитика</h3>
           <ul className="feature-list compact">
-            {premiumInsights.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
+            <li>Отклонения по сметам и объектам</li>
+            <li>Управленческая AI-помощь по смете</li>
+            <li>Глубокий контроль план / факт</li>
           </ul>
           {!hasPremiumAccess ? (
             <Link className="primary-button" to="/pricing">Открыть premium</Link>
@@ -100,23 +92,6 @@ export function DashboardPage() {
           )}
         </article>
       </div>
-
-      <article className="page-card">
-        <p className="eyebrow">Как пользоваться системой</p>
-        <h3>Рабочий сценарий от первого объекта до контроля закупки</h3>
-        <div className="tag-row">
-          <span className="tag">1. Создайте объект</span>
-          <span className="tag">2. Сформируйте смету</span>
-          <span className="tag">3. Добавьте позиции</span>
-          <span className="tag">4. Создайте закупку</span>
-          <span className="tag">5. Заполните позиции закупки</span>
-          <span className="tag">6. Смотрите план / факт</span>
-        </div>
-        <p className="muted">
-          Сервис нужен для того, чтобы связать объект, расчет сметы и реальную закупку материалов в один процесс.
-          Пользователь видит, что нужно купить, сколько это стоит и где начинается перерасход по объекту.
-        </p>
-      </article>
     </section>
   );
 }

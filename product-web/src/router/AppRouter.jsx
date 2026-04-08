@@ -14,9 +14,7 @@ import { SuppliersPage } from '../screens/SuppliersPage';
 import { SupplierDetailsPage } from '../screens/SupplierDetailsPage';
 import { EstimatesPage } from '../screens/EstimatesPage';
 import { EstimateDetailsPage } from '../screens/EstimateDetailsPage';
-import { PurchasesPage } from '../screens/PurchasesPage';
-import { PurchaseDetailsPage } from '../screens/PurchaseDetailsPage';
-import { PurchaseItemDetailsPage } from '../screens/PurchaseItemDetailsPage';
+import { EstimateItemDetailsPage } from '../screens/EstimateItemDetailsPage';
 import { PricingPage } from '../screens/PricingPage';
 import { ReportsPage } from '../screens/ReportsPage';
 import { UsersPage } from '../screens/UsersPage';
@@ -66,15 +64,13 @@ export function AppRouter() {
         <Route path="projects" element={<ProjectsPage />} />
         <Route path="projects/new" element={<CreateProjectPage />} />
         <Route path="projects/:id" element={<ProjectDetailsPage />} />
+        <Route path="estimates" element={<EstimatesPage />} />
         <Route path="estimates/:id" element={<EstimateDetailsPage />} />
-        <Route path="purchases/:id" element={<PurchaseDetailsPage />} />
-        <Route path="purchases/:id/items/:itemId" element={<PurchaseItemDetailsPage />} />
+        <Route path="estimates/:id/items/:itemId" element={<EstimateItemDetailsPage />} />
         <Route path="materials" element={<MaterialsPage />} />
         <Route path="materials/:id" element={<MaterialDetailsPage />} />
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="suppliers/:id" element={<SupplierDetailsPage />} />
-        <Route path="estimates" element={<EstimatesPage />} />
-        <Route path="purchases" element={<PurchasesPage />} />
         <Route path="reports/deviations" element={<ReportsPage />} />
         <Route
           path="admin/users"

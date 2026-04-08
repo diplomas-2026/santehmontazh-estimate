@@ -165,7 +165,7 @@ export function SupplierDetailsPage() {
           <p className="eyebrow">Материалы</p>
           <h3>Какие материалы поставщик может поставить</h3>
           <p className="muted">
-            Это справочный список материалов, которые доступны у поставщика для закупки.
+            Это справочный список материалов, которые поставщик держит в своем рабочем ассортименте.
           </p>
           <div className="linked-grid">
             {supplier.materials.length ? supplier.materials.map((material) => (

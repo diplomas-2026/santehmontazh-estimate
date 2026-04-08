@@ -72,10 +72,16 @@ public class EstimateController {
         return estimateService.requirements(id);
     }
 
-    @PostMapping("/estimates/{id}/submit-for-purchase")
+    @PostMapping({"/estimates/{id}/start-work", "/estimates/{id}/submit-for-purchase"})
     @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
-    public EstimateResponse submitForPurchase(@PathVariable Long id) {
+    public EstimateResponse startWork(@PathVariable Long id) {
         return estimateService.submitForPurchase(id);
+    }
+
+    @PostMapping("/estimates/{id}/complete")
+    @PreAuthorize("hasAnyRole('ADMIN','BASE_USER')")
+    public EstimateResponse complete(@PathVariable Long id) {
+        return estimateService.complete(id);
     }
 
     @PostMapping("/estimates/{id}/archive")

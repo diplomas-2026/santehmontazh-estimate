@@ -6,21 +6,16 @@ const roleLabels = {
 const projectStatusLabels = {
   DRAFT: 'Черновик',
   IN_PROGRESS: 'В работе',
-  PURCHASE_IN_PROGRESS: 'Идет закупка',
+  PURCHASE_IN_PROGRESS: 'Факт фиксируется',
   COMPLETED: 'Завершен',
 };
 
 const estimateStatusLabels = {
   DRAFT: 'Черновик',
-  IN_PURCHASE: 'В закупке',
-  READY_FOR_PURCHASE: 'Готова к закупке',
+  IN_PROGRESS: 'В работе',
+  IN_PURCHASE: 'В работе',
+  READY_FOR_PURCHASE: 'В работе',
   ARCHIVED: 'В архиве',
-  COMPLETED: 'Завершена',
-};
-
-const purchaseStatusLabels = {
-  DRAFT: 'Черновик',
-  IN_PROGRESS: 'В закупке',
   COMPLETED: 'Завершена',
 };
 
@@ -46,10 +41,6 @@ export function translateProjectStatus(status) {
 
 export function translateEstimateStatus(status) {
   return translateFromMap(status, estimateStatusLabels);
-}
-
-export function translatePurchaseStatus(status) {
-  return translateFromMap(status, purchaseStatusLabels);
 }
 
 export function translateSubscriptionStatus(status) {

@@ -19,31 +19,28 @@ export function EstimateDetailsPage() {
   const { user } = useAuth();
   const [estimate, setEstimate] = useState(null);
   const [materials, setMaterials] = useState([]);
-  const [purchase, setPurchase] = useState(null);
   const [itemForm, setItemForm] = useState(emptyItemForm);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [archiveMessage, setArchiveMessage] = useState('');
 
   const load = useCallback(() => {
     api(`/api/estimates/${id}`).then(setEstimate).catch(() => setEstimate(null));
     api('/api/materials').then(setMaterials).catch(() => setMaterials([]));
-    api('/api/purchases')
-      .then((items) => setPurchase(items.find((item) => String(item.estimateId) === String(id)) ?? null))
-      .catch(() => setPurchase(null));
   }, [id]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const purchasableItemsCount = useMemo(
-    () => estimate?.items?.filter((item) => item.materialId != null).length ?? 0,
-    [estimate],
-  );
+  const completionProgress = useMemo(() => {
+    if (!estimate?.items?.length) {
+      return { done: 0, total: 0 };
+    }
+    const done = estimate.items.filter((item) => Number(item.actualLineTotal ?? 0) > 0 || item.purchaseSourceName?.trim()).length;
+    return { done, total: estimate.items.length };
+  }, [estimate]);
 
-  const canEdit = ['ADMIN', 'BASE_USER'].includes(user.role) && estimate?.status === 'DRAFT';
-  const canCreatePurchase = ['ADMIN', 'BASE_USER'].includes(user.role) && purchasableItemsCount > 0 && !purchase;
+  const canEdit = ['ADMIN', 'BASE_USER'].includes(user.role) && !['ARCHIVED', 'COMPLETED'].includes(estimate?.status);
 
   async function addItem(event) {
     event.preventDefault();
@@ -80,30 +77,15 @@ export function EstimateDetailsPage() {
     }
   }
 
-  async function createPurchase() {
+  async function changeEstimateState(action, successMessage) {
     try {
-      const createdPurchase = await api(`/api/purchases/from-estimate/${id}`, { method: 'POST' });
-      setPurchase(createdPurchase);
-      setSuccess('Закупка создана по этой смете. Теперь можно перейти в позиции закупки и зафиксировать факт.');
-      setError('');
-      load();
-    } catch (submissionError) {
-      setError(submissionError.message);
-      setSuccess('');
-    }
-  }
-
-  async function archiveEstimate() {
-    try {
-      const updated = await api(`/api/estimates/${id}/archive`, { method: 'POST' });
+      const updated = await api(`/api/estimates/${id}/${action}`, { method: 'POST' });
       setEstimate(updated);
-      setArchiveMessage('Смета переведена в архив и больше не участвует в активной работе по объекту.');
       setError('');
-      setSuccess('');
-      load();
+      setSuccess(successMessage);
     } catch (submissionError) {
       setError(submissionError.message);
-      setArchiveMessage('');
+      setSuccess('');
     }
   }
 
@@ -128,60 +110,46 @@ export function EstimateDetailsPage() {
         </div>
       </div>
 
-      <div className="detail-grid">
+      {error ? <div className="error-box">{error}</div> : null}
+      {success ? <div className="success-box">{success}</div> : null}
+
+      <div className="detail-grid detail-grid-single">
         <article className="page-card">
-          <p className="eyebrow">Что входит в смету</p>
-          <h3>Описание расчета</h3>
+          <p className="eyebrow">Описание расчета</p>
+          <h3>Что заложено в смете</h3>
           <p>{estimate.notes}</p>
           <div className="detail-meta">
-            <span className="tag">Сумма: {formatCurrency(estimate.total)}</span>
+            <span className="tag">План: {formatCurrency(estimate.total)}</span>
+            <span className="tag">Факт: {formatCurrency(estimate.actualTotal)}</span>
+            <span className="tag">Отклонение: {formatCurrency(estimate.deviation)}</span>
             <span className="tag">Автор: {estimate.createdByName}</span>
-            <span className="tag">Позиции: {estimate.items.length}</span>
-            <span className="tag">Материалов к закупке: {purchasableItemsCount}</span>
+            <span className="tag">Заполнено по факту: {completionProgress.done} из {completionProgress.total}</span>
           </div>
-          <div className="action-row" style={{ marginTop: 16 }}>
-            {estimate.status !== 'ARCHIVED' ? (
-              <button type="button" className="ghost-button" onClick={archiveEstimate}>
-                Архивировать смету
-              </button>
-            ) : (
-              <span className="tag tag-success">Смета в архиве</span>
-            )}
-          </div>
-          {archiveMessage ? <div className="success-box" style={{ marginTop: 16 }}>{archiveMessage}</div> : null}
         </article>
 
         <article className="page-card">
-          <p className="eyebrow">Переход в закупку</p>
-          <h3>Что делает система дальше</h3>
+          <p className="eyebrow">Жизненный цикл</p>
+          <h3>Статус сметы и действия</h3>
+          <div className="tag-row">
+            <span className={`tag${estimate.status === 'DRAFT' ? ' tag-active' : ''}`}>Черновик</span>
+            <span className={`tag${estimate.status === 'IN_PROGRESS' ? ' tag-active' : ''}`}>В работе</span>
+            <span className={`tag${estimate.status === 'COMPLETED' ? ' tag-active' : ''}`}>Завершена</span>
+            <span className={`tag${estimate.status === 'ARCHIVED' ? ' tag-active' : ''}`}>В архиве</span>
+          </div>
           <p className="muted">
-            Из позиций этой сметы создается закупка по материалам. Дальше пользователь открывает позиции закупки, вносит факт и фиксирует, где именно купил каждую позицию.
+            Отдельной закупки больше нет: план, фактические цены и место покупки ведутся внутри позиций этой сметы.
           </p>
           <div className="action-row">
-            {purchase ? (
-              <>
-                <div className="success-box">Закупка уже создана по этой смете.</div>
-                <button type="button" className="primary-button" onClick={() => navigate(`/purchases/${purchase.id}`)}>
-                  Открыть закупку
-                </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                className="primary-button"
-                disabled={!canCreatePurchase || estimate.status === 'ARCHIVED'}
-                onClick={createPurchase}
-              >
-                Создать закупку по смете
-              </button>
-            )}
+            {estimate.status === 'DRAFT' ? (
+              <button type="button" className="ghost-button" onClick={() => changeEstimateState('start-work', 'Смета переведена в работу.')}>Начать работу</button>
+            ) : null}
+            {!['COMPLETED', 'ARCHIVED'].includes(estimate.status) ? (
+              <button type="button" className="primary-button" onClick={() => changeEstimateState('complete', 'Смета завершена.')}>Завершить смету</button>
+            ) : null}
+            {estimate.status !== 'ARCHIVED' ? (
+              <button type="button" className="ghost-button" onClick={() => changeEstimateState('archive', 'Смета переведена в архив.')}>Архивировать</button>
+            ) : null}
           </div>
-          {!purchase && purchasableItemsCount === 0 ? (
-            <p className="muted">Для создания закупки нужна хотя бы одна позиция с указанным материалом.</p>
-          ) : null}
-          {estimate.status === 'ARCHIVED' ? (
-            <p className="muted">Архивная смета больше не используется для создания новых закупок.</p>
-          ) : null}
         </article>
       </div>
 
@@ -191,118 +159,67 @@ export function EstimateDetailsPage() {
             <p className="eyebrow">Новая позиция</p>
             <h3>Добавить строку в смету</h3>
             <p className="muted">
-              Укажите материал или название работы. Можно заполнить только одно из этих полей или оба сразу.
+              Можно указать материал, название работы или оба поля сразу. Факт и место покупки заполняются уже в карточке позиции.
             </p>
           </div>
           <label className="form-field">
             <span className="form-label">Название работы</span>
-            <input
-              value={itemForm.workName}
-              onChange={(event) => setItemForm((current) => ({ ...current, workName: event.target.value }))}
-              placeholder="Название работы, например: Монтаж гарнитура"
-            />
+            <input value={itemForm.workName} onChange={(event) => setItemForm((current) => ({ ...current, workName: event.target.value }))} placeholder="Например: Монтаж смесителя" />
           </label>
           <label className="form-field">
             <span className="form-label">Материал</span>
-            <select
-              value={itemForm.materialId}
-              onChange={(event) => {
-                const materialId = event.target.value;
-                const selectedMaterialOnChange = materials.find((material) => String(material.id) === String(materialId));
-                setItemForm((current) => {
-                  if (current.unitPrice || !selectedMaterialOnChange) {
-                    return { ...current, materialId };
-                  }
-                  return {
-                    ...current,
-                    materialId,
-                    unitPrice: String(selectedMaterialOnChange.defaultPrice ?? ''),
-                  };
-                });
-              }}
-            >
-              <option value="">Материал можно не указывать</option>
+            <select value={itemForm.materialId} onChange={(event) => setItemForm((current) => ({ ...current, materialId: event.target.value }))}>
+              <option value="">Не выбран</option>
               {materials.map((material) => (
-                <option key={material.id} value={material.id}>
-                  {material.name} • {material.unit} • {formatCurrency(material.defaultPrice)}
-                </option>
+                <option key={material.id} value={material.id}>{material.name} • {formatCurrency(material.defaultPrice)}</option>
               ))}
             </select>
           </label>
           <label className="form-field">
             <span className="form-label">Количество</span>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={itemForm.quantity}
-              onChange={(event) => setItemForm((current) => ({ ...current, quantity: event.target.value }))}
-              placeholder="Количество"
-            />
+            <input type="number" min="0.01" step="0.01" value={itemForm.quantity} onChange={(event) => setItemForm((current) => ({ ...current, quantity: event.target.value }))} required />
           </label>
           <label className="form-field">
             <span className="form-label">Цена за единицу</span>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              value={itemForm.unitPrice}
-              onChange={(event) => setItemForm((current) => ({ ...current, unitPrice: event.target.value }))}
-              placeholder="Цена за единицу"
-            />
+            <input type="number" min="0.01" step="0.01" value={itemForm.unitPrice} onChange={(event) => setItemForm((current) => ({ ...current, unitPrice: event.target.value }))} required />
           </label>
           <label className="form-field">
-            <span className="form-label">Комментарий к позиции</span>
-            <input
-              value={itemForm.comment}
-              onChange={(event) => setItemForm((current) => ({ ...current, comment: event.target.value }))}
-              placeholder="Комментарий к позиции"
-            />
+            <span className="form-label">Комментарий</span>
+            <textarea rows={2} value={itemForm.comment} onChange={(event) => setItemForm((current) => ({ ...current, comment: event.target.value }))} />
           </label>
-          {error ? <div className="error-box">{error}</div> : null}
-          {success ? <div className="success-box">{success}</div> : null}
           <button type="submit" className="primary-button">Добавить позицию</button>
         </form>
-      ) : null}
-      {!canEdit && estimate.status === 'ARCHIVED' ? (
-        <div className="page-card">
-          <p className="eyebrow">Архивная смета</p>
-          <h3>Редактирование закрыто</h3>
-          <p className="muted">
-            Эта смета уже завершила свой цикл и теперь доступна только для просмотра как история объекта.
-          </p>
-        </div>
       ) : null}
 
       <article className="page-card">
         <div className="row-between">
           <div>
             <p className="eyebrow">Позиции сметы</p>
-            <h3>Состав расчета</h3>
+            <h3>План, факт и место покупки по каждой строке</h3>
           </div>
           <strong>{formatCurrency(estimate.total)}</strong>
         </div>
 
-        <div className="stack-list">
-          {estimate.items.length ? estimate.items.map((item) => (
+        <div className="stack-list" style={{ marginTop: 20 }}>
+          {estimate.items.map((item) => (
             <div key={item.id} className="detail-list-item">
               <div>
                 <strong>{item.workName || item.materialName || 'Позиция сметы'}</strong>
                 <p className="muted">
-                  {item.materialName ?? 'Без материала'} • {item.quantity} {item.unit ?? 'ед.'} • {formatCurrency(item.unitPrice)}
+                  План: {item.quantity} {item.unit ?? 'ед.'} по {formatCurrency(item.unitPrice)} • Факт: {item.actualQuantity} {item.unit ?? 'ед.'} по {formatCurrency(item.actualPrice)}
                 </p>
-                {item.comment ? <p className="muted">{item.comment}</p> : null}
+                <p className="muted">
+                  Где купили: {item.purchaseSourceName || 'Пока не указано'}
+                </p>
               </div>
               <div className="detail-actions">
-                <strong>{formatCurrency(item.lineTotal)}</strong>
+                <Link className="ghost-button" to={`/estimates/${estimate.id}/items/${item.id}`}>Открыть позицию</Link>
                 {canEdit ? (
-                  <button type="button" className="ghost-button" onClick={() => deleteItem(item.id)}>
-                    Удалить
-                  </button>
+                  <button type="button" className="ghost-button" onClick={() => deleteItem(item.id)}>Удалить</button>
                 ) : null}
               </div>
             </div>
-          )) : <p className="muted">В этой смете пока нет позиций.</p>}
+          ))}
         </div>
       </article>
     </section>

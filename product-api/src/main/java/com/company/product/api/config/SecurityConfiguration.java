@@ -41,7 +41,7 @@ public class SecurityConfiguration {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/login", "/api/auth/register", "/api/swagger-ui/**", "/api/v3/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/materials/**", "/api/projects/**", "/api/estimates/**",
-                    "/api/purchases/**", "/api/dashboard/**", "/api/suppliers/**").authenticated()
+                    "/api/dashboard/**", "/api/suppliers/**").authenticated()
                 .anyRequest().authenticated())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

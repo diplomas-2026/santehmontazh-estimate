@@ -13,8 +13,6 @@ import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Material;
 import com.company.product.api.entity.Project;
 import com.company.product.api.entity.Role;
-import com.company.product.api.entity.Purchase;
-import com.company.product.api.entity.PurchaseStatus;
 import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.BadRequestException;
 import com.company.product.api.exception.NotFoundException;
@@ -22,7 +20,6 @@ import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
 import com.company.product.api.repository.MaterialRepository;
 import com.company.product.api.repository.ProjectRepository;
-import com.company.product.api.repository.PurchaseRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.security.SecurityUtils;
 import java.math.BigDecimal;
@@ -42,7 +39,6 @@ public class EstimateService {
     private final EstimateItemRepository estimateItemRepository;
     private final ProjectRepository projectRepository;
     private final MaterialRepository materialRepository;
-    private final PurchaseRepository purchaseRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
 
@@ -50,14 +46,12 @@ public class EstimateService {
                            EstimateItemRepository estimateItemRepository,
                            ProjectRepository projectRepository,
                            MaterialRepository materialRepository,
-                           PurchaseRepository purchaseRepository,
                            UserRepository userRepository,
                            AuditService auditService) {
         this.estimateRepository = estimateRepository;
         this.estimateItemRepository = estimateItemRepository;
         this.projectRepository = projectRepository;
         this.materialRepository = materialRepository;
-        this.purchaseRepository = purchaseRepository;
         this.userRepository = userRepository;
         this.auditService = auditService;
     }
@@ -121,6 +115,12 @@ public class EstimateService {
             item.setUnitPrice(draftItem.unitPrice());
             item.setLineTotal(draftItem.quantity().multiply(draftItem.unitPrice()));
             item.setComment(normalizeComment(draftItem.comment()));
+            item.setActualQuantity(BigDecimal.ZERO);
+            item.setActualPrice(BigDecimal.ZERO);
+            item.setActualLineTotal(BigDecimal.ZERO);
+            item.setPurchaseSourceName("");
+            item.setPurchaseSourceUrl("");
+            item.setPurchaseNote("");
             estimateItemRepository.save(item);
         }
 
@@ -158,8 +158,10 @@ public class EstimateService {
         item.setUnitPrice(request.unitPrice());
         item.setLineTotal(request.quantity().multiply(request.unitPrice()));
         item.setComment(normalizeComment(request.comment()));
+        applyActualFields(item, request);
         estimateItemRepository.save(item);
 
+        syncEstimateStatusFromItems(estimate);
         estimate.setUpdatedAt(OffsetDateTime.now());
         estimateRepository.save(estimate);
         auditService.log(AuditEntityType.ESTIMATE, estimate.getId(), "ITEM_ADDED", currentActor(), "Добавлена позиция сметы");
@@ -181,8 +183,10 @@ public class EstimateService {
         item.setUnitPrice(request.unitPrice());
         item.setLineTotal(request.quantity().multiply(request.unitPrice()));
         item.setComment(normalizeComment(request.comment()));
+        applyActualFields(item, request);
         estimateItemRepository.save(item);
 
+        syncEstimateStatusFromItems(estimate);
         estimate.setUpdatedAt(OffsetDateTime.now());
         estimateRepository.save(estimate);
         auditService.log(AuditEntityType.ESTIMATE, estimate.getId(), "ITEM_UPDATED", currentActor(), "Позиция сметы обновлена");
@@ -195,6 +199,7 @@ public class EstimateService {
             .orElseThrow(() -> new NotFoundException("Позиция сметы не найдена"));
         Estimate estimate = getEditableEstimate(item.getEstimate().getId());
         estimateItemRepository.delete(item);
+        syncEstimateStatusFromItems(estimate);
         estimate.setUpdatedAt(OffsetDateTime.now());
         estimateRepository.save(estimate);
         auditService.log(AuditEntityType.ESTIMATE, estimate.getId(), "ITEM_DELETED", currentActor(), "Позиция сметы удалена");
@@ -222,12 +227,33 @@ public class EstimateService {
     public EstimateResponse submitForPurchase(Long estimateId) {
         Estimate estimate = getEditableEstimate(estimateId);
         if (estimateItemRepository.findByEstimateId(estimateId).isEmpty()) {
-            throw new BadRequestException("Нельзя отправить пустую смету в закупку");
+            throw new BadRequestException("Нельзя запустить пустую смету в работу");
         }
-        estimate.setStatus(EstimateStatus.READY_FOR_PURCHASE);
+        estimate.setStatus(EstimateStatus.IN_PROGRESS);
         estimate.setUpdatedAt(OffsetDateTime.now());
         Estimate saved = estimateRepository.save(estimate);
-        auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "SUBMITTED_FOR_PURCHASE", currentActor(), "Смета отправлена в закупку");
+        auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "STARTED", currentActor(), "Смета переведена в работу");
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public EstimateResponse complete(Long estimateId) {
+        Estimate estimate = getEstimate(estimateId);
+        if (estimate.getStatus() == EstimateStatus.COMPLETED) {
+            return toResponse(estimate);
+        }
+        List<EstimateItem> items = estimateItemRepository.findByEstimateId(estimate.getId());
+        if (items.isEmpty()) {
+            throw new BadRequestException("Нельзя завершить пустую смету");
+        }
+        boolean hasActuals = items.stream().anyMatch(this::hasAnyActualData);
+        if (!hasActuals) {
+            throw new BadRequestException("Сначала укажите факт хотя бы по одной позиции сметы");
+        }
+        estimate.setStatus(EstimateStatus.COMPLETED);
+        estimate.setUpdatedAt(OffsetDateTime.now());
+        Estimate saved = estimateRepository.save(estimate);
+        auditService.log(AuditEntityType.ESTIMATE, saved.getId(), "COMPLETED", currentActor(), "Смета завершена");
         return toResponse(saved);
     }
 
@@ -236,11 +262,6 @@ public class EstimateService {
         Estimate estimate = getEstimate(estimateId);
         if (estimate.getStatus() == EstimateStatus.ARCHIVED || estimate.getStatus() == EstimateStatus.COMPLETED) {
             return toResponse(estimate);
-        }
-        List<Purchase> purchases = purchaseRepository.findByEstimateId(estimate.getId());
-        boolean hasOpenPurchase = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.COMPLETED);
-        if (hasOpenPurchase) {
-            throw new BadRequestException("Нельзя архивировать смету, пока по ней есть незавершенная закупка");
         }
         estimate.setStatus(EstimateStatus.ARCHIVED);
         estimate.setUpdatedAt(OffsetDateTime.now());
@@ -267,7 +288,7 @@ public class EstimateService {
 
     private Estimate getEditableEstimate(Long id) {
         Estimate estimate = getEstimate(id);
-        if (estimate.getStatus() != EstimateStatus.DRAFT) {
+        if (estimate.getStatus() == EstimateStatus.ARCHIVED || estimate.getStatus() == EstimateStatus.COMPLETED) {
             throw new BadRequestException("Смета недоступна для редактирования в текущем статусе");
         }
         return estimate;
@@ -284,10 +305,17 @@ public class EstimateService {
                 item.getQuantity(),
                 item.getUnitPrice(),
                 item.getLineTotal(),
-                item.getComment()
+                item.getComment(),
+                item.getActualQuantity(),
+                item.getActualPrice(),
+                item.getActualLineTotal(),
+                item.getPurchaseSourceName(),
+                item.getPurchaseSourceUrl(),
+                item.getPurchaseNote()
             ))
             .toList();
         BigDecimal total = items.stream().map(EstimateItemResponse::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal actualTotal = items.stream().map(EstimateItemResponse::actualLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         return new EstimateResponse(
             estimate.getId(),
             estimate.getProject().getId(),
@@ -300,6 +328,8 @@ public class EstimateService {
             estimate.getCreatedAt(),
             estimate.getUpdatedAt(),
             total,
+            actualTotal,
+            actualTotal.subtract(total),
             items
         );
     }
@@ -311,6 +341,10 @@ public class EstimateService {
 
     private String normalizeComment(String comment) {
         return comment == null ? "" : comment.trim();
+    }
+
+    private String normalizeSource(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private String normalizeWorkName(String workName) {
@@ -329,6 +363,38 @@ public class EstimateService {
         if (material == null && workName.isBlank()) {
             throw new BadRequestException("Укажите материал или название работы");
         }
+    }
+
+    private void applyActualFields(EstimateItem item, EstimateItemRequest request) {
+        BigDecimal actualQuantity = normalizeOptionalMoney(request.actualQuantity());
+        BigDecimal actualPrice = normalizeOptionalMoney(request.actualPrice());
+        item.setActualQuantity(actualQuantity);
+        item.setActualPrice(actualPrice);
+        item.setActualLineTotal(actualQuantity.multiply(actualPrice));
+        item.setPurchaseSourceName(normalizeSource(request.purchaseSourceName()));
+        item.setPurchaseSourceUrl(normalizeSource(request.purchaseSourceUrl()));
+        item.setPurchaseNote(normalizeSource(request.purchaseNote()));
+    }
+
+    private BigDecimal normalizeOptionalMoney(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value.max(BigDecimal.ZERO);
+    }
+
+    private boolean hasAnyActualData(EstimateItem item) {
+        return item.getActualQuantity().compareTo(BigDecimal.ZERO) > 0
+            || item.getActualPrice().compareTo(BigDecimal.ZERO) > 0
+            || !item.getPurchaseSourceName().isBlank()
+            || !item.getPurchaseSourceUrl().isBlank()
+            || !item.getPurchaseNote().isBlank();
+    }
+
+    private void syncEstimateStatusFromItems(Estimate estimate) {
+        List<EstimateItem> items = estimateItemRepository.findByEstimateId(estimate.getId());
+        boolean hasActualData = items.stream().anyMatch(this::hasAnyActualData);
+        if (estimate.getStatus() == EstimateStatus.ARCHIVED || estimate.getStatus() == EstimateStatus.COMPLETED) {
+            return;
+        }
+        estimate.setStatus(hasActualData ? EstimateStatus.IN_PROGRESS : EstimateStatus.DRAFT);
     }
 
     private Project getAccessibleProject(Long projectId, UserAccount actor) {

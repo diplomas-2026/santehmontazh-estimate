@@ -11,6 +11,12 @@ public record EstimateItemResponse(
     BigDecimal quantity,
     BigDecimal unitPrice,
     BigDecimal lineTotal,
-    String comment
+    String comment,
+    BigDecimal actualQuantity,
+    BigDecimal actualPrice,
+    BigDecimal actualLineTotal,
+    String purchaseSourceName,
+    String purchaseSourceUrl,
+    String purchaseNote
 ) {
 }

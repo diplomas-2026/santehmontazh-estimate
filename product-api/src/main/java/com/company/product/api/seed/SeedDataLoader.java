@@ -260,6 +260,12 @@ public class SeedDataLoader {
             estimateItem.setUnitPrice(item.unitPrice());
             estimateItem.setLineTotal(item.quantity().multiply(item.unitPrice()));
             estimateItem.setComment(item.comment());
+            estimateItem.setActualQuantity(BigDecimal.ZERO);
+            estimateItem.setActualPrice(BigDecimal.ZERO);
+            estimateItem.setActualLineTotal(BigDecimal.ZERO);
+            estimateItem.setPurchaseSourceName("");
+            estimateItem.setPurchaseSourceUrl("");
+            estimateItem.setPurchaseNote("");
             estimateItemRepository.save(estimateItem);
         }
     }
@@ -299,6 +305,7 @@ public class SeedDataLoader {
             purchaseItem.setActualLineTotal(item.actualQuantity().multiply(item.actualPrice()));
             purchaseItem.setComment(item.comment());
             purchaseItemRepository.save(purchaseItem);
+            syncEstimateItemActuals(purchase, purchaseItem);
         }
         purchaseRepository.findAll().forEach(this::recalculatePurchaseTotals);
     }
@@ -393,6 +400,28 @@ public class SeedDataLoader {
         purchase.setPlannedTotal(items.stream().map(PurchaseItem::getPlannedLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
         purchase.setActualTotal(items.stream().map(PurchaseItem::getActualLineTotal).reduce(BigDecimal.ZERO, BigDecimal::add));
         purchaseRepository.save(purchase);
+    }
+
+    private void syncEstimateItemActuals(Purchase purchase, PurchaseItem purchaseItem) {
+        estimateItemRepository.findByEstimateId(purchase.getEstimate().getId()).stream()
+            .filter(item -> item.getMaterial() != null)
+            .filter(item -> item.getMaterial().getId().equals(purchaseItem.getMaterial().getId()))
+            .findFirst()
+            .ifPresent(item -> {
+                item.setActualQuantity(purchaseItem.getActualQuantity());
+                item.setActualPrice(purchaseItem.getActualPrice());
+                item.setActualLineTotal(purchaseItem.getActualLineTotal());
+                item.setPurchaseSourceName(purchase.getSupplierName() == null ? "" : purchase.getSupplierName());
+                item.setPurchaseSourceUrl(purchase.getSupplierUrl() == null ? "" : purchase.getSupplierUrl());
+                item.setPurchaseNote(purchaseItem.getComment() == null ? "" : purchaseItem.getComment());
+                estimateItemRepository.save(item);
+
+                Estimate estimate = item.getEstimate();
+                if (estimate.getStatus() == EstimateStatus.READY_FOR_PURCHASE || estimate.getStatus() == EstimateStatus.IN_PURCHASE) {
+                    estimate.setStatus(EstimateStatus.IN_PROGRESS);
+                    estimateRepository.save(estimate);
+                }
+            });
     }
 
     private <T> List<T> readList(String classpath, TypeReference<List<T>> typeReference) throws IOException {

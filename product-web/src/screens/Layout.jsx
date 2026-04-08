@@ -8,6 +8,7 @@ import { useAuth } from '../modules/auth/AuthContext';
 const baseLinks = [
   { to: '/dashboard', label: 'Обзор' },
   { to: '/projects', label: 'Объекты' },
+  { to: '/estimates', label: 'Сметы' },
   { to: '/materials', label: 'Материалы' },
   { to: '/suppliers', label: 'Поставщики', roles: ['ADMIN', 'BASE_USER'] },
   { to: '/reports/deviations', label: 'План / факт', roles: ['ADMIN', 'BASE_USER'] },
@@ -37,7 +38,7 @@ export function Layout() {
             <span className="brand-mark">SM</span>
             <div>
               <p className="eyebrow">SantechMontazh Estimate</p>
-              <h1 className="brand-title">Объекты и закупки</h1>
+              <h1 className="brand-title">Объекты и сметы</h1>
             </div>
           </Link>
 
@@ -79,7 +80,7 @@ export function Layout() {
             <p>
               {subscription
                 ? `Активен тариф ${subscription.tierName} до ${formatRuDate(subscription.expiresAt)}.`
-                : 'Подключите подписку, чтобы открыть аналитику, paywall-функции и расширенный контроль закупки.'}
+                : 'Подключите подписку, чтобы открыть аналитику, AI-сценарии и расширенный контроль план / факт.'}
             </p>
             <Link className="primary-button" to="/pricing">
               {subscription ? 'Управлять подпиской' : 'Оформить подписку'}

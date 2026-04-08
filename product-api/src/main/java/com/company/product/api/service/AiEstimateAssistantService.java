@@ -63,7 +63,7 @@ public class AiEstimateAssistantService {
     private static final TypeReference<Map<String, String>> ANSWERS_TYPE = new TypeReference<>() {
     };
     private static final String SYSTEM_PROMPT = """
-        Ты AI-помощник сметчика для системы расчета смет и закупки материалов.
+        Ты AI-помощник для системы расчета смет и фиксации факта по материалам и работам.
         Твоя задача — НЕ придумывать точную смету из воздуха. Сначала ты должен понять, хватает ли данных.
 
         Работай строго в одном из двух режимов:

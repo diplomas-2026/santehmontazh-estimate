@@ -13,6 +13,13 @@ public record EstimateItemRequest(
     @NotNull(message = "Цена обязательна")
     @DecimalMin(value = "0.01", message = "Цена должна быть больше нуля")
     BigDecimal unitPrice,
-    String comment
+    String comment,
+    @DecimalMin(value = "0.00", message = "Фактическое количество не может быть отрицательным")
+    BigDecimal actualQuantity,
+    @DecimalMin(value = "0.00", message = "Фактическая цена не может быть отрицательной")
+    BigDecimal actualPrice,
+    String purchaseSourceName,
+    String purchaseSourceUrl,
+    String purchaseNote
 ) {
 }

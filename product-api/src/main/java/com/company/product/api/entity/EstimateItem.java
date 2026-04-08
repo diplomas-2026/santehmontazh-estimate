@@ -45,4 +45,22 @@ public class EstimateItem {
 
     @Column(nullable = false, length = 1000)
     private String comment;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal actualQuantity;
+
+    @Column(nullable = false, precision = 12, scale = 2)
+    private BigDecimal actualPrice;
+
+    @Column(nullable = false, precision = 14, scale = 2)
+    private BigDecimal actualLineTotal;
+
+    @Column(nullable = false)
+    private String purchaseSourceName;
+
+    @Column(nullable = false, length = 1000)
+    private String purchaseSourceUrl;
+
+    @Column(nullable = false, length = 1000)
+    private String purchaseNote;
 }

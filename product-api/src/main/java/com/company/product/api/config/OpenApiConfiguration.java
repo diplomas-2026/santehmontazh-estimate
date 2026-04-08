@@ -13,7 +13,7 @@ public class OpenApiConfiguration {
         return new OpenAPI()
             .info(new Info()
                 .title("Product API")
-                .description("API для расчета сметы и закупки материалов")
+                .description("API для расчета смет, фиксации факта и контроля бюджета по объектам")
                 .version("1.0.0"));
     }
 }

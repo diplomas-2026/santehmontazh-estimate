@@ -52,10 +52,10 @@ export function AuthPage({ mode }) {
             <CardContent sx={{ p: { xs: 3, md: 5 }, display: 'grid', gap: 3 }}>
               <Typography className="eyebrow">Современный продукт для подрядчика</Typography>
               <Typography variant="h1" sx={{ fontSize: { xs: '2.4rem', md: '4.6rem' }, maxWidth: '11ch' }}>
-                Объекты, сметы и закупки в одном потоке, а не в десятке таблиц.
+                Объекты, сметы и факт по позициям в одном рабочем контуре.
               </Typography>
               <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 680 }}>
-                Платформа помогает вести объект от первого расчета до закупки материалов и показывает прозрачную картину по бюджету.
+                Платформа помогает вести объект от первого расчета до фактических затрат и показывает прозрачную картину по бюджету.
               </Typography>
               <Stack direction="row" flexWrap="wrap" gap={1}>
                 <Button variant="outlined" color="inherit">Объекты</Button>
@@ -80,8 +80,8 @@ export function AuthPage({ mode }) {
                 </Typography>
                 <Typography color="text.secondary">
                   {isRegister
-                    ? 'После регистрации у вас появится рабочее пространство для объектов, смет и закупок.'
-                    : 'Авторизуйтесь, чтобы работать со сметами, закупками и premium-аналитикой по объектам.'}
+                    ? 'После регистрации у вас появится рабочее пространство для объектов, смет и контроля факта по позициям.'
+                    : 'Авторизуйтесь, чтобы работать со сметами, фактом затрат и premium-аналитикой по объектам.'}
                 </Typography>
               </Box>
 

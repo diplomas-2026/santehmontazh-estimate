@@ -6,8 +6,6 @@ import com.company.product.api.entity.AuditEntityType;
 import com.company.product.api.entity.Estimate;
 import com.company.product.api.entity.EstimateStatus;
 import com.company.product.api.entity.Project;
-import com.company.product.api.entity.Purchase;
-import com.company.product.api.entity.PurchaseStatus;
 import com.company.product.api.entity.Role;
 import com.company.product.api.entity.UserAccount;
 import com.company.product.api.exception.BadRequestException;
@@ -15,7 +13,6 @@ import com.company.product.api.exception.NotFoundException;
 import com.company.product.api.repository.EstimateItemRepository;
 import com.company.product.api.repository.EstimateRepository;
 import com.company.product.api.repository.ProjectRepository;
-import com.company.product.api.repository.PurchaseRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.security.SecurityUtils;
 import java.math.BigDecimal;
@@ -30,20 +27,17 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final EstimateRepository estimateRepository;
     private final EstimateItemRepository estimateItemRepository;
-    private final PurchaseRepository purchaseRepository;
     private final UserRepository userRepository;
     private final AuditService auditService;
 
     public ProjectService(ProjectRepository projectRepository,
                           EstimateRepository estimateRepository,
                           EstimateItemRepository estimateItemRepository,
-                          PurchaseRepository purchaseRepository,
                           UserRepository userRepository,
                           AuditService auditService) {
         this.projectRepository = projectRepository;
         this.estimateRepository = estimateRepository;
         this.estimateItemRepository = estimateItemRepository;
-        this.purchaseRepository = purchaseRepository;
         this.userRepository = userRepository;
         this.auditService = auditService;
     }
@@ -93,12 +87,6 @@ public class ProjectService {
             throw new BadRequestException("Нельзя завершить объект, пока не архивированы все сметы");
         }
 
-        List<Purchase> purchases = purchaseRepository.findByProjectId(project.getId());
-        boolean hasOpenPurchases = purchases.stream().anyMatch(purchase -> purchase.getStatus() != PurchaseStatus.COMPLETED);
-        if (hasOpenPurchases) {
-            throw new BadRequestException("Нельзя завершить объект, пока не завершены все закупки");
-        }
-
         project.setStatus(com.company.product.api.entity.ProjectStatus.COMPLETED);
         Project saved = projectRepository.save(project);
         auditService.log(AuditEntityType.PROJECT, saved.getId(), "COMPLETED", currentActor(), "Объект завершен");
@@ -120,17 +108,17 @@ public class ProjectService {
 
     private ProjectResponse toResponse(Project project) {
         List<Estimate> estimates = estimateRepository.findByProjectIdOrderByUpdatedAtDesc(project.getId());
-        List<Purchase> purchases = purchaseRepository.findByProjectId(project.getId());
         BigDecimal estimateTotal = estimates.stream()
             .flatMap(estimate -> estimateItemRepository.findByEstimateId(estimate.getId()).stream())
             .map(item -> item.getLineTotal())
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal purchaseTotal = purchases.stream()
-            .map(Purchase::getPlannedTotal)
+        BigDecimal actualTotal = estimates.stream()
+            .flatMap(estimate -> estimateItemRepository.findByEstimateId(estimate.getId()).stream())
+            .map(item -> item.getActualLineTotal())
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new ProjectResponse(project.getId(), project.getName(), project.getCode(), project.getAddress(),
             project.getDescription(), project.getStatus(), project.getPlannedStartDate(), project.getPlannedEndDate(),
-            estimateTotal, purchaseTotal);
+            estimateTotal, actualTotal);
     }
 
     private com.company.product.api.entity.UserAccount currentActor() {

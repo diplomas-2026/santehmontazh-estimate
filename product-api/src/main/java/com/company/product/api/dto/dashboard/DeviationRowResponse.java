@@ -3,7 +3,6 @@ package com.company.product.api.dto.dashboard;
 import java.math.BigDecimal;
 
 public record DeviationRowResponse(
-    Long purchaseId,
     Long projectId,
     String projectName,
     Long estimateId,

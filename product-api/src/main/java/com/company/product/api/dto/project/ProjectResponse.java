@@ -14,6 +14,6 @@ public record ProjectResponse(
     LocalDate plannedStartDate,
     LocalDate plannedEndDate,
     BigDecimal estimateTotal,
-    BigDecimal purchaseTotal
+    BigDecimal actualTotal
 ) {
 }
