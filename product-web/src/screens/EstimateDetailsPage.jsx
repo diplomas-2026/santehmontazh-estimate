@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { api } from '../api';
+import { api, downloadBinary } from '../api';
 import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
@@ -89,6 +89,17 @@ export function EstimateDetailsPage() {
     }
   }
 
+  async function downloadProjectWorkbook() {
+    try {
+      await downloadBinary(`/api/estimates/${id}/project-report.xlsx`, `project-${estimate.projectId}-estimates.xlsx`);
+      setError('');
+      setSuccess('Excel по всем сметам объекта скачан.');
+    } catch (downloadError) {
+      setError(downloadError.message);
+      setSuccess('');
+    }
+  }
+
   if (!estimate) {
     return <div className="page-card">Загрузка сметы...</div>;
   }
@@ -104,6 +115,9 @@ export function EstimateDetailsPage() {
           </p>
         </div>
         <div className="action-row">
+          <button type="button" className="ghost-button" onClick={downloadProjectWorkbook}>
+            Скачать все сметы Excel
+          </button>
           <button type="button" className="ghost-button" onClick={() => navigate(`/projects/${estimate.projectId}`)}>
             К объекту
           </button>

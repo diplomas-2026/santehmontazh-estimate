@@ -22,12 +22,22 @@ import com.company.product.api.repository.MaterialRepository;
 import com.company.product.api.repository.ProjectRepository;
 import com.company.product.api.repository.UserRepository;
 import com.company.product.api.security.SecurityUtils;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -277,6 +287,17 @@ public class EstimateService {
             .toList();
     }
 
+    public byte[] exportEstimateWorkbook(Long estimateId) {
+        Estimate estimate = getEstimate(estimateId);
+        return buildWorkbook(estimate.getProject(), List.of(estimate));
+    }
+
+    public byte[] exportProjectEstimatesWorkbook(Long estimateId) {
+        Estimate estimate = getEstimate(estimateId);
+        List<Estimate> estimates = estimateRepository.findByProjectIdOrderByUpdatedAtDesc(estimate.getProject().getId());
+        return buildWorkbook(estimate.getProject(), estimates);
+    }
+
     private Estimate getEstimate(Long id) {
         Estimate estimate = estimateRepository.findById(id).orElseThrow(() -> new NotFoundException("Смета не найдена"));
         UserAccount actor = currentActor();
@@ -409,6 +430,119 @@ public class EstimateService {
             throw new BadRequestException("Объект недоступен для редактирования в текущем статусе");
         }
         return project;
+    }
+
+    private byte[] buildWorkbook(Project project, List<Estimate> estimates) {
+        try (XSSFWorkbook workbook = new XSSFWorkbook(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            CellStyle headerStyle = createHeaderStyle(workbook);
+            CellStyle sectionStyle = createSectionStyle(workbook);
+
+            for (Estimate estimate : estimates) {
+                writeEstimateSheet(workbook, project, toResponse(estimate), headerStyle, sectionStyle);
+            }
+
+            workbook.write(outputStream);
+            return outputStream.toByteArray();
+        } catch (Exception exception) {
+            throw new IllegalStateException("Не удалось сформировать Excel-отчет по смете", exception);
+        }
+    }
+
+    private void writeEstimateSheet(Workbook workbook,
+                                    Project project,
+                                    EstimateResponse estimate,
+                                    CellStyle headerStyle,
+                                    CellStyle sectionStyle) {
+        Sheet sheet = workbook.createSheet(buildSheetName(estimate.name(), estimate.id()));
+        int rowIndex = 0;
+
+        rowIndex = writeMetaRow(sheet, rowIndex, "Объект", project.getName(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "Код объекта", project.getCode(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "Смета", estimate.name(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "Статус", estimate.status().name(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "Автор", estimate.createdByName(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "План", estimate.total().toPlainString(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "Факт", estimate.actualTotal().toPlainString(), headerStyle);
+        rowIndex = writeMetaRow(sheet, rowIndex, "Отклонение", estimate.deviation().toPlainString(), headerStyle);
+        rowIndex++;
+
+        Row titleRow = sheet.createRow(rowIndex++);
+        titleRow.createCell(0).setCellValue("Позиции сметы");
+        titleRow.getCell(0).setCellStyle(sectionStyle);
+
+        Row headerRow = sheet.createRow(rowIndex++);
+        String[] columns = {
+            "№", "Позиция", "Материал", "Ед.", "План кол-во", "План цена", "План сумма",
+            "Факт кол-во", "Факт цена", "Факт сумма", "Где купили", "Ссылка", "Комментарий", "Заметка по факту"
+        };
+        for (int index = 0; index < columns.length; index++) {
+            headerRow.createCell(index).setCellValue(columns[index]);
+            headerRow.getCell(index).setCellStyle(headerStyle);
+        }
+
+        int position = 1;
+        for (EstimateItemResponse item : estimate.items()) {
+            Row row = sheet.createRow(rowIndex++);
+            row.createCell(0).setCellValue(position++);
+            row.createCell(1).setCellValue(item.workName() == null || item.workName().isBlank() ? "Позиция сметы" : item.workName());
+            row.createCell(2).setCellValue(item.materialName() == null ? "" : item.materialName());
+            row.createCell(3).setCellValue(item.unit() == null ? "" : item.unit());
+            row.createCell(4).setCellValue(item.quantity().doubleValue());
+            row.createCell(5).setCellValue(item.unitPrice().doubleValue());
+            row.createCell(6).setCellValue(item.lineTotal().doubleValue());
+            row.createCell(7).setCellValue(item.actualQuantity().doubleValue());
+            row.createCell(8).setCellValue(item.actualPrice().doubleValue());
+            row.createCell(9).setCellValue(item.actualLineTotal().doubleValue());
+            row.createCell(10).setCellValue(item.purchaseSourceName());
+            row.createCell(11).setCellValue(item.purchaseSourceUrl());
+            row.createCell(12).setCellValue(item.comment());
+            row.createCell(13).setCellValue(item.purchaseNote());
+        }
+
+        for (int index = 0; index < columns.length; index++) {
+            sheet.autoSizeColumn(index);
+        }
+    }
+
+    private int writeMetaRow(Sheet sheet, int rowIndex, String label, String value, CellStyle headerStyle) {
+        Row row = sheet.createRow(rowIndex);
+        row.createCell(0).setCellValue(label);
+        row.getCell(0).setCellStyle(headerStyle);
+        row.createCell(1).setCellValue(value == null ? "" : value);
+        return rowIndex + 1;
+    }
+
+    private CellStyle createHeaderStyle(XSSFWorkbook workbook) {
+        XSSFFont font = workbook.createFont();
+        font.setBold(true);
+
+        CellStyle style = workbook.createCellStyle();
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        style.setAlignment(HorizontalAlignment.LEFT);
+        return style;
+    }
+
+    private CellStyle createSectionStyle(XSSFWorkbook workbook) {
+        XSSFFont font = workbook.createFont();
+        font.setBold(true);
+        font.setColor(IndexedColors.WHITE.getIndex());
+
+        CellStyle style = workbook.createCellStyle();
+        style.setFont(font);
+        style.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return style;
+    }
+
+    private String buildSheetName(String estimateName, Long estimateId) {
+        String base = (estimateName == null || estimateName.isBlank()) ? "Смета " + estimateId : estimateName;
+        String sanitized = base.replaceAll("[\\\\/*?:\\[\\]]", " ").trim();
+        if (sanitized.isBlank()) {
+            sanitized = "Смета " + estimateId;
+        }
+        return sanitized.length() > 31 ? sanitized.substring(0, 31) : sanitized;
     }
 
     private static final class MaterialRequirementAccumulator {

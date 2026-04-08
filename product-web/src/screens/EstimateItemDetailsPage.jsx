@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { api } from '../api';
+import { api, downloadBinary } from '../api';
 import { formatCurrency } from '../i18n/currency';
 import { translateEstimateStatus } from '../i18n/enums';
 
@@ -108,6 +108,17 @@ export function EstimateItemDetailsPage() {
     }
   }
 
+  async function downloadEstimateWorkbook() {
+    try {
+      await downloadBinary(`/api/estimates/${id}/report.xlsx`, `estimate-${id}.xlsx`);
+      setError('');
+      setSuccess('Excel по текущей смете скачан.');
+    } catch (downloadError) {
+      setError(downloadError.message);
+      setSuccess('');
+    }
+  }
+
   if (loading) {
     return <div className="page-card">Загрузка позиции сметы...</div>;
   }
@@ -130,6 +141,9 @@ export function EstimateItemDetailsPage() {
           </p>
         </div>
         <div className="action-row">
+          <button type="button" className="ghost-button" onClick={downloadEstimateWorkbook}>
+            Скачать смету Excel
+          </button>
           <button type="button" className="ghost-button" onClick={() => navigate(`/estimates/${id}`)}>
             К смете
           </button>

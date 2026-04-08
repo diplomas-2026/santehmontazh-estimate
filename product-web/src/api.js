@@ -52,3 +52,45 @@ export async function api(path, options = {}) {
   }
   return response.text();
 }
+
+export async function downloadBinary(path, fallbackFilename) {
+  const headers = {};
+  const token = getToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, { headers });
+  } catch {
+    throw new Error(NETWORK_ERROR_MESSAGE);
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: '' }));
+    const message = error.message?.trim();
+    if (message) {
+      throw new Error(message);
+    }
+
+    if (response.status >= 500) {
+      throw new Error(SERVER_ERROR_MESSAGE);
+    }
+
+    throw new Error('Не удалось скачать файл. Попробуйте еще раз.');
+  }
+
+  const blob = await response.blob();
+  const contentDisposition = response.headers.get('content-disposition') ?? '';
+  const matchedFilename = contentDisposition.match(/filename="?([^"]+)"?/i)?.[1];
+  const fileName = matchedFilename || fallbackFilename || 'report.xlsx';
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}

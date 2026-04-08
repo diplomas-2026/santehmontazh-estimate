@@ -7,6 +7,9 @@ import com.company.product.api.dto.estimate.MaterialRequirementResponse;
 import com.company.product.api.service.EstimateService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -70,6 +73,24 @@ public class EstimateController {
     @GetMapping("/estimates/{id}/requirements")
     public List<MaterialRequirementResponse> requirements(@PathVariable Long id) {
         return estimateService.requirements(id);
+    }
+
+    @GetMapping(value = "/estimates/{id}/report.xlsx", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> exportEstimate(@PathVariable Long id) {
+        byte[] report = estimateService.exportEstimateWorkbook(id);
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=estimate-" + id + ".xlsx")
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .body(report);
+    }
+
+    @GetMapping(value = "/estimates/{id}/project-report.xlsx", produces = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    public ResponseEntity<byte[]> exportProjectEstimates(@PathVariable Long id) {
+        byte[] report = estimateService.exportProjectEstimatesWorkbook(id);
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=project-" + id + "-estimates.xlsx")
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .body(report);
     }
 
     @PostMapping({"/estimates/{id}/start-work", "/estimates/{id}/submit-for-purchase"})
