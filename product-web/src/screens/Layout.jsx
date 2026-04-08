@@ -1,5 +1,8 @@
 import { Link, NavLink, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { api } from '../api';
 import { formatRuDate } from '../i18n/date';
+import { formatRuDateTime } from '../i18n/date';
 import { translateRole, translateSubscriptionStatus } from '../i18n/enums';
 import { useAuth } from '../modules/auth/AuthContext';
 
@@ -15,6 +18,17 @@ const baseLinks = [
 export function Layout() {
   const { user, logout, subscription } = useAuth();
   const links = baseLinks.filter((link) => !link.roles || link.roles.includes(user.role));
+  const [aiUsage, setAiUsage] = useState(null);
+
+  useEffect(() => {
+    function loadAiUsage() {
+      api('/api/ai/usage').then(setAiUsage).catch(() => setAiUsage(null));
+    }
+
+    loadAiUsage();
+    window.addEventListener('ai-usage-updated', loadAiUsage);
+    return () => window.removeEventListener('ai-usage-updated', loadAiUsage);
+  }, []);
 
   return (
     <div className="app-shell">
@@ -50,6 +64,16 @@ export function Layout() {
         </nav>
 
         <div className="sidebar-bottom">
+          {aiUsage ? (
+            <div className="upgrade-panel ai-usage-panel">
+              <p className="eyebrow">AI-лимит системы</p>
+              <h3>{aiUsage.remainingTokens} токенов осталось</h3>
+              <p>Потрачено сегодня: {aiUsage.usedTokens} из {aiUsage.dailyLimit}.</p>
+              <p>Сброс: {formatRuDateTime(aiUsage.resetAt)}.</p>
+              <p>{aiUsage.message}</p>
+            </div>
+          ) : null}
+
           <div className="upgrade-panel">
             <p className="eyebrow">Монетизация</p>
             <h3>{subscription ? 'Premium уже включен' : 'Откройте платные сценарии'}</h3>
