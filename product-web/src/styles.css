@@ -551,10 +551,15 @@ button:hover,
   height: 100vh;
 }
 
+.sidebar-top {
+  align-items: stretch;
+}
+
 .brand-lockup {
   display: flex;
   align-items: center;
   gap: 14px;
+  width: 100%;
 }
 
 .brand-mark {
@@ -580,6 +585,8 @@ button:hover,
   display: grid;
   gap: 6px;
   padding: 18px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .user-card span {
