@@ -549,6 +549,8 @@ button:hover,
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .sidebar-top {
