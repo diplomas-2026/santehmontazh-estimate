@@ -32,6 +32,7 @@ export function EstimateItemDetailsPage() {
   const { id, itemId } = useParams();
   const navigate = useNavigate();
   const [estimate, setEstimate] = useState(null);
+  const [materialDetail, setMaterialDetail] = useState(null);
   const [draft, setDraft] = useState(emptyDraft);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -71,6 +72,30 @@ export function EstimateItemDetailsPage() {
       setDraft(buildDraft(item));
     }
   }, [item]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadMaterialDetail() {
+      if (!item?.materialId) {
+        setMaterialDetail(null);
+        return;
+      }
+      try {
+        const response = await api(`/api/materials/${item.materialId}`);
+        if (active) {
+          setMaterialDetail(response);
+        }
+      } catch {
+        if (active) {
+          setMaterialDetail(null);
+        }
+      }
+    }
+    loadMaterialDetail();
+    return () => {
+      active = false;
+    };
+  }, [item?.materialId]);
 
   async function reload(message) {
     const response = await api(`/api/estimates/${id}`);
@@ -222,14 +247,34 @@ export function EstimateItemDetailsPage() {
       </form>
 
       {item.materialId ? (
-        <article className="page-card">
-          <p className="eyebrow">Материал</p>
-          <h3>Справочная карточка</h3>
-          <p className="muted">Если по позиции выбран материал из каталога, можно быстро перейти в его карточку.</p>
-          <div className="action-row">
-            <Link className="ghost-button" to={`/materials/${item.materialId}`}>Открыть материал</Link>
-          </div>
-        </article>
+        <div className="detail-grid detail-grid-single">
+          <article className="page-card">
+            <p className="eyebrow">Материал</p>
+            <h3>Справочная карточка</h3>
+            <p className="muted">Если по позиции выбран материал из каталога, можно быстро перейти в его карточку.</p>
+            <div className="action-row">
+              <Link className="ghost-button" to={`/materials/${item.materialId}`}>Открыть материал</Link>
+            </div>
+          </article>
+
+          <article className="page-card">
+            <p className="eyebrow">Подсказки по поставщикам</p>
+            <h3>Кто может поставить этот материал</h3>
+            <p className="muted">
+              Это справочный список наших поставщиков по материалу. Вы можете купить у них или указать любой другой внешний источник в полях выше.
+            </p>
+            <div className="linked-grid">
+              {materialDetail?.suppliers?.length ? materialDetail.suppliers.map((supplier) => (
+                <Link key={supplier.id} className="linked-card" to={`/suppliers/${supplier.id}`}>
+                  <strong>{supplier.name}</strong>
+                  <span>{supplier.phone || supplier.email || 'Контакты не указаны'}</span>
+                  <span>{supplier.telegram || supplier.websiteUrl || 'Без сайта и Telegram'}</span>
+                  <span>Рейтинг: {supplier.rating}</span>
+                </Link>
+              )) : <div className="empty-note">Для этого материала пока не указаны поставщики. Можно указать любой внешний источник вручную.</div>}
+            </div>
+          </article>
+        </div>
       ) : null}
     </section>
   );
