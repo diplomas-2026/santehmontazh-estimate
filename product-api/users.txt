@@ -1,0 +1,4 @@
+email=admin@santehmontazh.local; password=Admin123!; role=ADMIN
+email=estimator@santehmontazh.local; password=Estimator123!; role=BASE_USER
+email=purchaser@santehmontazh.local; password=Purchaser123!; role=BASE_USER
+email=manager@santehmontazh.local; password=Manager123!; role=BASE_USER
