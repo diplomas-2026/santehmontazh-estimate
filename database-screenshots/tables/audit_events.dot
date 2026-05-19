@@ -1,0 +1,7 @@
+digraph single_table {
+  graph [rankdir=TB, fontsize=18];
+  node [shape=plain, fontname="Arial"];
+  label="santehmontazh-estimate — audit_events";
+  labelloc=t;
+  "audit_events" [label=<<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#eeeeee" COLSPAN="3"><B>audit_events</B></TD></TR><TR><TD><B>Поле</B></TD><TD><B>Тип</B></TD><TD><B>Модификаторы</B></TD></TR><TR><TD ALIGN="LEFT">id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">PK, NOT NULL, DEFAULT nextval(&#x27;audit_events_id_seq&#x27;::regclass)</TD></TR><TR><TD ALIGN="LEFT">entity_type</TD><TD ALIGN="LEFT">character varying(50)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">entity_id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">action</TD><TD ALIGN="LEFT">character varying(255)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">actor_id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">NOT NULL, FK → users.id</TD></TR><TR><TD ALIGN="LEFT">details</TD><TD ALIGN="LEFT">text</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">timestamp with time zone</TD><TD ALIGN="LEFT">NOT NULL</TD></TR></TABLE>>];
+}

@@ -1,0 +1,7 @@
+digraph single_table {
+  graph [rankdir=TB, fontsize=18];
+  node [shape=plain, fontname="Arial"];
+  label="santehmontazh-estimate — ai_token_usage_days";
+  labelloc=t;
+  "ai_token_usage_days" [label=<<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#eeeeee" COLSPAN="3"><B>ai_token_usage_days</B></TD></TR><TR><TD><B>Поле</B></TD><TD><B>Тип</B></TD><TD><B>Модификаторы</B></TD></TR><TR><TD ALIGN="LEFT">id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">PK, NOT NULL, DEFAULT nextval(&#x27;ai_token_usage_days_id_seq&#x27;::regclass)</TD></TR><TR><TD ALIGN="LEFT">business_date</TD><TD ALIGN="LEFT">date</TD><TD ALIGN="LEFT">NOT NULL, UNIQUE</TD></TR><TR><TD ALIGN="LEFT">used_tokens</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">NOT NULL, DEFAULT 0</TD></TR><TR><TD ALIGN="LEFT">request_count</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">NOT NULL, DEFAULT 0</TD></TR><TR><TD ALIGN="LEFT">created_at</TD><TD ALIGN="LEFT">timestamp with time zone</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">updated_at</TD><TD ALIGN="LEFT">timestamp with time zone</TD><TD ALIGN="LEFT">NOT NULL</TD></TR></TABLE>>];
+}

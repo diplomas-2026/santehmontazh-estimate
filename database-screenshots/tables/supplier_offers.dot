@@ -1,0 +1,7 @@
+digraph single_table {
+  graph [rankdir=TB, fontsize=18];
+  node [shape=plain, fontname="Arial"];
+  label="santehmontazh-estimate — supplier_offers";
+  labelloc=t;
+  "supplier_offers" [label=<<TABLE BORDER="1" CELLBORDER="1" CELLSPACING="0" CELLPADDING="6"><TR><TD BGCOLOR="#eeeeee" COLSPAN="3"><B>supplier_offers</B></TD></TR><TR><TD><B>Поле</B></TD><TD><B>Тип</B></TD><TD><B>Модификаторы</B></TD></TR><TR><TD ALIGN="LEFT">id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">PK, NOT NULL, DEFAULT nextval(&#x27;supplier_offers_id_seq&#x27;::regclass)</TD></TR><TR><TD ALIGN="LEFT">purchase_item_id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">NOT NULL, FK → purchase_items.id</TD></TR><TR><TD ALIGN="LEFT">supplier_id</TD><TD ALIGN="LEFT">bigint(64,0)</TD><TD ALIGN="LEFT">NOT NULL, FK → suppliers.id</TD></TR><TR><TD ALIGN="LEFT">offered_price</TD><TD ALIGN="LEFT">numeric(12,2)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">delivery_days</TD><TD ALIGN="LEFT">integer(32,0)</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">comment</TD><TD ALIGN="LEFT">text</TD><TD ALIGN="LEFT">NOT NULL</TD></TR><TR><TD ALIGN="LEFT">selected</TD><TD ALIGN="LEFT">boolean</TD><TD ALIGN="LEFT">NOT NULL, DEFAULT false</TD></TR></TABLE>>];
+}
